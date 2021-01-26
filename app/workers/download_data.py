@@ -3,10 +3,16 @@
 import pandas as pd
 import requests
 import os
-from datetime import date, time
+from datetime import datetime
 from app.logger import app_log
 from app.config import DATA_FOLDER, COMPRESSION_METHOD, FILE_EXTENTION
 
+class UpToDateException(Exception):
+    """Custom exception to be raised data is up to date"""
+    
+    def __init__(self, expression, message):
+        self.expression = expression
+        self.message = message
 
 #columns definitions
 proponentes_cols = ["IDENTIF_PROPONENTE", "NM_PROPONENTE"]
@@ -32,21 +38,11 @@ def datetime_validation(txt):
         tm = dtm[1].split(':')
         if len(dtm) != 2 or len(dt) != 3 or len(tm) != 3:
             raise
-        date(int(dt[2]), int(dt[1]), int(dt[0]))
-        time(int(tm[0]), int(tm[1]), int(tm[2]))
+        dtime = datetime(int(dt[2]), int(dt[1]), int(dt[0]), int(tm[0]), int(tm[1]), int(tm[2]))
     except:
-        return False
+        return None
 
-    return True
-
-def get_df(df_chunk, label=''):
-    df_list = []
-    rows = 0
-    for chunk in df_chunk:
-        df_list += [chunk]
-        rows += len(chunk)
-
-    return pd.concat(df_list)
+    return dtime
 
 def getCurrentDate():
     url = 'http://plataformamaisbrasil.gov.br/download-de-dados'
@@ -54,9 +50,9 @@ def getCurrentDate():
 
     p = response.text.find('dos dados: <strong>﻿')
     dt = response.text[p+20:p+39].strip()
-    if not datetime_validation(dt):
+    if datetime_validation(dt) is None:
         raise Exception(f'Invalid datetime: {dt}')
-    return dt
+    return datetime_validation(dt)
 
 def feedback(label='', value=''):
     label_length = 30
@@ -65,53 +61,56 @@ def feedback(label='', value=''):
     value = '-'*value_length + ' ' + value
     app_log.info(label[:label_length] + value[-value_length:])
 
+def get_last_date():
+    try:
+        last_date = pd.read_csv(os.path.join(DATA_FOLDER, 'data_atual.txt'), sep=';', dtype=str)
+        return datetime_validation(last_date.columns[0])
+    except:
+        return None
+
 def fetch_data():
     url = 'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
-    chunk_nrows = 1000
     
     app_log.info('[Getting current date]')
 
     feedback(label='-> data atual', value='connecting...')
+    
+    last_date = get_last_date()
     current_date = getCurrentDate()
-    df_date = pd.DataFrame(data={current_date: []})
-    feedback(label='-> data atual', value=current_date)
+    data_atual = pd.DataFrame(data={current_date: []})
+    feedback(label='-> data atual', value=current_date.strftime("%d/%m/%Y %H:%M:%S"))
+    if last_date and last_date >= current_date:
+        raise UpToDateException('', 'Dados já estão atualizados.')
 
     app_log.info('[Fetching data]')
     
     feedback(label='-> proponentes', value='connecting...')
-    df_chunk = pd.read_csv(f'{url}/siconv_proponentes.csv.zip', compression='zip', chunksize=chunk_nrows, sep=';', dtype=str, usecols=proponentes_cols)
-    proponentes = get_df(df_chunk, '-> Proponentes')
+    proponentes = pd.read_csv(f'{url}/siconv_proponentes.csv.zip', compression='zip', sep=';', dtype=str, usecols=proponentes_cols)
     feedback(label='-> Proponentes', value=f'{len(proponentes)}')
 
     feedback(label='-> propostas', value='connecting...')
-    df_chunk = pd.read_csv(f'{url}/siconv_proposta.csv.zip', compression='zip', chunksize=chunk_nrows, sep=';', dtype=str, usecols=propostas_cols)
-    propostas = get_df(df_chunk, '-> Propostas')
+    propostas = pd.read_csv(f'{url}/siconv_proposta.csv.zip', compression='zip', sep=';', dtype=str, usecols=propostas_cols)
     feedback(label='-> Propostas', value=f'{len(propostas)}')
 
     feedback(label='-> convenios', value='connecting...')
-    df_chunk = pd.read_csv(f'{url}/siconv_convenio.csv.zip', compression='zip', chunksize=chunk_nrows, sep=';', dtype=str, usecols=convenios_cols)
-    convenios = get_df(df_chunk, '-> convenios')
+    convenios = pd.read_csv(f'{url}/siconv_convenio.csv.zip', compression='zip', sep=';', dtype=str, usecols=convenios_cols)
     convenios = convenios[convenios['DIA_ASSIN_CONV'].notna()]
     feedback(label='-> convenios', value=f'{len(convenios)}')
 
     feedback(label='-> emendas', value='connecting...')
-    df_chunk = pd.read_csv(f'{url}/siconv_emenda.csv.zip', compression='zip', chunksize=chunk_nrows, sep=';', dtype=str, usecols=emendas_cols)
-    emendas = get_df(df_chunk, '-> emendas')
+    emendas = pd.read_csv(f'{url}/siconv_emenda.csv.zip', compression='zip', sep=';', dtype=str, usecols=emendas_cols)
     feedback(label='-> emendas', value=f'{len(emendas)}')
 
     feedback(label='-> desembolsos', value='connecting...')
-    df_chunk = pd.read_csv(f'{url}/siconv_desembolso.csv.zip', compression='zip', chunksize=chunk_nrows, sep=';', dtype=str, usecols=desembolsos_cols)
-    desembolsos = get_df(df_chunk, '-> desembolsos')
+    desembolsos = pd.read_csv(f'{url}/siconv_desembolso.csv.zip', compression='zip', sep=';', dtype=str, usecols=desembolsos_cols)
     feedback(label='-> desembolsos', value=f'{len(desembolsos)}')
 
     feedback(label='-> contrapartidas', value='connecting...')
-    df_chunk = pd.read_csv(f'{url}/siconv_ingresso_contrapartida.csv.zip', compression='zip', chunksize=chunk_nrows, sep=';', dtype=str, usecols=contrapartidas_cols)
-    contrapartidas = get_df(df_chunk, '-> contrapartidas')
+    contrapartidas = pd.read_csv(f'{url}/siconv_ingresso_contrapartida.csv.zip', compression='zip', sep=';', dtype=str, usecols=contrapartidas_cols)
     feedback(label='-> contrapartidas', value=f'{len(contrapartidas)}')
 
     feedback(label='-> pagamentos', value='connecting...')
-    df_chunk = pd.read_csv(f'{url}/siconv_pagamento.csv.zip', compression='zip', chunksize=chunk_nrows, sep=';', dtype=str, usecols=pagamentos_cols)
-    pagamentos = get_df(df_chunk, '-> pagamentos')
+    pagamentos = pd.read_csv(f'{url}/siconv_pagamento.csv.zip', compression='zip', sep=';', dtype=str, usecols=pagamentos_cols)
     feedback(label='-> pagamentos', value=f'{len(pagamentos)}')
 
     app_log.info('[Transforming data]')
@@ -153,7 +152,7 @@ def fetch_data():
     movimento = pd.concat([desembolsos, contrapartidas, pagamentos], ignore_index=True, sort=False)
     feedback(label='-> movimento', value='Success!')
 
-    return df_date, proponentes, convenios, emendas, emendas_convenios, movimento
+    return data_atual, proponentes, convenios, emendas, emendas_convenios, movimento
 
 def fix_movimento(movimento):
     fix_list = [
@@ -195,14 +194,13 @@ def fix_movimento(movimento):
 def update():
     try:
         #fetching
-        df_date, proponentes, convenios, emendas, emendas_convenios, movimento = fetch_data()
+        data_atual, proponentes, convenios, emendas, emendas_convenios, movimento = fetch_data()
         movimento = fix_movimento(movimento)
         
-
         app_log.info('[Updating]')
 
         feedback(label='-> data atual', value='updating...')
-        df_date.to_csv(os.path.join(DATA_FOLDER, 'data_atual.txt'), encoding='utf-8', index=False)
+        data_atual.to_csv(os.path.join(DATA_FOLDER, 'data_atual.txt'), encoding='utf-8', index=False)
         feedback(label='-> data atual', value='Success!')
         
         feedback(label='-> proponentes', value='updating...')
@@ -227,8 +225,8 @@ def update():
 
         app_log.info('Processo finalizado com sucesso!')
 
+    except UpToDateException:
+        app_log.info('Dados já estão atualizados!')
     except Exception as e:
         app_log.info(repr(e))
         app_log.info('Processo falhou!')
-
-#update()
