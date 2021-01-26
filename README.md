@@ -1,2 +1,2 @@
-# siconv-data
-Coleta informações do Siconv e reaorganiza em um novo modelo de dados
+# Siconv-Data
+API para disponibilização de alguns dados coletados do Siconv e reaorganizados em um novo modelo de dados mais simples
