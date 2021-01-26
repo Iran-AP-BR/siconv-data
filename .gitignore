@@ -1,0 +1,6 @@
+**/__pycache__
+**/.env
+/logs
+/app/files/*.zip
+/app/files/*.gz
+/venv
