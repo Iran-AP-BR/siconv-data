@@ -3,4 +3,5 @@
 /logs
 /app/files/*.zip
 /app/files/*.gz
+/app/files/*.txt
 /venv

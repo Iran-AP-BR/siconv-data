@@ -83,7 +83,7 @@ def fetch_data():
     if last_date and last_date >= current_date:
         raise UpToDateException('', 'Dados já estão atualizados.')
 
-    raise Exception('teste')
+    #raise Exception('teste')
     app_log.info('[Fetching data]')
     
     feedback(label='-> proponentes', value='connecting...')
