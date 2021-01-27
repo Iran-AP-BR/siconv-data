@@ -14,6 +14,13 @@ class UpToDateException(Exception):
         self.expression = expression
         self.message = message
 
+class UnchangedException(Exception):
+    """Custom exception to be raised the data was not changed since last download"""
+    
+    def __init__(self, expression, message):
+        self.expression = expression
+        self.message = message
+
 #columns definitions
 proponentes_cols = ["IDENTIF_PROPONENTE", "NM_PROPONENTE"]
 proponentes_final_cols = ["IDENTIF_PROPONENTE", "NM_PROPONENTE", "UF_PROPONENTE", "MUNIC_PROPONENTE", "COD_MUNIC_IBGE"]
@@ -76,14 +83,23 @@ def fetch_data():
     feedback(label='-> data atual', value='connecting...')
     
     last_date = get_last_date()
+    today = datetime.now()
+    today = datetime(today.year, today.month, today.day)
+    
     current_date = getCurrentDate()
     current_date_str = current_date.strftime("%d/%m/%Y %H:%M:%S")
-    data_atual = pd.DataFrame(data={current_date_str: []})
-    feedback(label='-> data atual', value=current_date_str)
-    if last_date and last_date >= current_date:
-        raise UpToDateException('', 'Dados já estão atualizados.')
 
-    #raise Exception('teste')
+    data_atual = pd.DataFrame(data={current_date_str: []})
+
+    feedback(label='-> data atual', value=current_date_str)
+    if last_date:
+        if  last_date >= today:
+            raise UpToDateException('', 'Dados já estão atualizados.')
+
+        if last_date >= current_date:
+            raise UnchangedException('', 'Dados inalterados na origem.')
+
+
     app_log.info('[Fetching data]')
     
     feedback(label='-> proponentes', value='connecting...')
@@ -195,16 +211,14 @@ def fix_movimento(movimento):
 
 def update():
     try:
-        #fetching
+        #fetch data
         data_atual, proponentes, convenios, emendas, emendas_convenios, movimento = fetch_data()
+        
+        #fix data
         movimento = fix_movimento(movimento)
         
         app_log.info('[Updating]')
-
-        feedback(label='-> data atual', value='updating...')
-        data_atual.to_csv(os.path.join(DATA_FOLDER, 'data_atual.txt'), encoding='utf-8', index=False)
-        feedback(label='-> data atual', value='Success!')
-        
+       
         feedback(label='-> proponentes', value='updating...')
         proponentes.to_csv(os.path.join(DATA_FOLDER, f'proponentes{FILE_EXTENTION}'), compression=COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> proponentes', value='Success!')
@@ -225,10 +239,25 @@ def update():
         movimento.to_csv(os.path.join(DATA_FOLDER, f'movimento{FILE_EXTENTION}'), compression=COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> movimento', value='Success!')
 
+        feedback(label='-> data atual', value='updating...')
+        data_atual.to_csv(os.path.join(DATA_FOLDER, 'data_atual.txt'), encoding='utf-8', index=False)
+        feedback(label='-> data atual', value='Success!')
+
         app_log.info('Processo finalizado com sucesso!')
 
-    except UpToDateException:
-        app_log.info('Dados já estão atualizados!')
+    except UpToDateException as e:
+        app_log.info(e.message)
+        return True
+    except UnchangedException as e:
+        app_log.info(e.message)
+        return False
     except Exception as e:
         app_log.info(repr(e))
         app_log.info('Processo falhou!')
+        return False
+    
+    return True
+
+
+if __name__ == '__main__':
+    update()
