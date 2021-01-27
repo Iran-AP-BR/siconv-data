@@ -39,7 +39,7 @@ def datetime_validation(txt):
         if len(dtm) != 2 or len(dt) != 3 or len(tm) != 3:
             raise
         dtime = datetime(int(dt[2]), int(dt[1]), int(dt[0]), int(tm[0]), int(tm[1]), int(tm[2]))
-    except:
+    except Exception as e:
         return None
 
     return dtime
@@ -77,11 +77,13 @@ def fetch_data():
     
     last_date = get_last_date()
     current_date = getCurrentDate()
-    data_atual = pd.DataFrame(data={current_date: []})
-    feedback(label='-> data atual', value=current_date.strftime("%d/%m/%Y %H:%M:%S"))
+    current_date_str = current_date.strftime("%d/%m/%Y %H:%M:%S")
+    data_atual = pd.DataFrame(data={current_date_str: []})
+    feedback(label='-> data atual', value=current_date_str)
     if last_date and last_date >= current_date:
         raise UpToDateException('', 'Dados já estão atualizados.')
 
+    raise Exception('teste')
     app_log.info('[Fetching data]')
     
     feedback(label='-> proponentes', value='connecting...')

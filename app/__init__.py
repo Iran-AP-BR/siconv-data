@@ -12,7 +12,7 @@ from app.logger import app_log
 
 
 sched = BackgroundScheduler()
-@sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='01')
+@sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='18', max_instances=1)
 def update_job():
     update()
 
