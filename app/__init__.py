@@ -8,14 +8,7 @@
 from datetime import datetime
 from app.logger import app_log
 
-'''
-from apscheduler.schedulers.background import BackgroundScheduler
-from app.workers.download_data import update
-sched = BackgroundScheduler()
-@sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='*/15', max_instances=1)
-def update_job():
-    update()
-'''
+
 
 def create_app():
     """This function has the role of create the app and initialize routes.
@@ -25,12 +18,24 @@ def create_app():
     from flask import Flask
     from flask_cors import CORS
     from app.api.routes import init_routes
+    from flask_swagger_ui import get_swaggerui_blueprint
    
     app = Flask(__name__)
     CORS(app)
     init_routes(app)
-    #sched.start()
+
+    SWAGGER_URL = '' 
+    API_URL = '/static/swagger.json' 
+
+    swaggerui_blueprint = get_swaggerui_blueprint(
+      SWAGGER_URL,
+      API_URL,
+      config={  
+         'app_name': "Dados do Siconv"
+      },
+    )
+
+    app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
     return app
-
 

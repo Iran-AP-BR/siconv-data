@@ -1,0 +1,129 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "description": "Iran",
+      "version": "1.0.0",
+      "title": "Siconv Dados",
+      "license": {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+      }
+    },
+    "servers": [
+        {
+          "url": "/"
+        }
+      ],
+      "tags": [
+        {
+          "name": "Dados do Siconv",
+          "description": "API para disponibilização de alguns dados coletados do Siconv e reaorganizados em um novo modelo de dados mais simples"
+        }
+      ],
+      "security": {
+          "ApiKeyAuth": []
+      },
+      "paths": {
+        "/data_atual": {
+          "get": {
+            "tags": [
+              "Data atual"
+            ],
+            "summary": "Retorna da data da última atualização",
+            "responses": {
+              "200": {
+                "description": "OK"
+              }
+            }
+          }
+        },
+        "/municipios": {
+            "get": {
+              "tags": [
+                "Municípios"
+              ],
+              "summary": "Retorna um arquivo json com os dados dos municípios",
+              "responses": {
+                "200": {
+                  "description": "OK"
+                }
+              }
+            }
+          },
+        "/data/convenios": {
+            "get": {
+              "tags": [
+                "Convênios"
+              ],
+              "summary": "Retorna um arquivo csv compactado com gzip contendo os dados dos convênios",
+              "responses": {
+                "200": {
+                  "description": "OK"
+                }
+              }
+            }
+          },
+        "/data/emendas": {
+            "get": {
+              "tags": [
+                "Emendas"
+              ],
+              "summary": "Retorna um arquivo csv compactado com gzip contendo os dados dos emendas",
+              "responses": {
+                "200": {
+                  "description": "OK"
+                }
+              }
+            }
+          },
+        "/data/emendas_convenios": {
+            "get": {
+              "tags": [
+                "Emendas x Convênios"
+              ],
+              "summary": "Retorna um arquivo csv compactado com gzip contendo os relacionamentos entre convênios e emendas",
+              "responses": {
+                "200": {
+                  "description": "OK"
+                }
+              }
+            }
+          },
+        "/data/proponentes": {
+            "get": {
+              "tags": [
+                "Proponentes"
+              ],
+              "summary": "Retorna um arquivo csv compactado com gzip contendo os dados dos proponentes",
+              "responses": {
+                "200": {
+                  "description": "OK"
+                }
+              }
+            }
+          },
+        "/data/movimento": {
+            "get": {
+              "tags": [
+                "Movimento"
+              ],
+              "summary": "Retorna um arquivo csv compactado com gzip contendo os dados de movimentações financeiras: Desembolsos (liberações do concedente), Ingressos de Contrapartidas (pelo convenente) e pagamentos a fornecedores",
+              "responses": {
+                "200": {
+                  "description": "OK"
+                }
+              }
+            }
+          }
+      },
+
+"components": {
+    "securitySchemes": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "X-API-KEY",
+            "in": "header"
+        }
+    }
+ }
+}
