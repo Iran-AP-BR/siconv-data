@@ -18,12 +18,12 @@ def create_app():
     from flask import Flask
     from flask_cors import CORS
     from app.api.routes import init_routes
-    from flask_swagger_ui import get_swaggerui_blueprint
+    #from flask_swagger_ui import get_swaggerui_blueprint
    
     app = Flask(__name__)
     CORS(app)
     init_routes(app)
-
+    '''
     SWAGGER_URL = '' 
     API_URL = '/static/swagger.json' 
 
@@ -36,6 +36,7 @@ def create_app():
     )
 
     app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
-
+    '''
     return app
+
 

@@ -2,8 +2,8 @@
 
 import os
 
-SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
-DATA_FOLDER = os.path.join(SITE_ROOT, "files")
+DATA_FOLDER = os.getenv('DATA_FOLDER')
+STATIC_FOLDER = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'static')
 API_KEY = os.getenv('API_KEY')
 DATA_ENDPOINT = 'data'
 

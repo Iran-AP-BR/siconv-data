@@ -9,11 +9,7 @@
         "url": "https://opensource.org/licenses/MIT"
       }
     },
-    "servers": [
-        {
-          "url": "/"
-        }
-      ],
+
       "tags": [
         {
           "name": "Dados do Siconv",
