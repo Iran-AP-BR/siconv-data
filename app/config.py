@@ -2,10 +2,12 @@
 
 import os
 
-DATA_FOLDER = os.getenv('DATA_FOLDER')
+APP_TITLE = 'Dados do Siconv'
+DATA_FOLDER = os.getenv('DATA_FOLDER', default=os.path.join(os.path.realpath(os.path.dirname(__file__)), 'csv_files'))
 STATIC_FOLDER = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'static')
 API_KEY = os.getenv('API_KEY')
 DATA_ENDPOINT = 'data'
-
 COMPRESSION_METHOD = 'gzip'
 FILE_EXTENTION = '.csv.gz'
+TABLE_LIST = ['emendas', 'emendas_convenios', 'convenios', 'proponentes', 'movimento']
+

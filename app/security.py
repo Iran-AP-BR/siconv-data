@@ -9,7 +9,7 @@ from app.config import API_KEY
 def api_key_required(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
-		if request.headers.get("X-Api-Key") != API_KEY:
+		if API_KEY is None or request.headers.get("X-Api-Key") != API_KEY:
 			abort(401)
 		return f(*args, **kwargs)
 	return decorated_function

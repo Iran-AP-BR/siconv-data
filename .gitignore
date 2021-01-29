@@ -1,7 +1,5 @@
 **/__pycache__
-**/.env
+**/.vscode
 /logs
-/app/files/*.zip
-/app/files/*.gz
-/app/files/*.txt
+**/csv_files
 /venv

@@ -1,7 +1,6 @@
 # coding: utf-8
 from apscheduler.schedulers.blocking import BlockingScheduler
 from app.workers.download_data import update
-
 from datetime import datetime
 
 sched = BlockingScheduler()

@@ -3,6 +3,7 @@
 import pandas as pd
 import requests
 import os
+from pathlib import Path
 from datetime import datetime
 from app.logger import app_log
 from app.config import DATA_FOLDER, COMPRESSION_METHOD, FILE_EXTENTION
@@ -77,8 +78,11 @@ def get_last_date():
 
 def fetch_data():
     url = 'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
-    
+
+    Path(DATA_FOLDER).mkdir(parents=True, exist_ok=True)
+
     app_log.info('[Getting current date]')
+    app_log.info(DATA_FOLDER)
 
     feedback(label='-> data atual', value='connecting...')
     
