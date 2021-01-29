@@ -1,6 +1,6 @@
 <!-- HTML for static distribution bundle build -->
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8">
     <title>{{ title }}</title>
@@ -24,8 +24,8 @@
 
       body
       {
-        margin:0;
-        background: #fafafa;
+        margin: 0;
+        background: #e5eff5;
       }
     </style>
   </head>
@@ -43,13 +43,8 @@
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-        layout: "StandaloneLayout"
+          SwaggerUIBundle.presets.apis
+        ]
       })
       // End Swagger UI call region
 
