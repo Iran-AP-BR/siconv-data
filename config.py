@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-if Path('.env').is_file():
+if os.getenv('ENV_MODE') == 'development' and Path('.env').is_file():
     load_dotenv(dotenv_path=".env", override=True)
 
 class Config(object):
