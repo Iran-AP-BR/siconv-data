@@ -5,8 +5,9 @@ import requests
 import os
 from pathlib import Path
 from datetime import datetime
-from app.logger import app_log
-from app.config import DATA_FOLDER, COMPRESSION_METHOD, FILE_EXTENTION
+from logger import app_log
+from config import config
+
 
 class UpToDateException(Exception):
     """Custom exception to be raised data is up to date"""
@@ -71,7 +72,7 @@ def feedback(label='', value=''):
 
 def get_last_date():
     try:
-        last_date = pd.read_csv(os.path.join(DATA_FOLDER, 'data_atual.txt'), sep=';', dtype=str)
+        last_date = pd.read_csv(os.path.join(config.DATA_FOLDER, 'data_atual.txt'), sep=';', dtype=str)
         return datetime_validation(last_date.columns[0])
     except:
         return None
@@ -79,12 +80,11 @@ def get_last_date():
 def fetch_data():
     url = 'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
 
-    Path(DATA_FOLDER).mkdir(parents=True, exist_ok=True)
+    Path(config.DATA_FOLDER).mkdir(parents=True, exist_ok=True)
 
     app_log.info('[Getting current date]')
-    app_log.info(DATA_FOLDER)
 
-    feedback(label='-> data atual', value='connecting...')
+    feedback(label='-> data atual', value='connecting...')    
     
     last_date = get_last_date()
     today = datetime.now()
@@ -224,27 +224,27 @@ def update():
         app_log.info('[Updating]')
        
         feedback(label='-> proponentes', value='updating...')
-        proponentes.to_csv(os.path.join(DATA_FOLDER, f'proponentes{FILE_EXTENTION}'), compression=COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
+        proponentes.to_csv(os.path.join(config.DATA_FOLDER, f'proponentes{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> proponentes', value='Success!')
 
         feedback(label='-> convenios', value='updating...')
-        convenios.to_csv(os.path.join(DATA_FOLDER, f'convenios{FILE_EXTENTION}'), compression=COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
+        convenios.to_csv(os.path.join(config.DATA_FOLDER, f'convenios{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> convenios', value='Success!')
         
         feedback(label='-> emendas', value='updating...')
-        emendas.to_csv(os.path.join(DATA_FOLDER, f'emendas{FILE_EXTENTION}'), compression=COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
+        emendas.to_csv(os.path.join(config.DATA_FOLDER, f'emendas{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> emendas', value='Success!')
 
         feedback(label='-> emendas_convenios', value='updating...')
-        emendas_convenios.to_csv(os.path.join(DATA_FOLDER, f'emendas_convenios{FILE_EXTENTION}'), compression=COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
+        emendas_convenios.to_csv(os.path.join(config.DATA_FOLDER, f'emendas_convenios{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> emendas_convenios', value='Success!')
 
         feedback(label='-> movimento', value='updating...')
-        movimento.to_csv(os.path.join(DATA_FOLDER, f'movimento{FILE_EXTENTION}'), compression=COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
+        movimento.to_csv(os.path.join(config.DATA_FOLDER, f'movimento{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> movimento', value='Success!')
 
         feedback(label='-> data atual', value='updating...')
-        data_atual.to_csv(os.path.join(DATA_FOLDER, 'data_atual.txt'), encoding='utf-8', index=False)
+        data_atual.to_csv(os.path.join(config.DATA_FOLDER, 'data_atual.txt'), encoding='utf-8', index=False)
         feedback(label='-> data atual', value='Success!')
 
         app_log.info('Processo finalizado com sucesso!')
@@ -264,4 +264,12 @@ def update():
 
 
 if __name__ == '__main__':
-    update()
+    from apscheduler.schedulers.blocking import BlockingScheduler
+    sched = BlockingScheduler()
+
+    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='*/15', max_instances=1)
+    def update_job():
+        if update() or datetime.utcnow().hour >= 21:
+            sched.shutdown(wait=False)
+
+    sched.start()

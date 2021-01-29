@@ -75,6 +75,7 @@
             "description": "Nome da tabela",
             "required": true,
             "type": "array",
+            "uniqueItems": true,
             "items": {
               "type": "string",
               "enum": [
