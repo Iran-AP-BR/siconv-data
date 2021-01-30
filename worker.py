@@ -265,6 +265,16 @@ def update():
 
 if __name__ == '__main__':
     from apscheduler.schedulers.blocking import BlockingScheduler
+    from dotenv import load_dotenv
+
+    env_path = '/home/siconvdata/.env'
+    if Path(env_path).is_file():
+        load_dotenv(dotenv_path=env_path, override=True)
+    else:
+        load_dotenv(dotenv_path='.env', override=True)
+
+    from config import config
+
     sched = BlockingScheduler()
 
     @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='*/15', max_instances=1)
