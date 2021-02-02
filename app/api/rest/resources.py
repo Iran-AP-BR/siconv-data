@@ -1,11 +1,10 @@
 # coding: utf-8
 """Resources.
    """
-from flask import send_file, make_response, jsonify, render_template, current_app as app
+from flask import Response, send_file, render_template, current_app as app
 from app.security import api_key_required
 from app.api import check_target
 import os
-#from app.config import DATA_FOLDER, STATIC_FOLDER, COMPRESSION_METHOD, FILE_EXTENTION, APP_TITLE
 
 @api_key_required
 def data_atual():
@@ -14,7 +13,9 @@ def data_atual():
    with open(filename, 'r') as fd:
       data_atual = fd.read()
 
-   return data_atual
+   resp = Response(data_atual)
+   resp.headers['content-type'] = 'plain/text; charset=utf-8'
+   return resp
 
 @api_key_required
 def municipios():

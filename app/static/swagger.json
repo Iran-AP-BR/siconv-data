@@ -59,7 +59,7 @@
         }
       }
     },
-    "/data/{tableName}": {
+    "/tables/{tableName}": {
       "get": {
         "tags": [
           "Tabelas"
