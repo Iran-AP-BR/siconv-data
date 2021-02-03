@@ -14,8 +14,9 @@
       "api_key": []
     }
   ],
+  "basePath": "/rest",
   "paths": {
-    "/rest/data_atual": {
+    "/data_atual": {
       "get": {
         "tags": [
           "Data atual"
@@ -37,7 +38,7 @@
         }
       }
     },
-    "/rest/municipios": {
+    "/municipios": {
       "get": {
         "tags": [
           "Municípios"
@@ -59,7 +60,7 @@
         }
       }
     },
-    "/rest/tables/{tableName}": {
+    "/tables/{tableName}": {
       "get": {
         "tags": [
           "Tabelas"

@@ -2,11 +2,10 @@
 """graphql_routes.
    """
 
-from flask import Blueprint
 from .query import graphql_playground, graphql_server
+from . import blueprint
 
-graphql_bp = Blueprint('graphql', __name__, url_prefix='/graphql')
 
 def init_routes():
-   graphql_bp.add_url_rule('', 'index_get', graphql_playground, methods=["GET"])
-   graphql_bp.add_url_rule('', 'index_post', graphql_server, methods=["POST"])
+   blueprint.add_url_rule('/', 'playground', graphql_playground, methods=["GET"])
+   blueprint.add_url_rule('/', 'index', graphql_server, methods=["POST"])

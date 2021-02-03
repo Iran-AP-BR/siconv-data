@@ -20,16 +20,17 @@ def create_app():
     
     CORS(app)
 
-    from app.rest.routes import init_routes as init_rest_routes, rest_bp
-    from app.graphql.routes import init_routes as init_graphql_routes, graphql_bp
-    
-    init_rest_routes(app.config)
-    init_graphql_routes()
+    import app.rest as rest
+    import app.graphql as graphql
 
-    app.register_blueprint(rest_bp)
-    app.register_blueprint(graphql_bp)
+    rest.init_routes(app.config)
+    graphql.init_routes()
+
+    app.register_blueprint(rest.blueprint)
+    app.register_blueprint(graphql.blueprint)
 
     print(app.url_map)
+
     return app
 
 

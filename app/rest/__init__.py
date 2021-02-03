@@ -2,8 +2,10 @@
 """Api.
    """
 
-from flask import abort, current_app as app
+from flask import Blueprint, abort, current_app as app
 from functools import wraps
+
+blueprint = Blueprint('rest', __name__, url_prefix='/rest', template_folder='templates', static_folder='static')
 
 def check_target(f):
 	@wraps(f)
@@ -12,3 +14,5 @@ def check_target(f):
 			abort(404)
 		return f(*args, **kwargs)
 	return decorated_function
+
+from app.rest.routes import init_routes
