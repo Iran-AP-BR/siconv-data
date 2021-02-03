@@ -1,0 +1,118 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "API para disponibilização de alguns dados coletados do Siconv e reaorganizados em um novo modelo de dados mais simples.",
+    "version": "1.0.0",
+    "title": "Dados do Siconv",
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "security": [
+    {
+      "api_key": []
+    }
+  ],
+  "paths": {
+    "/rest/data_atual": {
+      "get": {
+        "tags": [
+          "Data atual"
+        ],
+        "summary": "Retorna a data da última atualização.",
+        "produces": [
+          "plain/text"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Uma informação de autorização válida deve ser informada."
+          },
+          "500": {
+            "description": "Ocorreu um erro interno não especificado."
+          }
+        }
+      }
+    },
+    "/rest/municipios": {
+      "get": {
+        "tags": [
+          "Municípios"
+        ],
+        "summary": "Retorna um arquivo json com os dados dos municípios.",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Uma informação de autorização válida deve ser informada."
+          },
+          "500": {
+            "description": "Ocorreu um erro interno não especificado."
+          }
+        }
+      }
+    },
+    "/rest/tables/{tableName}": {
+      "get": {
+        "tags": [
+          "Tabelas"
+        ],
+        "summary": "Retorna um arquivo csv compactado com gzip contendo os dados da tabela selecionada.",
+        "produces": [
+          "application/gzip"
+        ],
+        "parameters": [
+          {
+            "name": "tableName",
+            "in": "path",
+            "description": "Nome da tabela",
+            "required": true,
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                       "emendas",
+                       "emendas_convenios",
+                       "convenios",
+                       "proponentes",
+                       "movimento"
+                      ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "A requisão foi mal formulada."
+          },
+          "401": {
+            "description": "Uma informação de autorização válida deve ser informada."
+          },
+          "404": {
+            "description": "A tabela requisitada não está disponível."
+          },
+          "500": {
+            "description": "Ocorreu um erro interno não especificado."
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "X-API-KEY",
+      "in": "header"
+    }
+  }
+}

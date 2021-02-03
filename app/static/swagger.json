@@ -15,7 +15,7 @@
     }
   ],
   "paths": {
-    "/data_atual": {
+    "/rest/data_atual": {
       "get": {
         "tags": [
           "Data atual"
@@ -37,7 +37,7 @@
         }
       }
     },
-    "/municipios": {
+    "/rest/municipios": {
       "get": {
         "tags": [
           "Municípios"
@@ -59,7 +59,7 @@
         }
       }
     },
-    "/tables/{tableName}": {
+    "/rest/tables/{tableName}": {
       "get": {
         "tags": [
           "Tabelas"
