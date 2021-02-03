@@ -22,10 +22,12 @@ def create_app():
 
     import app.rest as rest
     import app.graphql as graphql
+    import app.views as views
 
     rest.init_routes(app.config)
     graphql.init_routes()
-
+    
+    app.register_blueprint(views.blueprint)
     app.register_blueprint(rest.blueprint)
     app.register_blueprint(graphql.blueprint)
 
@@ -33,4 +35,5 @@ def create_app():
 
     return app
 
+from app.views import index
 
