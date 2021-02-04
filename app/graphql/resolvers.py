@@ -23,7 +23,7 @@ def resolve_convenio(obj, info, NR_CONVENIO):
     assert NR_CONVENIO
 
     try:
-        convenio, _ = load_convenios(NR_CONVENIO=NR_CONVENIO)
+        convenio, _ = load_convenios(parameters={'NR_CONVENIO': NR_CONVENIO})
         payload = {
             "convenio": convenio[0] if len(convenio) > 0 else None
         }
@@ -53,7 +53,7 @@ def resolve_emenda(obj, info, NR_EMENDA):
     assert NR_EMENDA
 
     try:
-        emenda, _ = load_emendas(NR_EMENDA=NR_EMENDA)
+        emenda, _ = load_emendas(parameters={'NR_EMENDA': NR_EMENDA})
         payload = {
             "emenda": emenda[0] if len(emenda) > 0 else None
         }

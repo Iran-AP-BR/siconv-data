@@ -12,28 +12,58 @@
     <link rel="icon" type="image/png" href="{{ url_for('views.static', filename='images/favicon-32x32.png') }}" sizes="32x32" />
     <link rel="icon" type="image/png" href="{{ url_for('views.static', filename='images/favicon-16x16.png') }}" sizes="16x16" />
 -->
+<style>
+      body
+      {
+        background: #3c4446;
+        /*A0D1FF*/
+        /*118DFF*/
+      }
+
+      div.container {
+        background: transparent;
+      }
+
+      div.jumbotron {
+        background: #5f6b6e;
+        color: #ffffff;
+      }
+
+      div.card {
+        background: transparent;
+        border-color: #5f6b6e;
+      }
+
+</style>
 
   </head>
   <body>
     <div class="container">
     <div class="jumbotron jumbotron-fluid">
         <div class="container">
-          <h1 class="display-4">Dados do Siconv</h1>
+          <h1 class="display-5">Dados do Siconv</h1>
           <p class="lead">API para disponibilização de alguns dados coletados do Siconv e reaorganizados em um novo modelo de dados mais simples.</p>
         </div>
       </div>
     <div class="row">
-      <div class="card col-sm-6" style="width: 18rem;">
-        <img class="card-img-top" src="{{ url_for('views.static', filename='images/rest_api.png')}}" alt="Card image cap">
+      <div class="card col-sm-4" style="width: 18rem;">
+        <img class="card-img-top" src="{{ url_for('views.static', filename='images/rest-api.png')}}" alt="Card image cap">
         <div class="card-body">
           <a href="{{ url_for('rest.swagger') }}"><p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p></a>
         </div>
       </div>
 
-      <div class="card col-sm-6" style="width: 18rem;">
+      <div class="card col-sm-4" style="width: 18rem;">
         <img class="card-img-top" src="{{ url_for('views.static', filename='images/graphql-logo.png')}}" alt="Card image cap">
         <div class="card-body">
             <a class="button" href="{{ url_for('graphql.playground') }}"><p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p></a>
+        </div>
+      </div>
+
+      <div class="card col-sm-4" style="width: 18rem;">
+        <img class="card-img-top" src="{{ url_for('views.static', filename='images/model-logo.png')}}" alt="Card image cap">
+        <div class="card-body">
+            <a class="button" href="{{ url_for('views.model') }}"><p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p></a>
         </div>
       </div>
 

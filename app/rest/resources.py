@@ -20,7 +20,6 @@ def data_atual():
 @api_key_required
 def municipios():
    filename = "municipios_brasileiros.json"
-   #return send_from_directory(app.static_folder, filename, mimetype='application/json', attachment_filename=filename, as_attachment=True)
    return send_from_directory(app.config['DATA_FOLDER'], filename, mimetype='application/json', attachment_filename=filename, as_attachment=True)
 
 @api_key_required
