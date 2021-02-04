@@ -8,6 +8,11 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
     <title>{{ title }}</title>
+<!--
+    <link rel="icon" type="image/png" href="{{ url_for('views.static', filename='images/favicon-32x32.png') }}" sizes="32x32" />
+    <link rel="icon" type="image/png" href="{{ url_for('views.static', filename='images/favicon-16x16.png') }}" sizes="16x16" />
+-->
+
   </head>
   <body>
     <div class="container">
@@ -19,14 +24,14 @@
       </div>
     <div class="row">
       <div class="card col-sm-6" style="width: 18rem;">
-        <img class="card-img-top" src="{{ url_for('views.static', filename='images/rest_api2.png')}}" alt="Card image cap">
+        <img class="card-img-top" src="{{ url_for('views.static', filename='images/rest_api.png')}}" alt="Card image cap">
         <div class="card-body">
           <a href="{{ url_for('rest.swagger') }}"><p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p></a>
         </div>
       </div>
 
       <div class="card col-sm-6" style="width: 18rem;">
-        <img class="card-img-top" src="{{ url_for('views.static', filename='images/graphql-logo2.png')}}" alt="Card image cap">
+        <img class="card-img-top" src="{{ url_for('views.static', filename='images/graphql-logo.png')}}" alt="Card image cap">
         <div class="card-body">
             <a class="button" href="{{ url_for('graphql.playground') }}"><p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p></a>
         </div>

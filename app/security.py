@@ -8,7 +8,8 @@ from functools import wraps
 def api_key_required(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
-		if app.config['API_KEY'] is None or request.headers.get("X-Api-Key") != app.config['API_KEY']:
-			abort(401)
+		if not app.config['API_KEY_DISABLED']:
+			if app.config['API_KEY'] is None or request.headers.get("X-Api-Key") != app.config['API_KEY']:
+				abort(401)
 		return f(*args, **kwargs)
 	return decorated_function
