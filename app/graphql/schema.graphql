@@ -90,7 +90,7 @@ type Query {
             TIPO_PARLAMENTAR: String): EmendasResult!
 
     convenio(NR_CONVENIO: String!): ConvenioResult!
-    convenios(page: Int! = 1, page_length: Int! = 50, emendas: Boolean = null,
+    buscaConvenios(NR_CONVENIO: String, page: Int! = 1, page_length: Int! = 50, emendas: Boolean = null,
               DIA_ASSIN_CONV: String,
               SIT_CONVENIO: String,
               INSTRUMENTO_ATIVO: String,

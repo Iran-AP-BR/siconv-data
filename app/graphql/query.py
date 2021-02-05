@@ -32,7 +32,7 @@ query = ObjectType("Query")
 
 query.set_field("emendas", resolve_emendas)
 query.set_field("emenda", resolve_emenda)
-query.set_field("convenios", resolve_convenios)
+query.set_field("buscaConvenios", resolve_convenios)
 query.set_field("convenio", resolve_convenio)
 
 type_defs = load_schema_from_path(os.path.join(os.path.realpath(os.path.dirname(__file__)), 'schema.graphql'))
