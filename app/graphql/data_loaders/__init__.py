@@ -15,9 +15,10 @@ def pagination(page, page_length, page_count, items_count):
         "items_count": items_count
     }
 
-def load_data(table_name):
+def load_data(table_name, dtypes='object', parse_dates=False):
     data = pd.read_csv(os.path.join(app.config['DATA_FOLDER'], f'{table_name}{app.config["FILE_EXTENTION"]}'),
-        compression=app.config['COMPRESSION_METHOD'], sep=';', dtype=str).fillna('')
+        compression=app.config['COMPRESSION_METHOD'], sep=';', decimal=',', dayfirst=True, dtype=dtypes,
+        parse_dates=parse_dates) #.fillna('')
 
     return data
 
