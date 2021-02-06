@@ -2,7 +2,7 @@
 """Resolvers.
    """
 
-from .data_loaders.loaders import load_convenios, load_emendas
+from .data_loaders.loaders import load_convenios, load_emendas, load_proponentes, load_movimento
 
 
 def resolve_convenios(obj, info, page, page_length, emendas=None, **kwargs):
@@ -18,23 +18,6 @@ def resolve_convenios(obj, info, page, page_length, emendas=None, **kwargs):
         }
     return payload
 
-
-def resolve_convenio(obj, info, NR_CONVENIO):
-    assert NR_CONVENIO
-
-    try:
-        convenio, _ = load_convenios(parameters={'NR_CONVENIO': NR_CONVENIO})
-        payload = {
-            "convenio": convenio[0] if len(convenio) > 0 else None
-        }
-
-    except Exception as error:
-        payload = {
-            "errors": [str(error)]
-        }
-
-    return payload
-
 def resolve_emendas(obj, info, page, page_length, **kwargs):
     try:
         emendas, pagination = load_emendas(page=page, page_length=page_length, parameters=kwargs)
@@ -48,19 +31,28 @@ def resolve_emendas(obj, info, page, page_length, **kwargs):
         }
     return payload
 
-
-def resolve_emenda(obj, info, NR_EMENDA):
-    assert NR_EMENDA
-
+def resolve_proponentes(obj, info, page, page_length, **kwargs):
     try:
-        emenda, _ = load_emendas(parameters={'NR_EMENDA': NR_EMENDA})
+        proponentes, pagination = load_proponentes(page=page, page_length=page_length, parameters=kwargs)
         payload = {
-            "emenda": emenda[0] if len(emenda) > 0 else None
+            "pagination": pagination,
+            "proponentes": proponentes
         }
-
     except Exception as error:
         payload = {
             "errors": [str(error)]
         }
+    return payload
 
+def resolve_movimento(obj, info, page, page_length, **kwargs):
+    try:
+        movimento, pagination = load_movimento(page=page, page_length=page_length, parameters=kwargs)
+        payload = {
+            "pagination": pagination,
+            "movimento": movimento
+        }
+    except Exception as error:
+        payload = {
+            "errors": [str(error)]
+        }
     return payload

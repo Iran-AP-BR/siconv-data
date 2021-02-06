@@ -8,7 +8,10 @@ from app.graphql.commands import Command
 
 def resolver_eq(field, argument, negation=False):
     neg = 'not' if negation else ''
-    return f"{neg} {field}=={argument}".strip()
+    if argument == "''":
+        return f"{neg} {field}.isna()".strip()
+    else:
+        return f"{neg} {field}=={argument}".strip()
     
 def resolver_gt(field, argument, negation=False):
     neg = 'not' if negation else ''
@@ -41,9 +44,7 @@ def resolver_bt(field, argument, negation=False):
     return f"{neg} {field}.between({inf}, {sup})".strip()
 
 
-def filter_constructor(parameters, data_frame, dtypes=None, parse_dates=[], initial_conditions=[]):
-    assert type(initial_conditions) == list
-    
+def filter_constructor(parameters, dtypes=None, parse_dates=[]):
     eq = Command(name='eq', data_type='*', split=False, split_length=0, resolver=resolver_eq)
     ct = Command(name='ct', data_type='str', split=False, split_length=0, resolver=resolver_ct, default='eq')
     sw = Command(name='sw', data_type='str', split=False, split_length=0, resolver=resolver_sw, default='eq')
@@ -55,27 +56,21 @@ def filter_constructor(parameters, data_frame, dtypes=None, parse_dates=[], init
     
     commands = [eq, ct, sw, ew, gt, lt, _in, bt]
 
-    conditions = initial_conditions
+    conditions = []
     for key in parameters.keys():
-        field_type = 'datetime64[ns]' if key in parse_dates else dtypes[key]
-
         cmd_found = False
         for cmd in commands:
-            str_compatible = (key not in parse_dates and dtypes[key] not in ['float64', 'int64']) or cmd.data_type != 'str'
-            condition = cmd.get_condition(field=key, line=parameters.get(key), str_compatible=str_compatible, field_type=field_type)
-
+            condition = cmd.get_condition(field=key, line=parameters.get(key),dtypes=dtypes, parse_dates=parse_dates)
             if condition is not None:
                 conditions += [condition]
                 cmd_found = True
                 break        
 
         if not cmd_found:
-            raise Exception('Comando desconhecido.')
+            raise Exception(f'Comando desconhecido: "{parameters.get(key)}".')
+        
     
-    if len(conditions) > 1:
-        return data_frame[reduce(lambda x, y: x & y, conditions)]
+    if len(conditions) == 0:
+        return None
 
-    elif len(conditions) == 1:
-        return data_frame.query(conditions[0])
-    
-    return data_frame
+    return reduce(lambda x, y: f'{x} and {y}', conditions)

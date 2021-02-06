@@ -5,7 +5,7 @@
 from flask import jsonify, request
 from ariadne import load_schema_from_path, make_executable_schema, graphql_sync, snake_case_fallback_resolvers, ObjectType
 from ariadne.constants import PLAYGROUND_HTML
-from .resolvers import resolve_emenda, resolve_emendas, resolve_convenio, resolve_convenios
+from .resolvers import resolve_emendas, resolve_convenios, resolve_proponentes, resolve_movimento
 from app.security import api_key_required
 import os
 
@@ -30,10 +30,10 @@ def graphql_server():
 
 query = ObjectType("Query")
 
-query.set_field("emendas", resolve_emendas)
-query.set_field("emenda", resolve_emenda)
-query.set_field("buscaConvenios", resolve_convenios)
-query.set_field("convenio", resolve_convenio)
+query.set_field("buscarEmendas", resolve_emendas)
+query.set_field("buscarConvenios", resolve_convenios)
+query.set_field("buscarProponentes", resolve_proponentes)
+query.set_field("buscarMovimento", resolve_movimento)
 
 type_defs = load_schema_from_path(os.path.join(os.path.realpath(os.path.dirname(__file__)), 'schema.graphql'))
 
