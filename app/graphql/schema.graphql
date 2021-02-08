@@ -1,4 +1,3 @@
-
 schema {
     query: Query
 }
@@ -6,6 +5,51 @@ schema {
 input PageSpecs {
     page: Int
     page_length: Int
+}
+
+input FilterEmendas {
+    NR_EMENDA: ID,
+    NOME_PARLAMENTAR: String,
+    TIPO_PARLAMENTAR: String
+}
+
+input FilterProponentes {
+    IDENTIF_PROPONENTE: ID,
+    NM_PROPONENTE: String,
+    UF_PROPONENTE: String,
+    MUNIC_PROPONENTE: String,
+    COD_MUNIC_IBGE: String
+}
+
+input FilterMovimento {
+    NR_CONVENIO: ID,
+    DATA: String,
+    VALOR: String,
+    TIPO: String,
+    IDENTIF_FORNECEDOR: String,
+    NOME_FORNECEDOR: String
+}
+
+input FilterConvenios {
+    NR_CONVENIO: ID, 
+    DIA_ASSIN_CONV: String,
+    SIT_CONVENIO: String,
+    INSTRUMENTO_ATIVO: String,
+    DIA_PUBL_CONV: String,
+    DIA_INIC_VIGENC_CONV: String,
+    DIA_FIM_VIGENC_CONV: String,
+    DIA_LIMITE_PREST_CONTAS: String,
+    VL_GLOBAL_CONV: String,
+    VL_REPASSE_CONV: String,
+    VL_CONTRAPARTIDA_CONV: String,
+    COD_ORGAO_SUP: String,
+    DESC_ORGAO_SUP: String,
+    NATUREZA_JURIDICA: String,
+    COD_ORGAO: String,
+    DESC_ORGAO: String,
+    MODALIDADE: String,
+    IDENTIF_PROPONENTE: String,
+    OBJETO_PROPOSTA: String
 }
 
 type Pagination {
@@ -26,12 +70,12 @@ type Movimento {
 }
 
 type Proponente {
-    IDENTIF_PROPONENTE: String
+    IDENTIF_PROPONENTE: ID!
     NM_PROPONENTE: String
     UF_PROPONENTE: String
     MUNIC_PROPONENTE: String
     COD_MUNIC_IBGE: String
-    CONVENIOS(page_specs: PageSpecs!={page: 1, page_length: 50}): ConveniosResult
+    CONVENIOS(page_specs: PageSpecs): ConveniosResult
 }
 
 type Convenio {
@@ -54,16 +98,16 @@ type Convenio {
     MODALIDADE: String
     IDENTIF_PROPONENTE: String
     OBJETO_PROPOSTA: String
-    EMENDAS(page_specs: PageSpecs!={page: 1, page_length: 50}): EmendasResult
+    EMENDAS(page_specs: PageSpecs): EmendasResult
     PROPONENTE: Proponente
-    MOVIMENTO(page_specs: PageSpecs!={page: 1, page_length: 50}): MovimentoResult
+    MOVIMENTO(page_specs: PageSpecs): MovimentoResult
 }
 
 type Emenda {
-    NR_EMENDA: String!
+    NR_EMENDA: ID!
     NOME_PARLAMENTAR: String
     TIPO_PARLAMENTAR: String
-    CONVENIOS(page_specs: PageSpecs!={page: 1, page_length: 50}): ConveniosResult
+    CONVENIOS(page_specs: PageSpecs): ConveniosResult
 }
 
 type ConveniosResult {
@@ -91,48 +135,23 @@ type MovimentoResult {
 }
 
 type Query {
-    buscarEmendas(page_specs: PageSpecs!={page: 1, page_length: 50},
-            NR_EMENDA: ID,
-            NOME_PARLAMENTAR: String,
-            TIPO_PARLAMENTAR: String
-            ): EmendasResult!
+    buscarEmendas(
+        page_specs: PageSpecs,
+        filters: FilterEmendas
+        ): EmendasResult!
 
-    buscarProponentes(page_specs: PageSpecs!={page: 1, page_length: 50},
-            IDENTIF_PROPONENTE: ID,
-            NM_PROPONENTE: String,
-            UF_PROPONENTE: String,
-            MUNIC_PROPONENTE: String,
-            COD_MUNIC_IBGE: String
-            ): ProponentesResult!
+    buscarProponentes(
+        page_specs: PageSpecs,
+        filters: FilterProponentes
+        ): ProponentesResult!
 
-    buscarMovimento(page_specs: PageSpecs!={page: 1, page_length: 50},
-            NR_CONVENIO: ID,
-            DATA: String,
-            VALOR: String,
-            TIPO: String,
-            IDENTIF_FORNECEDOR: String,
-            NOME_FORNECEDOR: String
-            ): MovimentoResult!
+    buscarMovimento(
+        page_specs: PageSpecs,
+        filters: FilterMovimento
+        ): MovimentoResult!
 
-    buscarConvenios(page_specs: PageSpecs!={page: 1, page_length: 50}, emendas: Boolean = null,
-              NR_CONVENIO: ID, 
-              DIA_ASSIN_CONV: String,
-              SIT_CONVENIO: String,
-              INSTRUMENTO_ATIVO: String,
-              DIA_PUBL_CONV: String,
-              DIA_INIC_VIGENC_CONV: String,
-              DIA_FIM_VIGENC_CONV: String,
-              DIA_LIMITE_PREST_CONTAS: String,
-              VL_GLOBAL_CONV: String,
-              VL_REPASSE_CONV: String,
-              VL_CONTRAPARTIDA_CONV: String,
-              COD_ORGAO_SUP: String,
-              DESC_ORGAO_SUP: String,
-              NATUREZA_JURIDICA: String,
-              COD_ORGAO: String,
-              DESC_ORGAO: String,
-              MODALIDADE: String,
-              IDENTIF_PROPONENTE: String,
-              OBJETO_PROPOSTA: String
-              ): ConveniosResult!
+    buscarConvenios(
+        page_specs: PageSpecs,
+        filters: FilterConvenios
+        ): ConveniosResult!
 }

@@ -53,7 +53,7 @@ class Command():
         return argument
 
     def get_condition(self, field, line, dtypes, parse_dates=[]):
-        field_type = 'datetime64[ns]' if field in parse_dates else dtypes[field]
+        field_type = self.__type_date__ if field in parse_dates else dtypes[field]
         str_compatible = (field not in parse_dates and dtypes[field] not in ['float64', 'int64']) or self.data_type != 'str'
 
         command, argument, negation = self.parser(line)

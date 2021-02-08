@@ -23,9 +23,13 @@ def load_data(table_name, dtypes='object', parse_dates=False):
     return data
 
 def page_settings(obj, page_specs):
+    page = page_specs.get('page') if page_specs and page_specs.get('page') else 1
+    page_length = page_specs.get('page_length') if page_specs and page_specs.get('page_length') else 50
     items_count = len(obj)
-    page_count = ceil(items_count / page_specs.get('page_length'))
-    idx_first = (page_specs.get('page')-1)*page_specs.get('page_length')
-    idx_last = idx_first + page_specs.get('page_length')
+    page_count = ceil(items_count / page_length)
+    idx_first = (page - 1) * page_length
+    idx_last = idx_first + page_length
 
-    return items_count, page_count, idx_first, idx_last
+    page_specs = {'page': page, 'page_length': page_length}
+
+    return items_count, page_count, idx_first, idx_last, page_specs

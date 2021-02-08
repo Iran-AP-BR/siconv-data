@@ -3,7 +3,7 @@
    """
 
 from functools import reduce
-from app.graphql.commands import Command
+from .commands import Command
 
 
 def resolver_eq(field, argument, negation=False):
