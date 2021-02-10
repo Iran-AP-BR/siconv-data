@@ -2,7 +2,7 @@
 """graphql_routes.
    """
 
-from .query import graphql_playground, graphql_server
+from .resources import graphql_playground, graphql_server
 from . import blueprint
 
 

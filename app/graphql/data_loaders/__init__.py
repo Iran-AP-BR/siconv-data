@@ -7,6 +7,7 @@ import pandas as pd
 import os
 from math import ceil
 
+
 def pagination(page_specs, page_count, items_count):
     return {
         "page": page_specs.get('page'),
@@ -33,3 +34,5 @@ def page_settings(obj, page_specs):
     page_specs = {'page': page, 'page_length': page_length}
 
     return items_count, page_count, idx_first, idx_last, page_specs
+
+

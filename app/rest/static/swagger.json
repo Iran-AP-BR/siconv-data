@@ -38,28 +38,6 @@
         }
       }
     },
-    "/municipios": {
-      "get": {
-        "tags": [
-          "Municípios"
-        ],
-        "summary": "Retorna um arquivo json com os dados dos municípios.",
-        "produces": [
-          "application/json"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Uma informação de autorização válida deve ser informada."
-          },
-          "500": {
-            "description": "Ocorreu um erro interno não especificado."
-          }
-        }
-      }
-    },
     "/tables/{tableName}": {
       "get": {
         "tags": [
@@ -80,11 +58,12 @@
             "items": {
               "type": "string",
               "enum": [
+                       "convenios",
                        "emendas",
                        "emendas_convenios",
-                       "convenios",
-                       "proponentes",
-                       "movimento"
+                       "movimento",
+                       "municipios",
+                       "proponentes"
                       ]
             }
           }

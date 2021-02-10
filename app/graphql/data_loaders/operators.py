@@ -2,7 +2,7 @@
 """commands.
    """
 
-class Command():
+class Operator():
     def __init__(self, name, data_type="*", split=False, split_length=0, resolver=None, default=None):
         assert resolver
 
@@ -27,19 +27,19 @@ class Command():
 
     def parser(self, line):
         line = line.lower() if line is not None else ''
-        command = self.default if self.default else self.name
+        operator = self.default if self.default else self.name
         argument = line
         negation = False
         params = line.split(self.__command_delimiter__)
         if len(params) > 1:
-            command = params[0]
-            argument = line[len(command)+1:]
+            operator = params[0]
+            argument = line[len(operator)+1:]
 
-        if command[0] == self.__negation_mark__:
-            command = command[1:]
+        if operator[0] == self.__negation_mark__:
+            operator = operator[1:]
             negation = True
         
-        return command, argument, negation
+        return operator, argument, negation
 
     def splitter(self, argument):
         argument = list(map(lambda x: x.strip(), argument.split(self.__list_delimiter__)))
@@ -56,12 +56,12 @@ class Command():
         field_type = self.__type_date__ if field in parse_dates else dtypes[field]
         str_compatible = (field not in parse_dates and dtypes[field] not in ['float64', 'int64']) or self.data_type != 'str'
 
-        command, argument, negation = self.parser(line)
+        operator, argument, negation = self.parser(line)
         
         if not str_compatible:
-            command = self.default if self.default else self.name
+            operator = self.default if self.default else self.name
 
-        if command != self.name:
+        if operator != self.name:
             return None
 
         if self.split:

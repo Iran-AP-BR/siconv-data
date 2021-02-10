@@ -27,10 +27,16 @@
         margin: 0;
         background: #e5eff5;
       }
+
+      .home {
+        margin-left: 10vmin;
+        font-size: 20px;
+      }
     </style>
   </head>
 
   <body>
+    <div class="home"><a href="{{ url_for('views.index') }}">Início</a></div>
     <div id="swagger-ui"></div>
 
     <script src="{{ url_for('rest.static', filename='js/swagger-ui-bundle.js') }}" charset="UTF-8"> </script>

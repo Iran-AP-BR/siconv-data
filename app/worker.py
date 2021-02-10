@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 from logger import app_log
-from config import config
+#from config import config
 
 
 class UpToDateException(Exception):
@@ -273,11 +273,13 @@ if __name__ == '__main__':
     else:
         load_dotenv(dotenv_path='.env', override=True)
 
-    from config import config
+    from config import Config
+
+    config = Config()
 
     sched = BlockingScheduler()
 
-    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='*/15', max_instances=1)
+    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='*/52', max_instances=1)
     def update_job():
         if update() or datetime.utcnow().hour >= 21:
             sched.shutdown(wait=False)

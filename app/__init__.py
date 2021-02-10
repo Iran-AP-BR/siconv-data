@@ -15,7 +15,7 @@ def create_app():
       
     app = Flask(__name__)
     
-    from config import Config
+    from .config import Config
     app.config.from_object(Config())
     
     CORS(app)
@@ -23,7 +23,7 @@ def create_app():
     import app.rest as rest
     import app.graphql as graphql
     import app.views as views
-
+    
     rest.init_routes(app.config)
     graphql.init_routes()
     

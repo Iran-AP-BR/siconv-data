@@ -4,66 +4,17 @@
 
 import pandas as pd
 from . import page_settings, pagination, load_data
+from .dtypes import *
 from .filtering import filter_constructor
-
-dtypes_convenios = {
-    'NR_CONVENIO': 'object',
-    'DIA_ASSIN_CONV': 'object',
-    'SIT_CONVENIO': 'object',
-    'INSTRUMENTO_ATIVO': 'object',
-    'DIA_PUBL_CONV': 'object',
-    'DIA_INIC_VIGENC_CONV': 'object',
-    'DIA_FIM_VIGENC_CONV': 'object',
-    'DIA_LIMITE_PREST_CONTAS': 'object',
-    'VL_GLOBAL_CONV': 'float64',
-    'VL_REPASSE_CONV': 'float64',
-    'VL_CONTRAPARTIDA_CONV': 'float64',
-    'COD_ORGAO_SUP': 'object',
-    'DESC_ORGAO_SUP': 'object',
-    'NATUREZA_JURIDICA': 'object',
-    'COD_ORGAO': 'object',
-    'DESC_ORGAO': 'object',
-    'MODALIDADE': 'object',
-    'IDENTIF_PROPONENTE': 'object',
-    'OBJETO_PROPOSTA': 'object'
-    }
-
-dtypes_emendas = {
-    'NR_EMENDA': 'object',
-    'NOME_PARLAMENTAR': 'object',
-    'TIPO_PARLAMENTAR': 'object'
-    }
-
-dtypes_proponentes = {
-    'IDENTIF_PROPONENTE': 'object',
-    'NM_PROPONENTE': 'object',
-    'UF_PROPONENTE': 'object',
-    'MUNIC_PROPONENTE': 'object',
-    'COD_MUNIC_IBGE': 'object'
-    }
-
-dtypes_movimento = {
-    'NR_CONVENIO': 'object',
-    'DATA': 'object',
-    'VALOR': 'float64',
-    'TIPO': 'object',
-    'IDENTIF_FORNECEDOR': 'object',
-    'NOME_FORNECEDOR': 'object'
-    }
-
-dtypes_emendas_convenios = {
-    'NR_EMENDA': 'object',
-    'NR_CONVENIO': 'object',
-    'VALOR_REPASSE_EMENDA': 'float64'
-    }
-
-parse_dates_convenios = ['DIA_ASSIN_CONV', 'DIA_PUBL_CONV', 'DIA_INIC_VIGENC_CONV', 'DIA_FIM_VIGENC_CONV', 'DIA_LIMITE_PREST_CONTAS']
-parse_dates_movimento = ['DATA']
+from flask import current_app as app
 
 def __load_emendas_convenios__(parameters={}):
 
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_emendas_convenios)
-    emendas_convenios = load_data('emendas_convenios', dtypes=dtypes_emendas_convenios)
+    if app.config.get('TBL_EMENDAS_CONVENIOS') is None:
+        app.config['TBL_EMENDAS_CONVENIOS'] = load_data('emendas_convenios', dtypes=dtypes_emendas_convenios)
+    
+    emendas_convenios = app.config.get('TBL_EMENDAS_CONVENIOS')
 
     if conditions:
         emendas_convenios = emendas_convenios.query(conditions)
@@ -73,10 +24,12 @@ def __load_emendas_convenios__(parameters={}):
     return emendas_convenios_d
 
 
-def __load_convenios__(page_specs=None, use_pagination=True, parameters={}):    
-
+def __load_convenios__(page_specs=None, use_pagination=True, parameters={}):
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
-    convenios = load_data('convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
+    if app.config.get('TBL_CONVENIOS') is None:
+        app.config['TBL_CONVENIOS'] = load_data('convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
+
+    convenios = app.config.get('TBL_CONVENIOS')
 
     if conditions:
         convenios = convenios.query(conditions)
@@ -93,8 +46,11 @@ def __load_convenios__(page_specs=None, use_pagination=True, parameters={}):
 def __load_emendas__(page_specs=None, use_pagination=True, parameters={}):
 
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_emendas)
-    emendas = load_data('emendas', dtypes=dtypes_emendas)
-    
+    if app.config.get('TBL_EMENDAS') is None:
+        app.config['TBL_EMENDAS'] = load_data('emendas', dtypes=dtypes_emendas)
+
+    emendas = app.config.get('TBL_EMENDAS')
+
     if conditions:
         emendas = emendas.query(conditions)
     
@@ -109,7 +65,10 @@ def __load_emendas__(page_specs=None, use_pagination=True, parameters={}):
 def __load_movimento__(page_specs=None, use_pagination=True, parameters={}):
 
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
-    movimento = load_data('movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
+    if app.config.get('TBL_MOVIMENTO') is None:
+        app.config['TBL_MOVIMENTO'] = load_data('movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
+
+    movimento = app.config.get('TBL_MOVIMENTO')
 
     if conditions:
         movimento = movimento.query(conditions)
@@ -150,7 +109,10 @@ def load_emendas(page_specs=None, use_pagination=True, parameters=None, obj=None
 
 def load_proponentes(page_specs=None, use_pagination=True, parameters={}):
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_proponentes)
-    proponentes = load_data('proponentes', dtypes=dtypes_proponentes)
+    if app.config.get('TBL_PROPONENTES') is None:
+        app.config['TBL_PROPONENTES'] = load_data('proponentes', dtypes=dtypes_proponentes)
+
+    proponentes = app.config.get('TBL_PROPONENTES')
 
     if conditions:
         proponentes = proponentes.query(conditions)
