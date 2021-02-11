@@ -8,7 +8,7 @@ import os
 
 @api_key_required
 def data_atual():
-   filename = os.path.join(app.config['DATA_FOLDER'], "data_atual.txt")
+   filename = os.path.join(app.config['DATA_FOLDER'], app.config.get('CURRENT_DATE_FILENAME'))
 
    with open(filename, 'r') as fd:
       data_atual = fd.read()

@@ -11,11 +11,8 @@ from flask import current_app as app
 def __load_emendas_convenios__(parameters={}):
 
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_emendas_convenios)
-    if app.config.get('TBL_EMENDAS_CONVENIOS') is None:
-        app.config['TBL_EMENDAS_CONVENIOS'] = load_data('emendas_convenios', dtypes=dtypes_emendas_convenios)
+    emendas_convenios = load_data('emendas_convenios', dtypes=dtypes_emendas_convenios)
     
-    emendas_convenios = app.config.get('TBL_EMENDAS_CONVENIOS')
-
     if conditions:
         emendas_convenios = emendas_convenios.query(conditions)
 
@@ -26,10 +23,8 @@ def __load_emendas_convenios__(parameters={}):
 
 def __load_convenios__(page_specs=None, use_pagination=True, parameters={}):
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
-    if app.config.get('TBL_CONVENIOS') is None:
-        app.config['TBL_CONVENIOS'] = load_data('convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
-
-    convenios = app.config.get('TBL_CONVENIOS')
+    
+    convenios= load_data('convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
 
     if conditions:
         convenios = convenios.query(conditions)
@@ -46,10 +41,7 @@ def __load_convenios__(page_specs=None, use_pagination=True, parameters={}):
 def __load_emendas__(page_specs=None, use_pagination=True, parameters={}):
 
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_emendas)
-    if app.config.get('TBL_EMENDAS') is None:
-        app.config['TBL_EMENDAS'] = load_data('emendas', dtypes=dtypes_emendas)
-
-    emendas = app.config.get('TBL_EMENDAS')
+    emendas = load_data('emendas', dtypes=dtypes_emendas)
 
     if conditions:
         emendas = emendas.query(conditions)
@@ -65,10 +57,7 @@ def __load_emendas__(page_specs=None, use_pagination=True, parameters={}):
 def __load_movimento__(page_specs=None, use_pagination=True, parameters={}):
 
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
-    if app.config.get('TBL_MOVIMENTO') is None:
-        app.config['TBL_MOVIMENTO'] = load_data('movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
-
-    movimento = app.config.get('TBL_MOVIMENTO')
+    movimento = load_data('movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
 
     if conditions:
         movimento = movimento.query(conditions)
@@ -109,10 +98,7 @@ def load_emendas(page_specs=None, use_pagination=True, parameters=None, obj=None
 
 def load_proponentes(page_specs=None, use_pagination=True, parameters={}):
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_proponentes)
-    if app.config.get('TBL_PROPONENTES') is None:
-        app.config['TBL_PROPONENTES'] = load_data('proponentes', dtypes=dtypes_proponentes)
-
-    proponentes = app.config.get('TBL_PROPONENTES')
+    proponentes = load_data('proponentes', dtypes=dtypes_proponentes)
 
     if conditions:
         proponentes = proponentes.query(conditions)

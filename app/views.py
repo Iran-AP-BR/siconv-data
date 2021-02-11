@@ -13,5 +13,4 @@ def index():
 
 @blueprint.route('/model', methods=['GET'])
 def model():
-   filename = "model.png"
-   return send_from_directory(app.config['DATA_FOLDER'], filename, mimetype='image/png', attachment_filename=filename, as_attachment=False)
+   return render_template('model.html')
