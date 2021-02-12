@@ -31,7 +31,7 @@ def create_app():
     app.register_blueprint(rest.blueprint)
     app.register_blueprint(graphql.blueprint)
 
-    print(app.url_map)
+    #print(app.url_map)
 
     return app
 

@@ -35,6 +35,9 @@ def page_settings(obj, page_specs):
     idx_first = (page - 1) * page_length
     idx_last = idx_first + page_length
 
+    if page > page_count:
+        raise Exception(f'Página solicitada dever ser no máximo {page_count}')
+
     page_specs = {'page': page, 'page_length': page_length}
 
     return items_count, page_count, idx_first, idx_last, page_specs
