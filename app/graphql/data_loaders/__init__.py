@@ -32,11 +32,15 @@ def page_settings(obj, page_specs):
     page_length = page_specs.get('page_length') if page_specs and page_specs.get('page_length') else app.config.get('GRAPHQL_DEFAULT_PAGE_LENGTH')
     items_count = len(obj)
     page_count = ceil(items_count / page_length)
-    idx_first = (page - 1) * page_length
-    idx_last = idx_first + page_length
 
     if page > page_count:
-        raise Exception(f'Página solicitada dever ser no máximo {page_count}')
+        page = page_count
+        
+    if page == 0:
+        page_length = 0
+
+    idx_first = (page - 1) * page_length if page > 0 else 0
+    idx_last = idx_first + page_length
 
     page_specs = {'page': page, 'page_length': page_length}
 
