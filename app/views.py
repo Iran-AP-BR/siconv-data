@@ -13,4 +13,4 @@ def index():
 
 @blueprint.route('/model', methods=['GET'])
 def model():
-   return render_template('model.html')
+   return render_template('model.html', title=app.config['DATA_MODEL_PAGE_TITLE'])

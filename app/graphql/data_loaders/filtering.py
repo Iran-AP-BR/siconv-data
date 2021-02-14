@@ -108,7 +108,6 @@ def translate(par, field, dtypes, parse_dates=[]):
         for line in lines:
             line = line.strip()
             if not re.match(PARENTHESES_BLOCK_TOKEN_PATTERN, line.strip()):
-                print(line.strip())
                 operator, _, _ = parser(line, 'eq')
                 
                 if operator not in operators.keys():
@@ -116,7 +115,6 @@ def translate(par, field, dtypes, parse_dates=[]):
 
                 cond = operators[operator].get_condition(field=field, line=line, dtypes=dtypes, parse_dates=parse_dates)
             else:
-                print(1, line.strip())
                 cond = line.strip()
 
             if connections:

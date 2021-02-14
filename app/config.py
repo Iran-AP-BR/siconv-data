@@ -4,6 +4,7 @@ import os
 
 class Config(object):
     APP_TITLE = 'Dados do Siconv'
+    DATA_MODEL_PAGE_TITLE = 'Diagrama da Base de Dados'
     DATA_ENDPOINT = 'tables'
     COMPRESSION_METHOD = 'gzip'
     FILE_EXTENTION = '.csv.gz'

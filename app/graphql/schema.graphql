@@ -8,26 +8,40 @@ input PageSpecs {
 }
 
 """
-Each field in this filter especification accepts the following commands (not case sensitive): 
-1. __eq$__: _equal to_.
-> Ex: UF:"eq$macapa"
->     eq$em execução
-2. __gt$__: _greater than_
-3. __lt$__: _lesser than_
-4. __ct$__: _contains a string_
-5. __bt$__: _is between two values_. 
-> Ex: DATA:"bt$2020-10-04|2020-12-01"
-6. __in$__: _is in a pipe-separated list of values_.
->Ex: DATA:"in$2020-05-03|2020-03-01|2020-04-30"
-7. __sw$ (starts with)__
-8. __s$ (ends with)__
+Each field in this filter especification accepts the following commands:
+
+1. __eq__: _equal to_.
+2. __gt__: _greater than_
+3. __lt__: _lesser than_
+4. __ct__: _contains_
+5. __bt__: _between two values_. 
+6. __in__: _in list_.
+7. __sw__: _starts with_
+8. __ew__: _ends with_
+
+Usage:
+>
+**_<command>$<value>_**
+>
+Where value may be, depending on command, a single element, a list or a range.
+>
+Each element may be, depending on command and field, a string, int, float ou date. Use pipe (|) as list or range separator, like this ...
+
+> For list:
+
+**_DATA:"in$2020-05-03|2020-03-01|2020-04-30"_**
+
+> For range:
+
+**_DATA:"in$2020-05-03|2020-03-01"_**
 
 To negate the commands, use exclamation mark (!).
-> Ex: !eq$, !gt$ ...
-
-Commands may be combined by using logical operators && (and) and || (or), and parentheses as well, like this: 
-> Ex: DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"
-
+>
+**_Ex: !eq$, !gt$ ..._**
+>
+Commands can be combined by using logical operators && (_and_) and || (_or_). Parentheses can be used as well:
+>
+**_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterEmendas {
     NR_EMENDA: ID,
@@ -36,26 +50,40 @@ input FilterEmendas {
 }
 
 """
-Each field in this filter especification accepts the following commands (not case sensitive): 
-1. __eq$__: _equal to_.
-> Ex: UF:"eq$macapa"
->     eq$em execução
-2. __gt$__: _greater than_
-3. __lt$__: _lesser than_
-4. __ct$__: _contains a string_
-5. __bt$__: _is between two values_. 
-> Ex: DATA:"bt$2020-10-04|2020-12-01"
-6. __in$__: _is in a pipe-separated list of values_.
->Ex: DATA:"in$2020-05-03|2020-03-01|2020-04-30"
-7. __sw$ (starts with)__
-8. __s$ (ends with)__
+Each field in this filter especification accepts the following commands:
+
+1. __eq__: _equal to_.
+2. __gt__: _greater than_
+3. __lt__: _lesser than_
+4. __ct__: _contains_
+5. __bt__: _between two values_. 
+6. __in__: _in list_.
+7. __sw__: _starts with_
+8. __ew__: _ends with_
+
+Usage:
+>
+**_<command>$<value>_**
+>
+Where value may be, depending on command, a single element, a list or a range.
+>
+Each element may be, depending on command and field, a string, int, float ou date. Use pipe (|) as list or range separator, like this ...
+
+> For list:
+
+**_DATA:"in$2020-05-03|2020-03-01|2020-04-30"_**
+
+> For range:
+
+**_DATA:"in$2020-05-03|2020-03-01"_**
 
 To negate the commands, use exclamation mark (!).
-> Ex: !eq$, !gt$ ...
-
-Commands may be combined by using logical operators && (and) and || (or), and parentheses as well, like this: 
-> Ex: DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"
-
+>
+**_Ex: !eq$, !gt$ ..._**
+>
+Commands can be combined by using logical operators && (_and_) and || (_or_). Parentheses can be used as well:
+>
+**_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterProponentes {
     IDENTIF_PROPONENTE: ID,
@@ -66,26 +94,40 @@ input FilterProponentes {
 }
 
 """
-Each field in this filter especification accepts the following commands (not case sensitive): 
-1. __eq$__: _equal to_.
-> Ex: UF:"eq$macapa"
->     eq$em execução
-2. __gt$__: _greater than_
-3. __lt$__: _lesser than_
-4. __ct$__: _contains a string_
-5. __bt$__: _is between two values_. 
-> Ex: DATA:"bt$2020-10-04|2020-12-01"
-6. __in$__: _is in a pipe-separated list of values_.
->Ex: DATA:"in$2020-05-03|2020-03-01|2020-04-30"
-7. __sw$ (starts with)__
-8. __s$ (ends with)__
+Each field in this filter especification accepts the following commands:
+
+1. __eq__: _equal to_.
+2. __gt__: _greater than_
+3. __lt__: _lesser than_
+4. __ct__: _contains_
+5. __bt__: _between two values_. 
+6. __in__: _in list_.
+7. __sw__: _starts with_
+8. __ew__: _ends with_
+
+Usage:
+>
+**_<command>$<value>_**
+>
+Where value may be, depending on command, a single element, a list or a range.
+>
+Each element may be, depending on command and field, a string, int, float ou date. Use pipe (|) as list or range separator, like this ...
+
+> For list:
+
+**_DATA:"in$2020-05-03|2020-03-01|2020-04-30"_**
+
+> For range:
+
+**_DATA:"in$2020-05-03|2020-03-01"_**
 
 To negate the commands, use exclamation mark (!).
-> Ex: !eq$, !gt$ ...
-
-Commands may be combined by using logical operators && (and) and || (or), and parentheses as well, like this: 
-> Ex: DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"
-
+>
+**_Ex: !eq$, !gt$ ..._**
+>
+Commands can be combined by using logical operators && (_and_) and || (_or_). Parentheses can be used as well:
+>
+**_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterMovimento {
     NR_CONVENIO: ID,
@@ -97,26 +139,40 @@ input FilterMovimento {
 }
 
 """
-Each field in this filter especification accepts the following commands (not case sensitive): 
-1. __eq$__: _equal to_.
-> Ex: UF:"eq$macapa"
->     eq$em execução
-2. __gt$__: _greater than_
-3. __lt$__: _lesser than_
-4. __ct$__: _contains a string_
-5. __bt$__: _is between two values_. 
-> Ex: DATA:"bt$2020-10-04|2020-12-01"
-6. __in$__: _is in a pipe-separated list of values_.
->Ex: DATA:"in$2020-05-03|2020-03-01|2020-04-30"
-7. __sw$ (starts with)__
-8. __s$ (ends with)__
+Each field in this filter especification accepts the following commands:
+
+1. __eq__: _equal to_.
+2. __gt__: _greater than_
+3. __lt__: _lesser than_
+4. __ct__: _contains_
+5. __bt__: _between two values_. 
+6. __in__: _in list_.
+7. __sw__: _starts with_
+8. __ew__: _ends with_
+
+Usage:
+>
+**_<command>$<value>_**
+>
+Where value may be, depending on command, a single element, a list or a range.
+>
+Each element may be, depending on command and field, a string, int, float ou date. Use pipe (|) as list or range separator, like this ...
+
+> For list:
+
+**_DATA:"in$2020-05-03|2020-03-01|2020-04-30"_**
+
+> For range:
+
+**_DATA:"in$2020-05-03|2020-03-01"_**
 
 To negate the commands, use exclamation mark (!).
-> Ex: !eq$, !gt$ ...
-
-Commands may be combined by using logical operators && (and) and || (or), and parentheses as well, like this: 
-> Ex: DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"
-
+>
+**_Ex: !eq$, !gt$ ..._**
+>
+Commands can be combined by using logical operators && (_and_) and || (_or_). Parentheses can be used as well:
+>
+**_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterConvenios {
     NR_CONVENIO: ID, 

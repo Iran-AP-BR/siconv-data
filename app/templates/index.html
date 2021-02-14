@@ -78,11 +78,11 @@
   <script>
     function go(dest) {
       if (dest === 'rest')
-        window.open("{{ url_for('rest.swagger') }}", "_self");
+        window.location.href = "{{ url_for('rest.swagger') }}";
       if (dest === 'graphql')
-        window.open("{{ url_for('graphql.playground') }}", "_self");
+        window.location.href = "{{ url_for('graphql.playground') }}";
       if (dest === 'model')
-        window.open("{{ url_for('views.model') }}", "_self");
+        window.location.href = "{{ url_for('views.model')}}";
     }
   </script>
 </html>

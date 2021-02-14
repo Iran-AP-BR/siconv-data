@@ -1,34 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{{ title }}</title>
+    <style>
+      .main{
+        text-align: center;
+        width: 100%;
+      }
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+      .container {
+        display: inline-block;
+      }
 
-    <title>Model</title>
-</head>
-<body>
-
-    <div class="bgimg">
-        <div class="topleft">
-          <p></p>
-        </div>
-        <div class="middle">
-          <h1>COMING SOON</h1>
-          <hr>
-          <p></p>
-        </div>
-        <div class="bottomleft">
-          <p></p>
-        </div>
+      .home {
+        margin-left: 10vmin;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="home"><a href="{{ url_for('views.index') }}"><img width=32 height=32 src="{{ url_for('views.static', filename='images/home.png') }}"></a></div>
+    <div class="main">
+      <div class="container">
+        <body><div class="mxgraph" style="max-width:100%;border:1px solid transparent;" data-mxgraph="{&quot;highlight&quot;:&quot;#0000ff&quot;,&quot;lightbox&quot;:false,&quot;nav&quot;:true,&quot;resize&quot;:true,&quot;toolbar&quot;:&quot;zoom&quot;,&quot;edit&quot;:&quot;_blank&quot;,&quot;xml&quot;:&quot;&lt;mxfile host=\&quot;app.diagrams.net\&quot; modified=\&quot;2021-02-13T21:26:22.362Z\&quot; agent=\&quot;5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36\&quot; etag=\&quot;jn14osy9cZGhBVnJOgoF\&quot; version=\&quot;14.3.1\&quot; type=\&quot;device\&quot;&gt;&lt;diagram id=\&quot;UUk49OENxMJTmFER-k-2\&quot; name=\&quot;Page-1\&quot;&gt;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&lt;/diagram&gt;&lt;/mxfile&gt;&quot;}"></div>
       </div>
-    
-
-
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-</body>
+    </div>
+    <script type="text/javascript" src="https://viewer.diagrams.net/js/viewer-static.min.js"></script>
+  </body>
 </html>
