@@ -22,6 +22,7 @@ def __load_emendas_convenios__(parameters={}):
 
 
 def __load_convenios__(page_specs=None, use_pagination=True, parameters={}, order_by=None):
+    
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
     
     convenios = load_data('convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
@@ -89,6 +90,7 @@ def __load_movimento__(page_specs=None, use_pagination=True, parameters={}, orde
 ##############################################
 
 def load_convenios(page_specs=None, use_pagination=True, parameters=None, obj=None, order_by=None):
+    
     if obj:
         if obj.get('IDENTIF_PROPONENTE'):
             convenios, pagination = __load_convenios__(page_specs=page_specs, 
@@ -103,17 +105,19 @@ def load_convenios(page_specs=None, use_pagination=True, parameters=None, obj=No
     return convenios, pagination
 
 def load_emendas(page_specs=None, use_pagination=True, parameters=None, obj=None, order_by=None):
+    
     if obj:
         emendas_convenios_didct = __load_emendas_convenios__(parameters={'NR_CONVENIO': obj.get('NR_CONVENIO')})
         emendas, pagination = __load_emendas__(page_specs=page_specs, 
                                                parameters={'NR_EMENDA': 'in$' + '|'.join([emc['NR_EMENDA']
                                                 for emc in emendas_convenios_didct])}, order_by=order_by)
     else:
-        emendas, pagination = __load_emendas__(page_specs=page_specs, parameters=parameters)
+        emendas, pagination = __load_emendas__(page_specs=page_specs, parameters=parameters, order_by=order_by)
     
     return emendas, pagination
 
 def load_proponentes(page_specs=None, use_pagination=True, parameters={}, order_by=None):
+    
     conditions = filter_constructor(parameters=parameters, dtypes=dtypes_proponentes)
     proponentes = load_data('proponentes', dtypes=dtypes_proponentes)
 
@@ -135,6 +139,7 @@ def load_proponentes(page_specs=None, use_pagination=True, parameters={}, order_
 
 
 def load_movimento(page_specs=None, use_pagination=True, parameters=None, obj=None, order_by=None):
+    
     if obj:
         movimento, pagination = __load_movimento__(page_specs=page_specs, parameters={'NR_CONVENIO': obj['NR_CONVENIO']}, order_by=order_by)
     else:
