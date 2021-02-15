@@ -2,150 +2,133 @@
 """Filtering.
    """
 
-from .operators import Operator, parser
+from .commands_resolvers import *
+from .commands import Command, parser
 import re
 
-PARENTHESES_BLOCK_TOKEN_PREFIX = '_#_b'
-PARENTHESES_BLOCK_TOKEN_SUFFIX = '_#_'
-PARENTHESES_BLOCK_TOKEN_PATTERN = f'^{PARENTHESES_BLOCK_TOKEN_PREFIX}\d{{1,2}}{PARENTHESES_BLOCK_TOKEN_SUFFIX}$'
-
-def resolver_eq(field, argument, negation=False):
-    neg = 'not' if negation else ''
-    if argument == "''":
-        return f"{neg} {field}.isna()".strip()
-    else:
-        return f"{neg} {field}=={argument}".strip()
-    
-def resolver_gt(field, argument, negation=False):
-    neg = 'not' if negation else ''
-    return f"{neg} {field}>{argument}".strip()
-
-def resolver_lt(field, argument, negation=False):
-    neg = 'not' if negation else ''
-    return f"{neg} {field}<{argument}".strip()
-
-def resolver_ct(field, argument, negation=False):
-    neg = 'not' if negation else ''
-    return f"{neg} {field}.str.contains({argument}, na=False)".strip()
-
-def resolver_sw(field, argument, negation=False):
-    neg = 'not' if negation else ''
-    return f"{neg} {field}.str.startswith({argument}, na=False)".strip()
-
-def resolver_ew(field, argument, negation=False):
-    neg = 'not' if negation else ''
-    return f"{neg} {field}.str.endswith({argument}, na=False)".strip()
-
-def resolver_in(field, argument, negation=False):
-    neg = 'not' if negation else ''
-    return f"{neg} {field}.isin({argument})".strip()
-
-def resolver_bt(field, argument, negation=False):
-    neg = 'not' if negation else ''
-    inf = f"'{argument[0]}'" if type(argument[0]) == str else argument[0]
-    sup = f"'{argument[1]}'" if type(argument[1]) == str else argument[1]
-    return f"{neg} {field}.between({inf}, {sup})".strip()
-
-
-
-operators = {
-    'eq': Operator(name='eq', data_type='*', split=False, split_length=0, resolver=resolver_eq), 
-    'ct': Operator(name='ct', data_type='str', split=False, split_length=0, resolver=resolver_ct, default='eq'),
-    'sw': Operator(name='sw', data_type='str', split=False, split_length=0, resolver=resolver_sw, default='eq'),
-    'ew': Operator(name='ew', data_type='str', split=False, split_length=0, resolver=resolver_ew, default='eq'),
-    'gt': Operator(name='gt', data_type='*', split=False, split_length=0, resolver=resolver_gt, default='eq'),
-    'lt': Operator(name='lt', data_type='*', split=False, split_length=0, resolver=resolver_lt, default='eq'),
-    'in': Operator(name='in', data_type='*', split=True, split_length=0, resolver=resolver_in, default='eq'),
-    'bt': Operator(name='bt', data_type='*', split=True, split_length=2, resolver=resolver_bt, default='eq')
-    }
-
-
-connectors = {
+LOGICAL_CONNECTORS = {
     '&&': 'and',
     '||': 'or'
     }
 
+PARENTHESES_TOKEN_PREFIX = '_#_b'
+PARENTHESES_TOKEN_SUFFIX = '_#_'
+PARENTHESES_TOKEN_PATTERN = f'^{PARENTHESES_TOKEN_PREFIX}\d{{1,2}}{PARENTHESES_TOKEN_SUFFIX}$'
 
-def tokenize_parentheses(expression):
+commands = {
+    'eq': Command(name='eq', data_type='*', split=False, split_length=0, resolver=resolver_eq), 
+    'ct': Command(name='ct', data_type='str', split=False, split_length=0, resolver=resolver_ct, default='eq'),
+    'sw': Command(name='sw', data_type='str', split=False, split_length=0, resolver=resolver_sw, default='eq'),
+    'ew': Command(name='ew', data_type='str', split=False, split_length=0, resolver=resolver_ew, default='eq'),
+    'gt': Command(name='gt', data_type='*', split=False, split_length=0, resolver=resolver_gt, default='eq'),
+    'lt': Command(name='lt', data_type='*', split=False, split_length=0, resolver=resolver_lt, default='eq'),
+    'in': Command(name='in', data_type='*', split=True, split_length=0, resolver=resolver_in, default='eq'),
+    'bt': Command(name='bt', data_type='*', split=True, split_length=2, resolver=resolver_bt, default='eq')
+    }
 
-    blocks = {}
-    count = 1
-    
-    while True:
-        groups = re.findall('\([^\(\)]*\)', expression)
-        if not groups:
-            block_id = f'{PARENTHESES_BLOCK_TOKEN_PREFIX}0{PARENTHESES_BLOCK_TOKEN_SUFFIX}'
-            blocks[block_id] = expression
-            expression = block_id
-            break
-            
-        for gr in groups:
-            block_id = f'{PARENTHESES_BLOCK_TOKEN_PREFIX}{count}{PARENTHESES_BLOCK_TOKEN_SUFFIX}'
-            blocks[block_id] = gr
-            expression = expression.replace(gr, block_id)
-            count += 1
-    
-    return blocks
-    
-
-def translate(par, field, dtypes, parse_dates=[]):
-
-    for p in par:
-        if par[p][0] == '(' and par[p][-1] == ')':
-            open_parenteses = par[p][0]
-            close_parenteses = par[p][-1]
-            par[p] = par[p][1:-1]
-        else:
-            open_parenteses = ''
-            close_parenteses = ''
-        
-        logical_operators_pattern = '&&|\|\|'
-        lines = re.split(logical_operators_pattern, par[p])
-        connections = re.findall(logical_operators_pattern, par[p]) 
+def translate(tree, field, dtypes, parse_dates=[]):    
+    for t in tree:
+        text = tree[t]['tokenized'] if tree[t].get('tokenized') else tree[t]['text']
+        text = text[1:-1] #descards parentheses
+        logical_operators_pattern = '|'.join([''.join([f'\{c}' for c in connector]) for connector in LOGICAL_CONNECTORS])
+        lines = re.split(logical_operators_pattern, text)
+        connections = re.findall(logical_operators_pattern, text) 
 
         condition = ''
         
         for line in lines:
             line = line.strip()
-            if not re.match(PARENTHESES_BLOCK_TOKEN_PATTERN, line.strip()):
-                operator, _, _ = parser(line, 'eq')
+            if not re.match(PARENTHESES_TOKEN_PATTERN, line):
+                command, _, _ = parser(line, 'eq')
                 
-                if operator not in operators.keys():
-                    raise Exception(f'Operador desconhecido: "{operator}".')
+                if command not in commands.keys():
+                    raise Exception(f'Comando desconhecido: "{command}".')
 
-                cond = operators[operator].get_condition(field=field, line=line, dtypes=dtypes, parse_dates=parse_dates)
+                cond = commands[command].get_condition(field=field, line=line, dtypes=dtypes, parse_dates=parse_dates)
             else:
-                cond = line.strip()
-
+                cond = line
+                
             if connections:
-                condition += f'{cond} {connectors[connections[0]]} '
+                condition += f'{cond} {LOGICAL_CONNECTORS[connections[0]]} '
                 connections.pop(0)
             else:
                 condition += cond
         
-        par[p] = f'{open_parenteses}{condition}{close_parenteses}'
+        condition = f'({condition})' #restores parentheses
         
-    
-    return par
-
-
-def reconstruct_expression(par):
-    
-    par_list = list(par.keys())
-    i = 0
-    expr = f'{PARENTHESES_BLOCK_TOKEN_PREFIX}0{PARENTHESES_BLOCK_TOKEN_SUFFIX}'
-    while par_list:
-        bl = par_list[i]
-        if bl in expr:
-            expr = expr.replace(bl, par[bl])
-            par_list.pop(i)
-            i = 0
+        if tree[t].get('tokenized'):
+            tree[t]['tokenized'] = condition
         else:
-            i += 1
-            if i >= len(par_list):
-                i = 0
+            tree[t]['text'] = condition
+        
+    return tree
 
-    return expr
+
+def set_tree(expression, marks=None, tree={}, id=None, id_count=0):
+    def token(n):
+        return f'{PARENTHESES_TOKEN_PREFIX}{n}{PARENTHESES_TOKEN_SUFFIX}'
+
+    if not marks:
+        marks = [(m.group(), m.start()) for m in re.compile('\(|\)').finditer(expression)]
+        
+    mark = marks.pop(0)
+    complete = False
+    if mark[0] == ')':
+        tree[id]['end'] = mark[1]
+        tree[id]['text'] = expression[tree[id]['start']:tree[id]['end']+1]
+        
+        if id == token(0):
+            complete = True
+            
+        id = tree[id]['parent']
+    else:
+        parent_id = id
+        id = token(id_count)
+        tree[id] = {'parent': parent_id, 'start': mark[1]} 
+        id_count += 1
+
+    if len(marks) > 0 and not complete:
+        return set_tree(expression, marks, tree, id, id_count)
+    
+    if len(marks) == 0 and not complete:
+        raise Exception('Parentheses not closed.')
+    
+    if len(marks) > 0 and complete:
+        raise Exception('Too many Parentheses.')
+        
+    #tokenize
+    for t in tree:
+        p = tree[t]['parent']
+        if p:
+            text = tree[p]['tokenized'] if tree[p].get('tokenized') else tree[p]['text']
+            tree[p]['tokenized'] = text.replace(tree[t]['text'], t)
+        
+    return tree
+
+def reconstruction(tree):
+    if len(tree) > 1:
+        leaves = set(list(tree.keys())) - set([tree[t]['parent'] for t in tree])
+        for lv in leaves:
+            p = tree[lv]['parent']
+            text = tree[lv]['tokenized'] if tree[lv].get('tokenized') else tree[lv]['text']
+            tree[p]['tokenized'] = tree[p]['tokenized'].replace(lv, text)
+            tree.pop(lv)
+
+        return reconstruction(tree)
+    
+    last_node = list(tree.values())[0]
+    return last_node['tokenized'] if last_node.get('tokenized') else last_node['text']
+
+def translate_commands(expression, field, dtypes, parse_dates=[]):
+    expression = expression.strip()
+    expression = f'({expression})' #extra parentheses to make sure that there'll be one root node in the tree
+        
+    tree = set_tree(expression)
+    
+    tree = translate(tree, field=field, dtypes=dtypes, parse_dates=parse_dates)
+    
+    expression = reconstruction(tree)
+    return expression[1:-1] #discards extra parentheses and return expression translated
 
 def filter_constructor(parameters, dtypes=None, parse_dates=[]):
    
@@ -154,77 +137,8 @@ def filter_constructor(parameters, dtypes=None, parse_dates=[]):
 
     conditions = ''
     for key in parameters.keys():
-        par = tokenize_parentheses(parameters.get(key).strip())
+        condition = translate_commands(parameters.get(key).strip(), field=key, dtypes=dtypes, parse_dates=parse_dates)
        
-        par = translate(par=par, field=key, dtypes=dtypes, parse_dates=parse_dates)
-
-        condition = reconstruct_expression(par)
-        
         conditions += f' and ({condition})' if conditions else f'({condition})'  
    
     return conditions
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-def filter_constructor(parameters, dtypes=None, parse_dates=[]):
-    if not parameters:
-        return None
-
-    eq = Operator(name='eq', data_type='*', split=False, split_length=0, resolver=resolver_eq)
-    ct = Operator(name='ct', data_type='str', split=False, split_length=0, resolver=resolver_ct, default='eq')
-    sw = Operator(name='sw', data_type='str', split=False, split_length=0, resolver=resolver_sw, default='eq')
-    ew = Operator(name='ew', data_type='str', split=False, split_length=0, resolver=resolver_ew, default='eq')
-    gt = Operator(name='gt', data_type='*', split=False, split_length=0, resolver=resolver_gt, default='eq')
-    lt = Operator(name='lt', data_type='*', split=False, split_length=0, resolver=resolver_lt, default='eq')
-    _in = Operator(name='in', data_type='*', split=True, split_length=0, resolver=resolver_in, default='eq')
-    bt = Operator(name='bt', data_type='*', split=True, split_length=2, resolver=resolver_bt, default='eq')
-    
-
-    operators = {'eq': eq, 'ct': ct, 'sw': sw, 'ew': ew, 'gt': gt, 'lt': lt, 'in': _in, 'bt': bt}
-    connectors = {'&&': 'and', '||': 'or'}
-
-    conditions = ''
-    for key in parameters.keys():
-        logical_operators_pattern = '&&|\|\|'
-        lines = re.split(logical_operators_pattern, parameters.get(key))
-        connections = re.findall(logical_operators_pattern, parameters.get(key)) 
-
-        condition = ''
-        for line in lines:
-            operator, _, _ = parser(line, 'eq')
-
-            if operator not in operators.keys():
-                raise Exception(f'Operador desconhecido: "{operator}".')
-
-            cond = operators[operator].get_condition(field=key, line=line, dtypes=dtypes, parse_dates=parse_dates)
-
-            if connections:
-                condition += f'{cond} {connectors[connections[0]]} '
-                connections.pop(0)
-            else:
-                condition += cond
-            
-        conditions += f' and ({condition})' if conditions else f'({condition})'      
-
-    return conditions
-'''

@@ -5,10 +5,10 @@
 from .data_loaders.loaders import load_convenios, load_emendas, load_proponentes, load_movimento
 
 
-def resolve_convenios(obj, info, page_specs=None, filters=None):
+def resolve_convenios(obj, info, page_specs=None, filters=None, order_by=None):
     try:
 
-        convenios, pagination = load_convenios(page_specs=page_specs, parameters=filters, obj=obj)
+        convenios, pagination = load_convenios(page_specs=page_specs, parameters=filters, obj=obj, order_by=order_by)
 
         payload = {
             "pagination": pagination,
@@ -37,10 +37,10 @@ def resolve_convenio(obj, *_):
     
     return payload
 
-def resolve_emendas(obj, info, page_specs=None, filters=None):
+def resolve_emendas(obj, info, page_specs=None, filters=None, order_by=None):
     try:
 
-        emendas, pagination = load_emendas(page_specs=page_specs, parameters=filters, obj=obj)
+        emendas, pagination = load_emendas(page_specs=page_specs, parameters=filters, obj=obj, order_by=order_by)
 
         payload = {
             "pagination": pagination,
@@ -55,10 +55,10 @@ def resolve_emendas(obj, info, page_specs=None, filters=None):
 
     return payload
 
-def resolve_proponentes(obj, info, page_specs=None, filters=None):
+def resolve_proponentes(obj, info, page_specs=None, filters=None, order_by=None):
     try:
 
-        proponentes, pagination = load_proponentes(page_specs=page_specs, parameters=filters)
+        proponentes, pagination = load_proponentes(page_specs=page_specs, parameters=filters, order_by=order_by)
        
         payload = {
             "pagination": pagination,
@@ -87,10 +87,10 @@ def resolve_proponente(obj, *_):
     
     return payload
 
-def resolve_movimentos(obj, info, page_specs=None, filters=None):
+def resolve_movimentos(obj, info, page_specs=None, filters=None, order_by=None):
     try:
 
-        movimento, pagination = load_movimento(page_specs=page_specs, parameters=filters, obj=obj)
+        movimento, pagination = load_movimento(page_specs=page_specs, parameters=filters, obj=obj, order_by=order_by)
 
         payload = {
             "pagination": pagination,

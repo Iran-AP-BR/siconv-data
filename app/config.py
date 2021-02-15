@@ -16,9 +16,8 @@ class Config(object):
     API_KEY = os.getenv('API_KEY')
 
     GRAPHQL_DEFAULT_PAGE_LENGTH = 50
-    GRAPHQL_OPERATOR_DELIMITER = '$'
+    GRAPHQL_COMMAND_DELIMITER = '$'
     GRAPHQL_LIST_DELIMITER = '|'
     GRAPHQL_NEGATION_MARK = '!'
-
 
 

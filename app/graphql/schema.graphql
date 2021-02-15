@@ -196,6 +196,71 @@ input FilterConvenios {
     OBJETO_PROPOSTA: String
 }
 
+enum FieldsEmendas {
+    NR_EMENDA
+    NOME_PARLAMENTAR
+    TIPO_PARLAMENTAR
+}
+
+enum FieldsProponentes {
+    IDENTIF_PROPONENTE
+    NM_PROPONENTE
+    UF_PROPONENTE
+    MUNIC_PROPONENTE
+    COD_MUNIC_IBGE
+}
+
+enum FieldsMovimento {
+    NR_CONVENIO
+    DATA
+    VALOR
+    TIPO
+    IDENTIF_FORNECEDOR
+    NOME_FORNECEDOR
+}
+
+enum FieldsConvenios {
+    NR_CONVENIO 
+    DIA_ASSIN_CONV
+    SIT_CONVENIO
+    INSTRUMENTO_ATIVO
+    DIA_PUBL_CONV
+    DIA_INIC_VIGENC_CONV
+    DIA_FIM_VIGENC_CONV
+    DIA_LIMITE_PREST_CONTAS
+    VL_GLOBAL_CONV
+    VL_REPASSE_CONV
+    VL_CONTRAPARTIDA_CONV
+    COD_ORGAO_SUP
+    DESC_ORGAO_SUP
+    NATUREZA_JURIDICA
+    COD_ORGAO
+    DESC_ORGAO
+    MODALIDADE
+    IDENTIF_PROPONENTE
+    OBJETO_PROPOSTA
+}
+
+input OrderByEmendas {
+    field: [FieldsEmendas],
+    ascending: Boolean = true
+}
+
+input OrderByProponentes {
+    field: [FieldsProponentes],
+    ascending: Boolean = true
+}
+
+input OrderByMovimento {
+    field: [FieldsMovimento],
+    ascending: Boolean = true
+}
+
+input OrderByConvenios {
+    field: [FieldsConvenios],
+    ascending: Boolean = true
+}
+
 type Pagination {
     page: Int!
     page_length: Int!
@@ -281,21 +346,25 @@ type MovimentoResult {
 type Query {
     buscarEmendas(
         page_specs: PageSpecs,
-        filters: FilterEmendas
+        filters: FilterEmendas,
+        order_by: OrderByEmendas
         ): EmendasResult!
 
     buscarProponentes(
         page_specs: PageSpecs,
-        filters: FilterProponentes
+        filters: FilterProponentes,
+        order_by: OrderByProponentes
         ): ProponentesResult!
 
     buscarMovimento(
         page_specs: PageSpecs,
-        filters: FilterMovimento
+        filters: FilterMovimento,
+        order_by: OrderByMovimento
         ): MovimentoResult!
 
     buscarConvenios(
         page_specs: PageSpecs,
-        filters: FilterConvenios
+        filters: FilterConvenios,
+        order_by: OrderByConvenios
         ): ConveniosResult!
 }
