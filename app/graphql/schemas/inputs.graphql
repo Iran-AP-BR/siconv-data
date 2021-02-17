@@ -1,7 +1,6 @@
-schema {
-    query: Query
-}
-
+"""
+Pagination specifications. Use to set the number of items in a page (page_length) and to select the page to be returned.
+"""
 input PageSpecs {
     page: Int
     page_length: Int
@@ -10,14 +9,19 @@ input PageSpecs {
 """
 Each field in this filter especification accepts the following commands:
 
-1. __eq__: _equal to_.
+1. __eq__: _equal to_
 2. __gt__: _greater than_
-3. __lt__: _lesser than_
-4. __ct__: _contains_
-5. __bt__: _between two values_. 
-6. __in__: _in list_.
-7. __sw__: _starts with_
-8. __ew__: _ends with_
+3. __gte__: _greater than or equal to_
+4. __lt__: _less than_
+5. __lte__: _less than or equal to_
+6. __ct__: _contains_
+7. __ctx__: _contains exact (whole word)_
+8. __bt__: _between two values_. 
+9. __in__: _in list_.
+10. __sw__: _starts with_
+11. __swx__: _starts with exact (whole word)_
+12. __ew__: _ends with_
+13. __ewx__: _ends with exact (whole word)_
 
 Usage:
 >
@@ -52,14 +56,19 @@ input FilterEmendas {
 """
 Each field in this filter especification accepts the following commands:
 
-1. __eq__: _equal to_.
+1. __eq__: _equal to_
 2. __gt__: _greater than_
-3. __lt__: _lesser than_
-4. __ct__: _contains_
-5. __bt__: _between two values_. 
-6. __in__: _in list_.
-7. __sw__: _starts with_
-8. __ew__: _ends with_
+3. __gte__: _greater than or equal to_
+4. __lt__: _less than_
+5. __lte__: _less than or equal to_
+6. __ct__: _contains_
+7. __ctx__: _contains exact (whole word)_
+8. __bt__: _between two values_. 
+9. __in__: _in list_.
+10. __sw__: _starts with_
+11. __swx__: _starts with exact (whole word)_
+12. __ew__: _ends with_
+13. __ewx__: _ends with exact (whole word)_
 
 Usage:
 >
@@ -96,14 +105,19 @@ input FilterProponentes {
 """
 Each field in this filter especification accepts the following commands:
 
-1. __eq__: _equal to_.
+1. __eq__: _equal to_
 2. __gt__: _greater than_
-3. __lt__: _lesser than_
-4. __ct__: _contains_
-5. __bt__: _between two values_. 
-6. __in__: _in list_.
-7. __sw__: _starts with_
-8. __ew__: _ends with_
+3. __gte__: _greater than or equal to_
+4. __lt__: _less than_
+5. __lte__: _less than or equal to_
+6. __ct__: _contains_
+7. __ctx__: _contains exact (whole word)_
+8. __bt__: _between two values_. 
+9. __in__: _in list_.
+10. __sw__: _starts with_
+11. __swx__: _starts with exact (whole word)_
+12. __ew__: _ends with_
+13. __ewx__: _ends with exact (whole word)_
 
 Usage:
 >
@@ -141,14 +155,19 @@ input FilterMovimento {
 """
 Each field in this filter especification accepts the following commands:
 
-1. __eq__: _equal to_.
+1. __eq__: _equal to_
 2. __gt__: _greater than_
-3. __lt__: _lesser than_
-4. __ct__: _contains_
-5. __bt__: _between two values_. 
-6. __in__: _in list_.
-7. __sw__: _starts with_
-8. __ew__: _ends with_
+3. __gte__: _greater than or equal to_
+4. __lt__: _less than_
+5. __lte__: _less than or equal to_
+6. __ct__: _contains_
+7. __ctx__: _contains exact (whole word)_
+8. __bt__: _between two values_. 
+9. __in__: _in list_.
+10. __sw__: _starts with_
+11. __swx__: _starts with exact (whole word)_
+12. __ew__: _ends with_
+13. __ewx__: _ends with exact (whole word)_
 
 Usage:
 >
@@ -196,175 +215,38 @@ input FilterConvenios {
     OBJETO_PROPOSTA: String
 }
 
-enum FieldsEmendas {
-    NR_EMENDA
-    NOME_PARLAMENTAR
-    TIPO_PARLAMENTAR
-}
-
-enum FieldsProponentes {
-    IDENTIF_PROPONENTE
-    NM_PROPONENTE
-    UF_PROPONENTE
-    MUNIC_PROPONENTE
-    COD_MUNIC_IBGE
-}
-
-enum FieldsMovimento {
-    NR_CONVENIO
-    DATA
-    VALOR
-    TIPO
-    IDENTIF_FORNECEDOR
-    NOME_FORNECEDOR
-}
-
-enum FieldsConvenios {
-    NR_CONVENIO 
-    DIA_ASSIN_CONV
-    SIT_CONVENIO
-    INSTRUMENTO_ATIVO
-    DIA_PUBL_CONV
-    DIA_INIC_VIGENC_CONV
-    DIA_FIM_VIGENC_CONV
-    DIA_LIMITE_PREST_CONTAS
-    VL_GLOBAL_CONV
-    VL_REPASSE_CONV
-    VL_CONTRAPARTIDA_CONV
-    COD_ORGAO_SUP
-    DESC_ORGAO_SUP
-    NATUREZA_JURIDICA
-    COD_ORGAO
-    DESC_ORGAO
-    MODALIDADE
-    IDENTIF_PROPONENTE
-    OBJETO_PROPOSTA
-}
-
+"""
+Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
+The 'field' parameter must be a single name, or a list of names, of existing fields.
+"""
 input OrderByEmendas {
     field: [FieldsEmendas],
     ascending: Boolean = true
 }
 
+"""
+Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
+The 'field' parameter must be a single name, or a list of names, of existing fields.
+"""
 input OrderByProponentes {
     field: [FieldsProponentes],
     ascending: Boolean = true
 }
 
+"""
+Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
+The 'field' parameter must be a single name, or a list of names, of existing fields.
+"""
 input OrderByMovimento {
     field: [FieldsMovimento],
     ascending: Boolean = true
 }
 
+"""
+Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
+The 'field' parameter must be a single name, or a list of names, of existing fields.
+"""
 input OrderByConvenios {
     field: [FieldsConvenios],
     ascending: Boolean = true
-}
-
-type Pagination {
-    page: Int!
-    page_length: Int!
-    page_count: Int!
-    items_count: Int!
-}
-
-type Movimento {
-    NR_CONVENIO: String!
-    DATA: String
-    VALOR: String
-    TIPO: String
-    IDENTIF_FORNECEDOR: String
-    NOME_FORNECEDOR: String
-    CONVENIO: Convenio
-}
-
-type Proponente {
-    IDENTIF_PROPONENTE: ID!
-    NM_PROPONENTE: String
-    UF_PROPONENTE: String
-    MUNIC_PROPONENTE: String
-    COD_MUNIC_IBGE: String
-    CONVENIOS(page_specs: PageSpecs): ConveniosResult
-}
-
-type Convenio {
-    NR_CONVENIO: ID!
-    DIA_ASSIN_CONV: String
-    SIT_CONVENIO: String
-    INSTRUMENTO_ATIVO: String
-    DIA_PUBL_CONV: String
-    DIA_INIC_VIGENC_CONV: String
-    DIA_FIM_VIGENC_CONV: String
-    DIA_LIMITE_PREST_CONTAS: String
-    VL_GLOBAL_CONV: String
-    VL_REPASSE_CONV: String
-    VL_CONTRAPARTIDA_CONV: String
-    COD_ORGAO_SUP: String
-    DESC_ORGAO_SUP: String
-    NATUREZA_JURIDICA: String
-    COD_ORGAO: String
-    DESC_ORGAO: String
-    MODALIDADE: String
-    IDENTIF_PROPONENTE: String
-    OBJETO_PROPOSTA: String
-    EMENDAS(page_specs: PageSpecs): EmendasResult
-    PROPONENTE: Proponente
-    MOVIMENTO(page_specs: PageSpecs): MovimentoResult
-}
-
-type Emenda {
-    NR_EMENDA: ID!
-    NOME_PARLAMENTAR: String
-    TIPO_PARLAMENTAR: String
-    CONVENIOS(page_specs: PageSpecs): ConveniosResult
-}
-
-type ConveniosResult {
-    pagination: Pagination
-    errors: [String]
-    convenios: [Convenio]
-}
-
-type EmendasResult {
-    pagination: Pagination
-    errors: [String]
-    emendas: [Emenda]
-}
-
-type ProponentesResult {
-    pagination: Pagination
-    errors: [String]
-    proponentes: [Proponente]
-}
-
-type MovimentoResult {
-    pagination: Pagination
-    errors: [String]
-    movimento: [Movimento]
-}
-
-type Query {
-    buscarEmendas(
-        page_specs: PageSpecs,
-        filters: FilterEmendas,
-        order_by: OrderByEmendas
-        ): EmendasResult!
-
-    buscarProponentes(
-        page_specs: PageSpecs,
-        filters: FilterProponentes,
-        order_by: OrderByProponentes
-        ): ProponentesResult!
-
-    buscarMovimento(
-        page_specs: PageSpecs,
-        filters: FilterMovimento,
-        order_by: OrderByMovimento
-        ): MovimentoResult!
-
-    buscarConvenios(
-        page_specs: PageSpecs,
-        filters: FilterConvenios,
-        order_by: OrderByConvenios
-        ): ConveniosResult!
 }

@@ -5,23 +5,27 @@
 from .commands_resolvers import *
 from .commands import Command, parser
 import re
+from uuid import uuid4
 
 LOGICAL_CONNECTORS = {
     '&&': 'and',
     '||': 'or'
     }
 
-PARENTHESES_TOKEN_PREFIX = '_#_b'
-PARENTHESES_TOKEN_SUFFIX = '_#_'
-PARENTHESES_TOKEN_PATTERN = f'^{PARENTHESES_TOKEN_PREFIX}\d{{1,2}}{PARENTHESES_TOKEN_SUFFIX}$'
+PARENTHESES_TOKEN_PATTERN = '^[0-9a-f]{32}$'
 
 commands = {
     'eq': Command(name='eq', data_type='*', split=False, split_length=0, resolver=resolver_eq), 
     'ct': Command(name='ct', data_type='str', split=False, split_length=0, resolver=resolver_ct, default='eq'),
+    'ctx': Command(name='ctx', data_type='str', split=False, split_length=0, resolver=resolver_ctx, default='eq'),
     'sw': Command(name='sw', data_type='str', split=False, split_length=0, resolver=resolver_sw, default='eq'),
+    'swx': Command(name='swx', data_type='str', split=False, split_length=0, resolver=resolver_swx, default='eq'),
     'ew': Command(name='ew', data_type='str', split=False, split_length=0, resolver=resolver_ew, default='eq'),
+    'ewx': Command(name='ewx', data_type='str', split=False, split_length=0, resolver=resolver_ewx, default='eq'),
     'gt': Command(name='gt', data_type='*', split=False, split_length=0, resolver=resolver_gt, default='eq'),
+    'gte': Command(name='gte', data_type='*', split=False, split_length=0, resolver=resolver_gte, default='eq'),
     'lt': Command(name='lt', data_type='*', split=False, split_length=0, resolver=resolver_lt, default='eq'),
+    'lte': Command(name='lte', data_type='*', split=False, split_length=0, resolver=resolver_lte, default='eq'),
     'in': Command(name='in', data_type='*', split=True, split_length=0, resolver=resolver_in, default='eq'),
     'bt': Command(name='bt', data_type='*', split=True, split_length=2, resolver=resolver_bt, default='eq')
     }
@@ -64,9 +68,9 @@ def translate(tree, field, dtypes, parse_dates=[]):
     return tree
 
 
-def set_tree(expression, marks=None, tree={}, id=None, id_count=0):
-    def token(n):
-        return f'{PARENTHESES_TOKEN_PREFIX}{n}{PARENTHESES_TOKEN_SUFFIX}'
+def set_tree(expression, marks=None, tree=None, id=None):
+    def new_token():
+        return uuid4().hex
 
     if not marks:
         marks = [(m.group(), m.start()) for m in re.compile('\(|\)').finditer(expression)]
@@ -77,18 +81,21 @@ def set_tree(expression, marks=None, tree={}, id=None, id_count=0):
         tree[id]['end'] = mark[1]
         tree[id]['text'] = expression[tree[id]['start']:tree[id]['end']+1]
         
-        if id == token(0):
+        if not tree[id]['parent']:
             complete = True
             
         id = tree[id]['parent']
     else:
         parent_id = id
-        id = token(id_count)
+        id = new_token()
+        if not tree:
+            tree = {}
+        
         tree[id] = {'parent': parent_id, 'start': mark[1]} 
-        id_count += 1
+            
 
     if len(marks) > 0 and not complete:
-        return set_tree(expression, marks, tree, id, id_count)
+        return set_tree(expression, marks, tree, id)
     
     if len(marks) == 0 and not complete:
         raise Exception('Parentheses not closed.')

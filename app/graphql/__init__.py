@@ -36,7 +36,7 @@ emenda.set_field("CONVENIOS", resolve_convenios)
 movimento = ObjectType("Movimento")
 movimento.set_field("CONVENIO", resolve_convenio)
 
-type_defs = load_schema_from_path(os.path.join(os.path.realpath(os.path.dirname(__file__)), 'schema.graphql'))
+type_defs = load_schema_from_path(os.path.join(os.path.realpath(os.path.dirname(__file__)), 'schemas'))
 
 schema = make_executable_schema(type_defs, query, convenio, proponente, emenda, movimento)
 

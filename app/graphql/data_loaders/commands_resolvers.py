@@ -13,22 +13,45 @@ def resolver_gt(field, argument, negation=False):
     neg = 'not' if negation else ''
     return f"{neg} {field}>{argument}".strip()
 
+def resolver_gte(field, argument, negation=False):
+    neg = 'not' if negation else ''
+    return f"{neg} {field}>={argument}".strip()
+
 def resolver_lt(field, argument, negation=False):
     neg = 'not' if negation else ''
     return f"{neg} {field}<{argument}".strip()
+
+def resolver_lte(field, argument, negation=False):
+    neg = 'not' if negation else ''
+    return f"{neg} {field}<={argument}".strip()
 
 def resolver_ct(field, argument, negation=False):
     neg = 'not' if negation else ''
     return f"{neg} {field}.str.contains({argument}, na=False)".strip()
 
+def resolver_ctx(field, argument, negation=False):
+    neg = 'not' if negation else ''
+    argument = "'\\b" + argument[1:-1] + "\\b'"
+    return f"{neg} {field}.str.contains(r{argument}, na=False, regex=True)".strip()
+
 def resolver_sw(field, argument, negation=False):
     neg = 'not' if negation else ''
     return f"{neg} {field}.str.startswith({argument}, na=False)".strip()
+
+def resolver_swx(field, argument, negation=False):
+    neg = 'not' if negation else ''
+    argument = "'^" + argument[1:-1] + "\\b.*'"
+    return f"{neg} {field}.str.match(r{argument}, na=False)".strip()
 
 def resolver_ew(field, argument, negation=False):
     neg = 'not' if negation else ''
     return f"{neg} {field}.str.endswith({argument}, na=False)".strip()
 
+def resolver_ewx(field, argument, negation=False):
+    neg = 'not' if negation else ''
+    argument = "'.*\\b" + argument[1:-1] + "$'"
+    return f"{neg} {field}.str.match(r{argument}, na=False)".strip()
+    
 def resolver_in(field, argument, negation=False):
     neg = 'not' if negation else ''
     return f"{neg} {field}.isin({argument})".strip()

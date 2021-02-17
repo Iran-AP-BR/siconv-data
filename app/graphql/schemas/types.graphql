@@ -1,0 +1,111 @@
+schema {
+    query: Query
+}
+
+type Pagination {
+    page: Int!
+    page_length: Int!
+    page_count: Int!
+    items_count: Int!
+}
+
+type Movimento {
+    NR_CONVENIO: String!
+    DATA: String
+    VALOR: String
+    TIPO: String
+    IDENTIF_FORNECEDOR: String
+    NOME_FORNECEDOR: String
+    CONVENIO: Convenio
+}
+
+type Proponente {
+    IDENTIF_PROPONENTE: ID!
+    NM_PROPONENTE: String
+    UF_PROPONENTE: String
+    MUNIC_PROPONENTE: String
+    COD_MUNIC_IBGE: String
+    CONVENIOS(page_specs: PageSpecs): ConveniosResult
+}
+
+type Convenio {
+    NR_CONVENIO: ID!
+    DIA_ASSIN_CONV: String
+    SIT_CONVENIO: String
+    INSTRUMENTO_ATIVO: String
+    DIA_PUBL_CONV: String
+    DIA_INIC_VIGENC_CONV: String
+    DIA_FIM_VIGENC_CONV: String
+    DIA_LIMITE_PREST_CONTAS: String
+    VL_GLOBAL_CONV: String
+    VL_REPASSE_CONV: String
+    VL_CONTRAPARTIDA_CONV: String
+    COD_ORGAO_SUP: String
+    DESC_ORGAO_SUP: String
+    NATUREZA_JURIDICA: String
+    COD_ORGAO: String
+    DESC_ORGAO: String
+    MODALIDADE: String
+    IDENTIF_PROPONENTE: String
+    OBJETO_PROPOSTA: String
+    EMENDAS(page_specs: PageSpecs): EmendasResult
+    PROPONENTE: Proponente
+    MOVIMENTO(page_specs: PageSpecs): MovimentoResult
+}
+
+type Emenda {
+    NR_EMENDA: ID!
+    NOME_PARLAMENTAR: String
+    TIPO_PARLAMENTAR: String
+    CONVENIOS(page_specs: PageSpecs): ConveniosResult
+}
+
+type ConveniosResult {
+    pagination: Pagination
+    errors: [String]
+    convenios: [Convenio]
+}
+
+type EmendasResult {
+    pagination: Pagination
+    errors: [String]
+    emendas: [Emenda]
+}
+
+type ProponentesResult {
+    pagination: Pagination
+    errors: [String]
+    proponentes: [Proponente]
+}
+
+type MovimentoResult {
+    pagination: Pagination
+    errors: [String]
+    movimento: [Movimento]
+}
+
+type Query {
+    buscarEmendas(
+        page_specs: PageSpecs,
+        filters: FilterEmendas,
+        order_by: OrderByEmendas
+        ): EmendasResult!
+
+    buscarProponentes(
+        page_specs: PageSpecs,
+        filters: FilterProponentes,
+        order_by: OrderByProponentes
+        ): ProponentesResult!
+
+    buscarMovimento(
+        page_specs: PageSpecs,
+        filters: FilterMovimento,
+        order_by: OrderByMovimento
+        ): MovimentoResult!
+
+    buscarConvenios(
+        page_specs: PageSpecs,
+        filters: FilterConvenios,
+        order_by: OrderByConvenios
+        ): ConveniosResult!
+}
