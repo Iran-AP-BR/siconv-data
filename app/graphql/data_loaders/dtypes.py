@@ -22,13 +22,13 @@ dtypes_convenios = {
     'MODALIDADE': 'object',
     'IDENTIF_PROPONENTE': 'object',
     'OBJETO_PROPOSTA': 'object'
-    }
+}
 
 dtypes_emendas = {
     'NR_EMENDA': 'object',
     'NOME_PARLAMENTAR': 'object',
     'TIPO_PARLAMENTAR': 'object'
-    }
+}
 
 dtypes_proponentes = {
     'IDENTIF_PROPONENTE': 'object',
@@ -36,7 +36,7 @@ dtypes_proponentes = {
     'UF_PROPONENTE': 'object',
     'MUNIC_PROPONENTE': 'object',
     'COD_MUNIC_IBGE': 'object'
-    }
+}
 
 dtypes_movimento = {
     'NR_CONVENIO': 'object',
@@ -45,13 +45,24 @@ dtypes_movimento = {
     'TIPO': 'object',
     'IDENTIF_FORNECEDOR': 'object',
     'NOME_FORNECEDOR': 'object'
-    }
+}
 
 dtypes_emendas_convenios = {
     'NR_EMENDA': 'object',
     'NR_CONVENIO': 'object',
     'VALOR_REPASSE_EMENDA': 'float64'
-    }
+}
 
-parse_dates_convenios = ['DIA_ASSIN_CONV', 'DIA_PUBL_CONV', 'DIA_INIC_VIGENC_CONV', 'DIA_FIM_VIGENC_CONV', 'DIA_LIMITE_PREST_CONTAS']
+dtypes_municipios = {
+    'codigo_ibge': 'object',
+    'nome_municipio': 'object',
+    'codigo_uf': 'object',
+    'uf': 'object',
+    'estado': 'object',
+    'latitude': 'float64',
+    'longitude': 'float64'
+}
+
+parse_dates_convenios = ['DIA_ASSIN_CONV', 'DIA_PUBL_CONV',
+                         'DIA_INIC_VIGENC_CONV', 'DIA_FIM_VIGENC_CONV', 'DIA_LIMITE_PREST_CONTAS']
 parse_dates_movimento = ['DATA']

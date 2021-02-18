@@ -1,3 +1,13 @@
+enum FieldsMunicipios {
+    codigo_ibge
+    nome_municipio
+    codigo_uf
+    uf
+    estado
+    latitude
+    longitude
+}
+
 enum FieldsEmendas {
     NR_EMENDA
     NOME_PARLAMENTAR

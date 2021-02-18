@@ -47,9 +47,60 @@ Commands can be combined by using logical operators && (_and_) and || (_or_). Pa
 >
 **_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
+input FilterMunicipios {
+    codigo_ibge: ID
+    nome_municipio: String
+    codigo_uf: String
+    uf: String
+    estado: String
+    latitude: Float
+    longitude: Float
+}
+
+"""
+Each field in this filter especification accepts the following commands:
+
+1. __eq__: _equal to_
+2. __gt__: _greater than_
+3. __gte__: _greater than or equal to_
+4. __lt__: _less than_
+5. __lte__: _less than or equal to_
+6. __ct__: _contains_
+7. __ctx__: _contains exact (whole word)_
+8. __bt__: _between two values_. 
+9. __in__: _in list_.
+10. __sw__: _starts with_
+11. __swx__: _starts with exact (whole word)_
+12. __ew__: _ends with_
+13. __ewx__: _ends with exact (whole word)_
+
+Usage:
+>
+**_<command>$<value>_**
+>
+Where value may be, depending on command, a single element, a list or a range.
+>
+Each element may be, depending on command and field, a string, int, float ou date. Use pipe (|) as list or range separator, like this ...
+
+> For list:
+
+**_DATA:"in$2020-05-03|2020-03-01|2020-04-30"_**
+
+> For range:
+
+**_DATA:"in$2020-05-03|2020-03-01"_**
+
+To negate the commands, use exclamation mark (!).
+>
+**_Ex: !eq$, !gt$ ..._**
+>
+Commands can be combined by using logical operators && (_and_) and || (_or_). Parentheses can be used as well:
+>
+**_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
+"""
 input FilterEmendas {
     NR_EMENDA: ID,
-    NOME_PARLAMENTAR: String,
+    NOME_PARLAMENTAR: String
     TIPO_PARLAMENTAR: String
 }
 
@@ -95,10 +146,10 @@ Commands can be combined by using logical operators && (_and_) and || (_or_). Pa
 **_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterProponentes {
-    IDENTIF_PROPONENTE: ID,
-    NM_PROPONENTE: String,
-    UF_PROPONENTE: String,
-    MUNIC_PROPONENTE: String,
+    IDENTIF_PROPONENTE: ID
+    NM_PROPONENTE: String
+    UF_PROPONENTE: String
+    MUNIC_PROPONENTE: String
     COD_MUNIC_IBGE: String
 }
 
@@ -144,11 +195,11 @@ Commands can be combined by using logical operators && (_and_) and || (_or_). Pa
 **_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterMovimento {
-    NR_CONVENIO: ID,
-    DATA: String,
-    VALOR: String,
-    TIPO: String,
-    IDENTIF_FORNECEDOR: String,
+    NR_CONVENIO: ID
+    DATA: String
+    VALOR: String
+    TIPO: String
+    IDENTIF_FORNECEDOR: String
     NOME_FORNECEDOR: String
 }
 
@@ -194,24 +245,24 @@ Commands can be combined by using logical operators && (_and_) and || (_or_). Pa
 **_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterConvenios {
-    NR_CONVENIO: ID, 
-    DIA_ASSIN_CONV: String,
-    SIT_CONVENIO: String,
-    INSTRUMENTO_ATIVO: String,
-    DIA_PUBL_CONV: String,
-    DIA_INIC_VIGENC_CONV: String,
-    DIA_FIM_VIGENC_CONV: String,
-    DIA_LIMITE_PREST_CONTAS: String,
-    VL_GLOBAL_CONV: String,
-    VL_REPASSE_CONV: String,
-    VL_CONTRAPARTIDA_CONV: String,
-    COD_ORGAO_SUP: String,
-    DESC_ORGAO_SUP: String,
-    NATUREZA_JURIDICA: String,
-    COD_ORGAO: String,
-    DESC_ORGAO: String,
-    MODALIDADE: String,
-    IDENTIF_PROPONENTE: String,
+    NR_CONVENIO: ID
+    DIA_ASSIN_CONV: String
+    SIT_CONVENIO: String
+    INSTRUMENTO_ATIVO: String
+    DIA_PUBL_CONV: String
+    DIA_INIC_VIGENC_CONV: String
+    DIA_FIM_VIGENC_CONV: String
+    DIA_LIMITE_PREST_CONTAS: String
+    VL_GLOBAL_CONV: String
+    VL_REPASSE_CONV: String
+    VL_CONTRAPARTIDA_CONV: String
+    COD_ORGAO_SUP: String
+    DESC_ORGAO_SUP: String
+    NATUREZA_JURIDICA: String
+    COD_ORGAO: String
+    DESC_ORGAO: String
+    MODALIDADE: String
+    IDENTIF_PROPONENTE: String
     OBJETO_PROPOSTA: String
 }
 
@@ -219,8 +270,17 @@ input FilterConvenios {
 Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
 The 'field' parameter must be a single name, or a list of names, of existing fields.
 """
+input OrderByMunicipios {
+    field: [FieldsMunicipios]
+    ascending: Boolean = true
+}
+
+"""
+Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
+The 'field' parameter must be a single name, or a list of names, of existing fields.
+"""
 input OrderByEmendas {
-    field: [FieldsEmendas],
+    field: [FieldsEmendas]
     ascending: Boolean = true
 }
 
@@ -229,7 +289,7 @@ Classification specifications. Use to set the fields by which the records will b
 The 'field' parameter must be a single name, or a list of names, of existing fields.
 """
 input OrderByProponentes {
-    field: [FieldsProponentes],
+    field: [FieldsProponentes]
     ascending: Boolean = true
 }
 
@@ -238,7 +298,7 @@ Classification specifications. Use to set the fields by which the records will b
 The 'field' parameter must be a single name, or a list of names, of existing fields.
 """
 input OrderByMovimento {
-    field: [FieldsMovimento],
+    field: [FieldsMovimento]
     ascending: Boolean = true
 }
 
@@ -247,6 +307,6 @@ Classification specifications. Use to set the fields by which the records will b
 The 'field' parameter must be a single name, or a list of names, of existing fields.
 """
 input OrderByConvenios {
-    field: [FieldsConvenios],
+    field: [FieldsConvenios]
     ascending: Boolean = true
 }
