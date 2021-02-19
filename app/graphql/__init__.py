@@ -25,22 +25,22 @@ query.set_field("buscarMovimento", resolve_movimentos)
 query.set_field("buscarMunicipios", resolve_municipios)
 
 convenio = ObjectType("Convenio")
-convenio.set_field("PROPONENTE", resolve_proponente)
-convenio.set_field("MOVIMENTO", resolve_movimentos)
-convenio.set_field("EMENDAS", resolve_emendas)
+convenio.set_field("PROPONENTE", resolve_conv_proponente)
+convenio.set_field("MOVIMENTO", resolve_conv_movimentos)
+convenio.set_field("EMENDAS", resolve_conv_emendas)
 
 proponente = ObjectType("Proponente")
-proponente.set_field("CONVENIOS", resolve_convenios)
-proponente.set_field("MUNICIPIO", resolve_municipio)
+proponente.set_field("CONVENIOS", resolve_prop_convenios)
+proponente.set_field("MUNICIPIO", resolve_prop_municipios)
 
 emenda = ObjectType("Emenda")
-emenda.set_field("CONVENIOS", resolve_convenios)
+emenda.set_field("CONVENIOS", resolve_emd_convenios)
 
 movimento = ObjectType("Movimento")
-movimento.set_field("CONVENIO", resolve_convenio)
+movimento.set_field("CONVENIO", resolve_mov_convenio)
 
 municipio = ObjectType("Municipio")
-municipio.set_field("PROPONENTES", resolve_proponentes)
+municipio.set_field("PROPONENTES", resolve_mun_proponentes)
 
 type_defs = load_schema_from_path(os.path.join(
     os.path.realpath(os.path.dirname(__file__)), 'schemas'))

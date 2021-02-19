@@ -55,6 +55,7 @@ input FilterMunicipios {
     estado: String
     latitude: Float
     longitude: Float
+    PROPONENTE: FilterProponentes
 }
 
 """
@@ -102,6 +103,7 @@ input FilterEmendas {
     NR_EMENDA: ID,
     NOME_PARLAMENTAR: String
     TIPO_PARLAMENTAR: String
+    CONVENIOS: FilterConvenios
 }
 
 """
@@ -151,6 +153,8 @@ input FilterProponentes {
     UF_PROPONENTE: String
     MUNIC_PROPONENTE: String
     COD_MUNIC_IBGE: String
+    CONVENIOS: FilterConvenios
+    MUNICIPIOS: FilterMunicipios
 }
 
 """
@@ -201,6 +205,7 @@ input FilterMovimento {
     TIPO: String
     IDENTIF_FORNECEDOR: String
     NOME_FORNECEDOR: String
+    CONVENIOS: FilterConvenios
 }
 
 """
@@ -264,6 +269,9 @@ input FilterConvenios {
     MODALIDADE: String
     IDENTIF_PROPONENTE: String
     OBJETO_PROPOSTA: String
+    EMENDAS: FilterEmendas
+    PROPONENTE: FilterProponentes
+    MOVIMENTO: FilterMovimento
 }
 
 """

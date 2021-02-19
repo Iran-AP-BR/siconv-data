@@ -17,7 +17,8 @@ type Municipio {
     estado: String
     latitude: Float
     longitude: Float
-    PROPONENTES(page_specs: PageSpecs): ProponentesResult
+    PROPONENTES(page_specs: PageSpecs, filters: FilterProponentes, order_by: OrderByProponentes): ProponentesResult
+
 }
 
 type Movimento {
@@ -36,7 +37,7 @@ type Proponente {
     UF_PROPONENTE: String
     MUNIC_PROPONENTE: String
     COD_MUNIC_IBGE: String
-    CONVENIOS(page_specs: PageSpecs): ConveniosResult
+    CONVENIOS(page_specs: PageSpecs, filters: FilterConvenios, order_by: OrderByConvenios): ConveniosResult
     MUNICIPIO: Municipio
 }
 
@@ -60,16 +61,16 @@ type Convenio {
     MODALIDADE: String
     IDENTIF_PROPONENTE: String
     OBJETO_PROPOSTA: String
-    EMENDAS(page_specs: PageSpecs): EmendasResult
+    EMENDAS(page_specs: PageSpecs, filters: FilterEmendas, order_by: OrderByEmendas): EmendasResult
     PROPONENTE: Proponente
-    MOVIMENTO(page_specs: PageSpecs): MovimentoResult
+    MOVIMENTO(page_specs: PageSpecs, filters: FilterMovimento, order_by: OrderByMovimento): MovimentoResult
 }
 
 type Emenda {
     NR_EMENDA: ID!
     NOME_PARLAMENTAR: String
     TIPO_PARLAMENTAR: String
-    CONVENIOS(page_specs: PageSpecs): ConveniosResult
+    CONVENIOS(page_specs: PageSpecs, filters: FilterConvenios, order_by: OrderByConvenios): ConveniosResult
 }
 
 type MunicipiosResult {

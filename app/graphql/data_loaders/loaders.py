@@ -89,76 +89,153 @@ class DataLoader(object):
 
 ##############################################
 
-def load_convenios(page_specs=None, use_pagination=True, parameters=None, emenda=None, order_by=None):
+def join_dict(*d0):
+    d0 = d0 and list(filter(lambda x: x, d0))
+    if d0:
+        d3 = d0[0].copy()
+        for d1 in d0[1:]:
+            if d1:
+                for d in d1:           
+                    if d in d3:
+                        d3[d] = d3[d] if type(d3[d]) is list else [d3[d]]
+                        d3[d] += d1[d] if type(d1[d]) is list else [d1[d]]
+                    else:
+                        d3[d] = d1[d]
 
-    convenios_loader = DataLoader(
-        table_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
-    emendas_convenios_loader = DataLoader(
-        table_name='emendas_convenios', dtypes=dtypes_emendas_convenios)
+        if d3:
+            for d in d3:
+                d3[d] = list(map(lambda x: f'({x})', d3[d])) if type(d3[d]) is list else d3[d]
+                d3[d] = ' && '.join(d3[d]) if type(d3[d]) is list else d3[d]
 
-    if emenda:
-        emendas_convenios_didct, _ = emendas_convenios_loader.load(
-            parameters={'NR_EMENDA': emenda})
-        p = 'in$' + '|'.join([emc['NR_CONVENIO']
-                              for emc in emendas_convenios_didct])
-        convenios, pagination = convenios_loader.load(
-            page_specs=page_specs, parameters={'NR_CONVENIO': p}, order_by=order_by)
-    else:
-        convenios, pagination = convenios_loader.load(
-            page_specs=page_specs, parameters=parameters, order_by=order_by)
+         
+            return d3
+
+    return None
+
+
+def load_convenios(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
+
+    params1 = None
+    params2 = None
+    params3 = None
+    params4 = None
+
+    convenios_loader = DataLoader(table_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
+    emendas_convenios_loader = DataLoader(table_name='emendas_convenios', dtypes=dtypes_emendas_convenios)
+
+    if parent:
+
+        if parent.get('NR_EMENDA'):
+
+            params1 = {'NR_EMENDA': parent['NR_EMENDA']}
+            emendas_convenios_didct, _ = emendas_convenios_loader.load(parameters=params1, use_pagination=False)
+            params1 = {'NR_CONVENIO': 'in$' + '|'.join([emc['NR_CONVENIO'] for emc in emendas_convenios_didct])}
+
+        else:
+
+            params1 = {'IDENTIF_PROPONENTE': parent['IDENTIF_PROPONENTE']}
+
+
+    if parameters:
+
+        if parameters.get('MOVIMENTO'):
+
+            params2 = parameters.pop('MOVIMENTO')
+            movimentos_dict, _ = load_movimento(parameters=params2, use_pagination=False)
+            params2 = {'NR_CONVENIO': 'in$' + '|'.join([mov['NR_CONVENIO'] for mov in movimentos_dict])}
+    
+        if parameters.get('EMENDAS'):
+
+            params3 = parameters.pop('EMENDAS')
+            emendas_dict, _ = load_emendas(parameters=params3, use_pagination=False)
+            params3 = {'NR_EMENDA': 'in$' + '|'.join([emd['NR_EMENDA'] for emd in emendas_dict])}
+            emendas_convenios_didct, _ = emendas_convenios_loader.load(parameters=params3, use_pagination=False)
+            params3 = {'NR_CONVENIO': 'in$' + '|'.join([emc['NR_CONVENIO'] for emc in emendas_convenios_didct])}
+  
+        if parameters.get('PROPONENTE'):
+
+            params4 = parameters.pop('PROPONENTE')
+            proponentes_dict, _ = load_proponentes(parameters=params4, use_pagination=False)
+            params4 = {'IDENTIF_PROPONENTE': 'in$' + '|'.join([prop['IDENTIF_PROPONENTE'] for prop in proponentes_dict])}
+    
+
+    parameters = join_dict(parameters, params1, params2, params3, params4)
+
+    convenios, pagination = convenios_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by, use_pagination=use_pagination)
 
     return convenios, pagination
 
 
-def load_emendas(page_specs=None, use_pagination=True, parameters=None, convenio=None, order_by=None):
+def load_emendas(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
 
+    params = None
     emendas_loader = DataLoader(table_name='emendas', dtypes=dtypes_emendas)
-    emendas_convenios_loader = DataLoader(
-        table_name='emendas_convenios', dtypes=dtypes_emendas_convenios)
+    emendas_convenios_loader = DataLoader(table_name='emendas_convenios', dtypes=dtypes_emendas_convenios)
 
-    if convenio:
-        emendas_convenios_didct, _ = emendas_convenios_loader.load(
-            parameters={'NR_CONVENIO': convenio})
-        emendas, pagination = emendas_loader.load(page_specs=page_specs,
-                                                  parameters={'NR_EMENDA': 'in$' + '|'.join([emc['NR_EMENDA']
-                                                                                             for emc in emendas_convenios_didct])}, order_by=order_by)
-    else:
-        emendas, pagination = emendas_loader.load(
-            page_specs=page_specs, parameters=parameters, order_by=order_by)
+    if parent:
+
+        emendas_convenios_didct, _ = emendas_convenios_loader.load(parameters={'NR_CONVENIO': parent['NR_CONVENIO']}, use_pagination=False)
+        params = {'NR_EMENDA': 'in$' + '|'.join([emc['NR_EMENDA'] for emc in emendas_convenios_didct])}
+        
+
+    parameters = join_dict(parameters, params)
+    
+    emendas, pagination = emendas_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by, use_pagination=use_pagination)
 
     return emendas, pagination
 
 
-def load_proponentes(page_specs=None, use_pagination=True, parameters=None, order_by=None):
+def load_proponentes(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
 
-    proponentes_loader = DataLoader(
-        table_name='proponentes', dtypes=dtypes_proponentes)
+    params = None
+    proponentes_loader = DataLoader(table_name='proponentes', dtypes=dtypes_proponentes)
 
-    proponentes, pagination = proponentes_loader.load(
-        page_specs=page_specs, parameters=parameters, order_by=order_by)
+    if parent:
+
+        if parent.get('IDENTIF_PROPONENTE'):
+
+            params = {'IDENTIF_PROPONENTE': parent['IDENTIF_PROPONENTE']}
+
+        else:
+
+            params = {'COD_MUNIC_IBGE': parent['codigo_ibge']}
+
+    parameters = join_dict(parameters, params)
+
+    proponentes, pagination = proponentes_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by, use_pagination=use_pagination)
 
     return proponentes, pagination
 
 
-def load_movimento(page_specs=None, use_pagination=True, parameters=None, convenio=None, order_by=None):
+def load_movimento(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
 
-    movimento_loader = DataLoader(
-        table_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
+    params = None
+    movimento_loader = DataLoader(table_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
 
-    if convenio:
-        movimento, pagination = movimento_loader.load(page_specs=page_specs, parameters={
-                                                      'NR_CONVENIO': convenio}, order_by=order_by)
-    else:
-        movimento, pagination = movimento_loader.load(
-            page_specs=page_specs, parameters=parameters, order_by=order_by)
+    if parent:
+
+        params={'NR_CONVENIO': parent['NR_CONVENIO']}
+
+
+    parameters = join_dict(parameters, params)
+  
+    movimento, pagination = movimento_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by, use_pagination=use_pagination)
 
     return movimento, pagination
 
 
-def load_municipios(page_specs=None, use_pagination=True, parameters=None, order_by=None):
+def load_municipios(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
 
+    params = None
     municipios_loader = DataLoader(table_name='municipios', dtypes=dtypes_municipios, decimal='.')
 
-    municipios, pagination = municipios_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by)
+    if parent:
+
+        params = {'codigo_ibge': parent['COD_MUNIC_IBGE']}
+
+
+    parameters = join_dict(parameters, params)
+
+    municipios, pagination = municipios_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by, use_pagination=use_pagination)
 
     return municipios, pagination
