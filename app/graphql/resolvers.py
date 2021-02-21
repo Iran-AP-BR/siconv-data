@@ -129,7 +129,7 @@ def resolve_emd_convenios(obj, info, page_specs=None, filters=None, order_by=Non
 
 def resolve_proponentes(obj, info, page_specs=None, filters=None, order_by=None):
     try:
-
+        
         proponentes, pagination = load_proponentes(page_specs=page_specs, parameters=filters, order_by=order_by)
 
         payload = {

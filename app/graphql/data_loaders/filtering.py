@@ -2,163 +2,58 @@
 """Filtering.
    """
 
-from .commands_resolvers import *
-from .commands import Command, parser
-import re
-from uuid import uuid4
+from .translators import *
 
-LOGICAL_CONNECTORS = {
-    '&&': 'and',
-    '||': 'or'
-}
+translators = {
+    'eq': translator_eq,
+    'ct': translator_ct,
+    'ctx': translator_ctx,
+    'sw': translator_sw,
+    'swx': translator_swx,
+    'ew': translator_ew,
+    'ewx': translator_ewx,
+    'gt': translator_gt,
+    'gte': translator_gte,
+    'lt': translator_lt,
+    'lte': translator_lte,
+    'in': translator_in,
+    'bt': translator_bt
+    }
 
-PARENTHESES_TOKEN_PATTERN = '^[0-9a-f]{32}$'
+def filter_constructor(filters):
+    def transl(field, cmds):
+        expr = ''
+        op = ''
+        for cmd in cmds:
+            translated = translators[cmd](field, cmds[cmd])
+            expr += f' {op} {translated}'
+            op = 'and'
+        
+        return f'{expr.strip()}'
 
-commands = {
-    'eq': Command(name='eq', data_type='*', split=False, split_length=0, resolver=resolver_eq),
-    'ct': Command(name='ct', data_type='str', split=False, split_length=0, resolver=resolver_ct, default='eq'),
-    'ctx': Command(name='ctx', data_type='str', split=False, split_length=0, resolver=resolver_ctx, default='eq'),
-    'sw': Command(name='sw', data_type='str', split=False, split_length=0, resolver=resolver_sw, default='eq'),
-    'swx': Command(name='swx', data_type='str', split=False, split_length=0, resolver=resolver_swx, default='eq'),
-    'ew': Command(name='ew', data_type='str', split=False, split_length=0, resolver=resolver_ew, default='eq'),
-    'ewx': Command(name='ewx', data_type='str', split=False, split_length=0, resolver=resolver_ewx, default='eq'),
-    'gt': Command(name='gt', data_type='*', split=False, split_length=0, resolver=resolver_gt, default='eq'),
-    'gte': Command(name='gte', data_type='*', split=False, split_length=0, resolver=resolver_gte, default='eq'),
-    'lt': Command(name='lt', data_type='*', split=False, split_length=0, resolver=resolver_lt, default='eq'),
-    'lte': Command(name='lte', data_type='*', split=False, split_length=0, resolver=resolver_lte, default='eq'),
-    'in': Command(name='in', data_type='*', split=True, split_length=0, resolver=resolver_in, default='eq'),
-    'bt': Command(name='bt', data_type='*', split=True, split_length=2, resolver=resolver_bt, default='eq')
-}
-
-
-def translate(tree, field, dtypes, parse_dates=[]):
-    for t in tree:
-        text = tree[t]['tokenized'] if tree[t].get(
-            'tokenized') else tree[t]['text']
-        text = text[1:-1]  # descards parentheses
-        logical_operators_pattern = '|'.join(
-            [''.join([f'\{c}' for c in connector]) for connector in LOGICAL_CONNECTORS])
-        lines = re.split(logical_operators_pattern, text)
-        connections = re.findall(logical_operators_pattern, text)
-
-        condition = ''
-
-        for line in lines:
-            line = line.strip()
-            if not re.match(PARENTHESES_TOKEN_PATTERN, line):
-                command, _, _ = parser(line, 'eq')
-
-                if command not in commands.keys():
-                    raise Exception(f'Comando desconhecido: "{command}".')
-
-                cond = commands[command].get_condition(
-                    field=field, line=line, dtypes=dtypes, parse_dates=parse_dates)
-            else:
-                cond = line
-
-            if connections:
-                condition += f'{cond} {LOGICAL_CONNECTORS[connections[0]]} '
-                connections.pop(0)
-            else:
-                condition += cond
-
-        condition = f'({condition})'  # restores parentheses
-
-        if tree[t].get('tokenized'):
-            tree[t]['tokenized'] = condition
-        else:
-            tree[t]['text'] = condition
-
-    return tree
-
-
-def set_tree(expression, marks=None, tree=None, id=None):
-    def new_token():
-        return uuid4().hex
-
-    if not marks:
-        marks = [(m.group(), m.start())
-                 for m in re.compile('\(|\)').finditer(expression)]
-
-    mark = marks.pop(0)
-    complete = False
-    if mark[0] == ')':
-        tree[id]['end'] = mark[1]
-        tree[id]['text'] = expression[tree[id]['start']:tree[id]['end']+1]
-
-        if not tree[id]['parent']:
-            complete = True
-
-        id = tree[id]['parent']
-    else:
-        parent_id = id
-        id = new_token()
-        if not tree:
-            tree = {}
-
-        tree[id] = {'parent': parent_id, 'start': mark[1]}
-
-    if len(marks) > 0 and not complete:
-        return set_tree(expression, marks, tree, id)
-
-    if len(marks) == 0 and not complete:
-        raise Exception('Parentheses not closed.')
-
-    if len(marks) > 0 and complete:
-        raise Exception('Too many Parentheses.')
-
-    # tokenize
-    for t in tree:
-        p = tree[t]['parent']
-        if p:
-            text = tree[p]['tokenized'] if tree[p].get(
-                'tokenized') else tree[p]['text']
-            tree[p]['tokenized'] = text.replace(tree[t]['text'], t)
-
-    return tree
-
-
-def reconstruction(tree):
-    if len(tree) > 1:
-        leaves = set(list(tree.keys())) - \
-            set([tree[t]['parent'] for t in tree])
-        for lv in leaves:
-            p = tree[lv]['parent']
-            text = tree[lv]['tokenized'] if tree[lv].get(
-                'tokenized') else tree[lv]['text']
-            tree[p]['tokenized'] = tree[p]['tokenized'].replace(lv, text)
-            tree.pop(lv)
-
-        return reconstruction(tree)
-
-    last_node = list(tree.values())[0]
-    return last_node['tokenized'] if last_node.get('tokenized') else last_node['text']
-
-
-def translate_commands(expression, field, dtypes, parse_dates=[]):
-    expression = expression.strip()
-    # extra parentheses to make sure that there'll be one root node in the tree
-    expression = f'({expression})'
-
-    tree = set_tree(expression)
-
-    tree = translate(tree, field=field, dtypes=dtypes, parse_dates=parse_dates)
-
-    expression = reconstruction(tree)
-    # discards extra parentheses and return expression translated
-    return expression[1:-1]
-
-
-def filter_constructor(parameters, dtypes=None, parse_dates=[]):
-
-    if not parameters:
+    if not filters:
         return None
 
-    conditions = ''
-    for key in parameters.keys():
-        condition = translate_commands(parameters.get(
-            key).strip(), field=key, dtypes=dtypes, parse_dates=parse_dates)
+    expr = ''
+    opr = ''
+    for f in filters:
+        if f in ['OR', 'AND']:
+            expr2 = ''
+            opr2 = ''
+            for d in filters[f]:
+                expr2 += f' {opr2} ({filter_constructor(d)})'
+                expr2 = expr2.strip()
+                opr2 = 'and'
+                
+            opr3 = f.lower() if expr else ''
+            expr += f' {opr3} {expr2}'
+        elif f == 'NOT':
+            expr += f' {opr} not ({filter_constructor(filters[f])})'
+        else:
+            expr += f' {opr} {transl(f, filters[f])}'
+        
+        expr = expr.strip()
+        opr = 'and'
 
-        conditions += f' and ({condition})' if conditions else f'({condition})'
+    return f'{expr}'
 
-    return conditions

@@ -2,6 +2,8 @@ schema {
     query: Query
 }
 
+scalar Datetime
+
 type Pagination {
     page: Int!
     page_length: Int!
@@ -23,8 +25,8 @@ type Municipio {
 
 type Movimento {
     NR_CONVENIO: String!
-    DATA: String
-    VALOR: String
+    DATA: Datetime
+    VALOR: Float
     TIPO: String
     IDENTIF_FORNECEDOR: String
     NOME_FORNECEDOR: String
@@ -43,13 +45,13 @@ type Proponente {
 
 type Convenio {
     NR_CONVENIO: ID!
-    DIA_ASSIN_CONV: String
+    DIA_ASSIN_CONV: Datetime
     SIT_CONVENIO: String
     INSTRUMENTO_ATIVO: String
-    DIA_PUBL_CONV: String
-    DIA_INIC_VIGENC_CONV: String
-    DIA_FIM_VIGENC_CONV: String
-    DIA_LIMITE_PREST_CONTAS: String
+    DIA_PUBL_CONV: Datetime
+    DIA_INIC_VIGENC_CONV: Datetime
+    DIA_FIM_VIGENC_CONV: Datetime
+    DIA_LIMITE_PREST_CONTAS: Datetime
     VL_GLOBAL_CONV: String
     VL_REPASSE_CONV: String
     VL_CONTRAPARTIDA_CONV: String

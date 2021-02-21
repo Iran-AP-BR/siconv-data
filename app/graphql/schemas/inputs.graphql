@@ -1,3 +1,37 @@
+input FloatFilters {
+    eq: Float
+    diff: Float
+    in: [Float!]
+    gt: Float
+    gte: Float
+    lt: Float
+    lte: Float
+} 
+
+input DateFilters {
+    eq: Datetime
+    diff: Datetime
+    in: [Datetime!]
+    gt: Datetime
+    gte: Datetime
+    lt: Datetime
+    lte: Datetime
+} 
+
+input StringFilters {
+    eq: String
+    diff: String
+    in: [String!]
+    ct: String
+    ctx: String
+    ew: String
+    ewx: String
+    sw: String
+    swx: String
+} 
+
+
+
 """
 Pagination specifications. Use to set the number of items in a page (page_length) and to select the page to be returned.
 """
@@ -48,14 +82,18 @@ Commands can be combined by using logical operators && (_and_) and || (_or_). Pa
 **_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterMunicipios {
-    codigo_ibge: ID
-    nome_municipio: String
-    codigo_uf: String
-    uf: String
-    estado: String
-    latitude: Float
-    longitude: Float
-    PROPONENTE: FilterProponentes
+    codigo_ibge: StringFilters
+    nome_municipio: StringFilters
+    codigo_uf: StringFilters
+    uf: StringFilters
+    estado: StringFilters
+    latitude: FloatFilters
+    longitude: FloatFilters
+
+    OR: [FilterMunicipios!]
+    AND: [FilterMunicipios!]
+    NOT: FilterMunicipios
+    #PROPONENTE: FilterProponentes
 }
 
 """
@@ -100,10 +138,14 @@ Commands can be combined by using logical operators && (_and_) and || (_or_). Pa
 **_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterEmendas {
-    NR_EMENDA: ID,
-    NOME_PARLAMENTAR: String
-    TIPO_PARLAMENTAR: String
-    CONVENIOS: FilterConvenios
+    NR_EMENDA: StringFilters,
+    NOME_PARLAMENTAR: StringFilters
+    TIPO_PARLAMENTAR: StringFilters
+    #CONVENIOS: FilterConvenios
+
+    OR: [FilterEmendas!]
+    AND: [FilterEmendas!]
+    NOT: FilterEmendas
 }
 
 """
@@ -148,13 +190,17 @@ Commands can be combined by using logical operators && (_and_) and || (_or_). Pa
 **_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterProponentes {
-    IDENTIF_PROPONENTE: ID
-    NM_PROPONENTE: String
-    UF_PROPONENTE: String
-    MUNIC_PROPONENTE: String
-    COD_MUNIC_IBGE: String
-    CONVENIOS: FilterConvenios
-    MUNICIPIOS: FilterMunicipios
+    IDENTIF_PROPONENTE: StringFilters
+    NM_PROPONENTE: StringFilters
+    UF_PROPONENTE: StringFilters
+    MUNIC_PROPONENTE: StringFilters
+    COD_MUNIC_IBGE: StringFilters
+    #CONVENIOS: FilterConvenios
+    #MUNICIPIOS: FilterMunicipios
+
+    OR: [FilterProponentes!]
+    AND: [FilterProponentes!]
+    NOT: FilterProponentes
 }
 
 """
@@ -199,13 +245,17 @@ Commands can be combined by using logical operators && (_and_) and || (_or_). Pa
 **_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterMovimento {
-    NR_CONVENIO: ID
-    DATA: String
-    VALOR: String
-    TIPO: String
-    IDENTIF_FORNECEDOR: String
-    NOME_FORNECEDOR: String
-    CONVENIOS: FilterConvenios
+    NR_CONVENIO: StringFilters
+    DATA: DateFilters
+    VALOR: FloatFilters
+    TIPO: StringFilters
+    IDENTIF_FORNECEDOR: StringFilters
+    NOME_FORNECEDOR: StringFilters
+    #CONVENIOS: FilterConvenios
+
+    OR: [FilterMovimento!]
+    AND: [FilterMovimento!]
+    NOT: FilterMovimento
 }
 
 """
@@ -250,28 +300,32 @@ Commands can be combined by using logical operators && (_and_) and || (_or_). Pa
 **_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
 """
 input FilterConvenios {
-    NR_CONVENIO: ID
-    DIA_ASSIN_CONV: String
-    SIT_CONVENIO: String
-    INSTRUMENTO_ATIVO: String
-    DIA_PUBL_CONV: String
-    DIA_INIC_VIGENC_CONV: String
-    DIA_FIM_VIGENC_CONV: String
-    DIA_LIMITE_PREST_CONTAS: String
-    VL_GLOBAL_CONV: String
-    VL_REPASSE_CONV: String
-    VL_CONTRAPARTIDA_CONV: String
-    COD_ORGAO_SUP: String
-    DESC_ORGAO_SUP: String
-    NATUREZA_JURIDICA: String
-    COD_ORGAO: String
-    DESC_ORGAO: String
-    MODALIDADE: String
-    IDENTIF_PROPONENTE: String
-    OBJETO_PROPOSTA: String
-    EMENDAS: FilterEmendas
-    PROPONENTE: FilterProponentes
-    MOVIMENTO: FilterMovimento
+    NR_CONVENIO: StringFilters
+    DIA_ASSIN_CONV: DateFilters
+    SIT_CONVENIO: StringFilters
+    INSTRUMENTO_ATIVO: StringFilters
+    DIA_PUBL_CONV: DateFilters
+    DIA_INIC_VIGENC_CONV: DateFilters
+    DIA_FIM_VIGENC_CONV: DateFilters
+    DIA_LIMITE_PREST_CONTAS: DateFilters
+    VL_GLOBAL_CONV: FloatFilters
+    VL_REPASSE_CONV: FloatFilters
+    VL_CONTRAPARTIDA_CONV: FloatFilters
+    COD_ORGAO_SUP: StringFilters
+    DESC_ORGAO_SUP: StringFilters
+    NATUREZA_JURIDICA: StringFilters
+    COD_ORGAO: StringFilters
+    DESC_ORGAO: StringFilters
+    MODALIDADE: StringFilters
+    IDENTIF_PROPONENTE: StringFilters
+    OBJETO_PROPOSTA: StringFilters
+    #EMENDAS: FilterEmendas
+    #PROPONENTE: FilterProponentes
+    #MOVIMENTO: FilterMovimento
+
+    OR: [FilterConvenios!]
+    AND: [FilterConvenios!]
+    NOT: FilterConvenios
 }
 
 """
