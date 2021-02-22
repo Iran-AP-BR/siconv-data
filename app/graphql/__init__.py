@@ -17,7 +17,13 @@ blueprint = Blueprint('graphql', __name__, url_prefix='/graphql')
 datetime_scalar = ScalarType("Datetime")
 @datetime_scalar.serializer
 def serialize_datetime(value):
-    return value.strftime("%Y-%m-%d")
+    try:
+        value = value.strftime("%Y-%m-%d")
+
+    except Exception as e:
+        pass
+
+    return value
 
 @datetime_scalar.value_parser
 def parse_datetime_value(value):

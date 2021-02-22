@@ -11,10 +11,11 @@ from math import ceil
 
 
 class DataLoader(object):
-    def __init__(self, table_name, dtypes, parse_dates=[], decimal=','):
+    def __init__(self, table_name, dtypes, parse_dates=[], decimal=',', auxiliary_table=None):
         self.dtypes = dtypes
         self.parse_dates = parse_dates
         self.table_name = table_name
+        self.auxiliary_table = auxiliary_table
         self.decimal = decimal
         self.__current_date_var__ = f'{table_name.upper()}_CURRENT_DATE'
         self.__table_name_var__ = table_name.upper()
@@ -40,6 +41,25 @@ class DataLoader(object):
 
         return items_count, page_count, idx_first, idx_last, page_specs
 
+    def __read_data__(self, tbl_name=None, dtypes=None, parse_dates=[]):
+        tbl = pd.read_csv(os.path.join(app.config['DATA_FOLDER'], f'{tbl_name}{app.config["FILE_EXTENTION"]}'),
+                                                            compression=app.config['COMPRESSION_METHOD'], sep=';',
+                                                            decimal=self.decimal, dayfirst=True, dtype=dtypes,
+                                                            parse_dates=parse_dates)
+        
+        return tbl
+
+    def __aggregate_auxiliary_table__(self, table):
+
+        tbl = self.__read_data__(self.auxiliary_table.get('name'), self.auxiliary_table.get('dtypes'))
+
+        tbl[self.auxiliary_table.get('aggregated_column')] = tbl[[self.auxiliary_table.get('pivot_column'), self.auxiliary_table.get('data_column')]].groupby(by=self.auxiliary_table.get('pivot_column')).transform(lambda x: ','.join(x))
+        tbl = tbl[[self.auxiliary_table.get('pivot_column'), self.auxiliary_table.get('aggregated_column')]].drop_duplicates()
+
+        table = table.merge(tbl, how='left', on=self.auxiliary_table.get('pivot_column'))
+
+        return table
+
     def __load__(self):
         # Get tables' current date
         with open(os.path.join(app.config.get('DATA_FOLDER'), app.config.get('CURRENT_DATE_FILENAME')), 'r') as fd:
@@ -47,9 +67,12 @@ class DataLoader(object):
 
         if app.config.get(self.__current_date_var__) != current_date or app.config.get(self.__table_name_var__) is None:
 
-            app.config[self.__table_name_var__] = pd.read_csv(os.path.join(app.config['DATA_FOLDER'], f'{self.table_name}{app.config["FILE_EXTENTION"]}'),
-                                                              compression=app.config['COMPRESSION_METHOD'], sep=';', decimal=self.decimal, dayfirst=True, dtype=self.dtypes,
-                                                              parse_dates=self.parse_dates)
+            tbl = self.__read_data__(self.table_name, self.dtypes, self.parse_dates)
+
+            if self.auxiliary_table:
+                tbl = self.__aggregate_auxiliary_table__(table=tbl)
+
+            app.config[self.__table_name_var__] = tbl.fillna('')
 
             app.config[self.__current_date_var__] = current_date
 
@@ -91,26 +114,26 @@ class DataLoader(object):
 def load_convenios(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
 
     params = {'AND': []}
+    auxiliary_table = {
+        'name': 'emendas_convenios',
+        'dtypes': dtypes_emendas_convenios,
+        'pivot_column': 'NR_CONVENIO',
+        'data_column': 'NR_EMENDA',
+        'aggregated_column': 'EMENDAS'
+    }
 
-    convenios_loader = DataLoader(table_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
-    emendas_convenios_loader = DataLoader(table_name='emendas_convenios', dtypes=dtypes_emendas_convenios)
+    convenios_loader = DataLoader(table_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios, auxiliary_table=auxiliary_table)
 
     if parent:
 
         if parent.get('NR_EMENDA'):
-
-            p = {'NR_EMENDA': {'eq': parent['NR_EMENDA']}}
-            emendas_convenios_dict, _ = emendas_convenios_loader.load(parameters=p, use_pagination=False)
-            if emendas_convenios_dict:
-                params['AND'] += [{'NR_CONVENIO': {'in': [emc['NR_CONVENIO'] for emc in emendas_convenios_dict]}}]
-            else:
-                params = None
-
-        else:
-
+            params['AND'] += [{'EMENDAS': {'ctx': parent['NR_EMENDA']}}]
+        elif parent.get('IDENTIF_PROPONENTE'):
             params['AND'] += [{'IDENTIF_PROPONENTE': {'eq': parent['IDENTIF_PROPONENTE']}}]
+        else:
+            params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
 
-    '''
+
     if parameters:
 
         if parameters.get('MOVIMENTO'):
@@ -121,15 +144,17 @@ def load_convenios(page_specs=None, use_pagination=True, parameters=None, parent
         if parameters.get('EMENDAS'):
 
             emendas_dict, _ = load_emendas(parameters=parameters.pop('EMENDAS'), use_pagination=False)
-            p = {'NR_EMENDA': {'in': [emd['NR_EMENDA'] for emd in emendas_dict]}}
-            emendas_convenios_didct, _ = emendas_convenios_loader.load(parameters=p, use_pagination=False)
-            params['AND'] += [{'NR_CONVENIO': {'in': [emc['NR_CONVENIO'] for emc in emendas_convenios_didct]}}]
-  
+            d = []
+            for emd in emendas_dict:
+                d += emd['CONVENIOS'].split(',')
+                
+            params['AND'] += [{'NR_CONVENIO': {'in': d}}]
+
         if parameters.get('PROPONENTE'):
 
             proponentes_dict, _ = load_proponentes(parameters=parameters.pop('PROPONENTE'), use_pagination=False)
             params['AND'] += [{'IDENTIF_PROPONENTE': {'in': [prop['IDENTIF_PROPONENTE'] for prop in proponentes_dict]}}]
-    '''
+
 
 
     if params is not None:   
@@ -139,7 +164,8 @@ def load_convenios(page_specs=None, use_pagination=True, parameters=None, parent
         if params['AND']:
             parameters = params
         
-        convenios, pagination = convenios_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by, use_pagination=use_pagination)
+        convenios, pagination = convenios_loader.load(page_specs=page_specs, parameters=parameters, 
+                        order_by=order_by, use_pagination=use_pagination)
     else:
         emendas = []
         pagination = None
@@ -150,16 +176,31 @@ def load_convenios(page_specs=None, use_pagination=True, parameters=None, parent
 def load_emendas(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
 
     params = {'AND': []}
-    emendas_loader = DataLoader(table_name='emendas', dtypes=dtypes_emendas)
-    emendas_convenios_loader = DataLoader(table_name='emendas_convenios', dtypes=dtypes_emendas_convenios)
+
+    auxiliary_table = {
+        'name': 'emendas_convenios',
+        'dtypes': dtypes_emendas_convenios,
+        'pivot_column': 'NR_EMENDA',
+        'data_column': 'NR_CONVENIO',
+        'aggregated_column': 'CONVENIOS'
+    }
+
+    emendas_loader = DataLoader(table_name='emendas', dtypes=dtypes_emendas, auxiliary_table=auxiliary_table)
 
     if parent:
-        p = {'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}
-        emendas_convenios_dict, _ = emendas_convenios_loader.load(parameters=p, use_pagination=False)
-        if emendas_convenios_dict:
-            params['AND'] += [{'NR_EMENDA': {'in': [emc['NR_EMENDA'] for emc in emendas_convenios_dict]}}]
-        else:
-            params = None
+        params['AND'] += [{'CONVENIOS': {'ctx': parent['NR_CONVENIO']}}]
+
+    if parameters:
+    
+        if parameters.get('CONVENIOS'):
+
+            convenios_dict, _ = load_convenios(parameters=parameters.pop('CONVENIOS'), use_pagination=False)
+            d = []
+            for conv in convenios_dict:
+                d += conv['EMENDAS'].split(',')
+                
+            params['AND'] += [{'NR_EMENDA': {'in': d}}]
+
 
     if params is not None:   
         if parameters:
@@ -167,8 +208,9 @@ def load_emendas(page_specs=None, use_pagination=True, parameters=None, parent=N
 
         if params['AND']:
             parameters = params
-    
-        emendas, pagination = emendas_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by, use_pagination=use_pagination)
+
+        emendas, pagination = emendas_loader.load(page_specs=page_specs, parameters=parameters, 
+                                                  order_by=order_by, use_pagination=use_pagination)
     else:
         emendas = []
         pagination = None
@@ -191,6 +233,20 @@ def load_proponentes(page_specs=None, use_pagination=True, parameters=None, pare
 
             params['AND'] += [{'COD_MUNIC_IBGE': {'eq': parent['codigo_ibge']}}]
 
+
+    if parameters:
+
+        if parameters.get('CONVENIOS'):
+
+            convenios_dict, _ = load_convenios(parameters=parameters.pop('CONVENIOS'), use_pagination=False)
+            params['AND'] += [{'IDENTIF_PROPONENTE': {'in': [conv['IDENTIF_PROPONENTE'] for conv in convenios_dict]}}]
+
+        if parameters.get('MUNICIPIOS'):
+
+            municipios_dict, _ = load_municipios(parameters=parameters.pop('MUNICIPIOS'), use_pagination=False)
+            params['AND'] += [{'COD_MUNIC_IBGE': {'in': [mun['codigo_ibge'] for mun in municipios_dict]}}]
+
+
     if parameters:
         params['AND'] += [parameters]
 
@@ -211,6 +267,13 @@ def load_movimento(page_specs=None, use_pagination=True, parameters=None, parent
         params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
 
     if parameters:
+
+        if parameters.get('CONVENIOS'):
+
+            convenios_dict, _ = load_convenios(parameters=parameters.pop('CONVENIOS'), use_pagination=False)
+            params['AND'] += [{'NR_CONVENIO': {'in': [conv['NR_CONVENIO'] for conv in convenios_dict]}}]
+
+    if parameters:
         params['AND'] += [parameters]
 
     if params['AND']:
@@ -228,6 +291,14 @@ def load_municipios(page_specs=None, use_pagination=True, parameters=None, paren
 
     if parent:
         params['AND'] += [{'codigo_ibge': {'eq': parent['COD_MUNIC_IBGE']}}]
+
+    if parameters:
+
+        if parameters.get('PROPONENTE'):
+
+            proponentes_dict, _ = load_proponentes(parameters=parameters.pop('PROPONENTE'), use_pagination=False)
+            params['AND'] += [{'codigo_ibge': {'in': [prop['COD_MUNIC_IBGE'] for prop in proponentes_dict]}}]
+    
 
     if parameters:
         params['AND'] += [parameters]

@@ -9,6 +9,7 @@ def resolve_convenios(obj, info, page_specs=None, filters=None, order_by=None):
     try:
 
         convenios, pagination = load_convenios(page_specs=page_specs, parameters=filters, order_by=order_by)
+        print(convenios)
 
         payload = {
             "pagination": pagination,
@@ -105,7 +106,6 @@ def resolve_emd_convenios(obj, info, page_specs=None, filters=None, order_by=Non
     try:
 
         convenios, pagination = load_convenios(page_specs=page_specs, parameters=filters, parent=obj, order_by=order_by)
-
         payload = {
             "pagination": pagination,
             "items": convenios
@@ -118,12 +118,6 @@ def resolve_emd_convenios(obj, info, page_specs=None, filters=None, order_by=Non
         }
 
     return payload
-
-
-
-
-
-
 
 
 
@@ -207,8 +201,7 @@ def resolve_movimentos(obj, info, page_specs=None, filters=None, order_by=None):
 def resolve_mov_convenio(obj, info, page_specs=None, filters=None, order_by=None):
     try:
 
-        convenio, _ = load_convenios(
-            parameters={'NR_CONVENIO': obj['NR_CONVENIO']}, use_pagination=False)
+        convenio, _ = load_convenios(parameters=filters, parent=obj, use_pagination=False)
         payload = convenio[0]
 
     except Exception as error:
