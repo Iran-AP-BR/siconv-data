@@ -43,9 +43,9 @@ def filter_constructor(filters):
             for d in filters[f]:
                 expr2 += f' {opr2} ({filter_constructor(d)})'
                 expr2 = expr2.strip()
-                opr2 = 'and'
+                opr2 = 'and' if f == 'AND' else 'or'
                 
-            opr3 = f.lower() if expr else ''
+            opr3 = 'and' if expr else ''
             expr += f' {opr3} {expr2}'
         elif f == 'NOT':
             expr += f' {opr} not ({filter_constructor(filters[f])})'

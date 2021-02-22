@@ -78,8 +78,8 @@ class DataLoader(object):
 
         return app.config.get(self.__table_name_var__)
 
-    def load(self, page_specs=None, use_pagination=True, parameters=None, order_by=None):
-        conditions = filter_constructor(filters=parameters)
+    def load(self, page_specs=None, use_pagination=True, filters=None, order_by=None):
+        conditions = filter_constructor(filters=filters)
         data_frame = self.__load__()
         pagination = None
 
@@ -111,7 +111,7 @@ class DataLoader(object):
 ##############################################
 
 
-def load_convenios(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
+def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, order_by=None):
 
     params = {'AND': []}
     auxiliary_table = {
@@ -134,37 +134,37 @@ def load_convenios(page_specs=None, use_pagination=True, parameters=None, parent
             params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
 
 
-    if parameters:
+    if filters:
 
-        if parameters.get('MOVIMENTO'):
+        if filters.get('MOVIMENTO'):
 
-            movimentos_dict, _ = load_movimento(parameters=parameters.pop('MOVIMENTO'), use_pagination=False)
+            movimentos_dict, _ = load_movimento(filters=filters.pop('MOVIMENTO'), use_pagination=False)
             params['AND'] += [{'NR_CONVENIO': {'in': [mov['NR_CONVENIO'] for mov in movimentos_dict]}}]
     
-        if parameters.get('EMENDAS'):
+        if filters.get('EMENDAS'):
 
-            emendas_dict, _ = load_emendas(parameters=parameters.pop('EMENDAS'), use_pagination=False)
+            emendas_dict, _ = load_emendas(filters=filters.pop('EMENDAS'), use_pagination=False)
             d = []
             for emd in emendas_dict:
                 d += emd['CONVENIOS'].split(',')
                 
             params['AND'] += [{'NR_CONVENIO': {'in': d}}]
 
-        if parameters.get('PROPONENTE'):
+        if filters.get('PROPONENTE'):
 
-            proponentes_dict, _ = load_proponentes(parameters=parameters.pop('PROPONENTE'), use_pagination=False)
+            proponentes_dict, _ = load_proponentes(filters=filters.pop('PROPONENTE'), use_pagination=False)
             params['AND'] += [{'IDENTIF_PROPONENTE': {'in': [prop['IDENTIF_PROPONENTE'] for prop in proponentes_dict]}}]
 
 
 
     if params is not None:   
-        if parameters:
-            params['AND'] += [parameters]
+        if filters:
+            params['AND'] += [filters]
 
         if params['AND']:
-            parameters = params
+            filters = params
         
-        convenios, pagination = convenios_loader.load(page_specs=page_specs, parameters=parameters, 
+        convenios, pagination = convenios_loader.load(page_specs=page_specs, filters=filters, 
                         order_by=order_by, use_pagination=use_pagination)
     else:
         emendas = []
@@ -173,7 +173,7 @@ def load_convenios(page_specs=None, use_pagination=True, parameters=None, parent
     return convenios, pagination
 
 
-def load_emendas(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
+def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None, order_by=None):
 
     params = {'AND': []}
 
@@ -190,11 +190,11 @@ def load_emendas(page_specs=None, use_pagination=True, parameters=None, parent=N
     if parent:
         params['AND'] += [{'CONVENIOS': {'ctx': parent['NR_CONVENIO']}}]
 
-    if parameters:
+    if filters:
     
-        if parameters.get('CONVENIOS'):
+        if filters.get('CONVENIOS'):
 
-            convenios_dict, _ = load_convenios(parameters=parameters.pop('CONVENIOS'), use_pagination=False)
+            convenios_dict, _ = load_convenios(filters=filters.pop('CONVENIOS'), use_pagination=False)
             d = []
             for conv in convenios_dict:
                 d += conv['EMENDAS'].split(',')
@@ -203,13 +203,13 @@ def load_emendas(page_specs=None, use_pagination=True, parameters=None, parent=N
 
 
     if params is not None:   
-        if parameters:
-            params['AND'] += [parameters]
+        if filters:
+            params['AND'] += [filters]
 
         if params['AND']:
-            parameters = params
+            filters = params
 
-        emendas, pagination = emendas_loader.load(page_specs=page_specs, parameters=parameters, 
+        emendas, pagination = emendas_loader.load(page_specs=page_specs, filters=filters, 
                                                   order_by=order_by, use_pagination=use_pagination)
     else:
         emendas = []
@@ -218,7 +218,7 @@ def load_emendas(page_specs=None, use_pagination=True, parameters=None, parent=N
     return emendas, pagination
 
 
-def load_proponentes(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
+def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=None, order_by=None):
 
     params = {'AND': []}
     proponentes_loader = DataLoader(table_name='proponentes', dtypes=dtypes_proponentes)
@@ -234,31 +234,31 @@ def load_proponentes(page_specs=None, use_pagination=True, parameters=None, pare
             params['AND'] += [{'COD_MUNIC_IBGE': {'eq': parent['codigo_ibge']}}]
 
 
-    if parameters:
+    if filters:
 
-        if parameters.get('CONVENIOS'):
+        if filters.get('CONVENIOS'):
 
-            convenios_dict, _ = load_convenios(parameters=parameters.pop('CONVENIOS'), use_pagination=False)
+            convenios_dict, _ = load_convenios(filters=filters.pop('CONVENIOS'), use_pagination=False)
             params['AND'] += [{'IDENTIF_PROPONENTE': {'in': [conv['IDENTIF_PROPONENTE'] for conv in convenios_dict]}}]
 
-        if parameters.get('MUNICIPIOS'):
+        if filters.get('MUNICIPIOS'):
 
-            municipios_dict, _ = load_municipios(parameters=parameters.pop('MUNICIPIOS'), use_pagination=False)
+            municipios_dict, _ = load_municipios(filters=filters.pop('MUNICIPIOS'), use_pagination=False)
             params['AND'] += [{'COD_MUNIC_IBGE': {'in': [mun['codigo_ibge'] for mun in municipios_dict]}}]
 
 
-    if parameters:
-        params['AND'] += [parameters]
+    if filters:
+        params['AND'] += [filters]
 
     if params['AND']:
-        parameters = params
+        filters = params
 
-    proponentes, pagination = proponentes_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by, use_pagination=use_pagination)
+    proponentes, pagination = proponentes_loader.load(page_specs=page_specs, filters=filters, order_by=order_by, use_pagination=use_pagination)
 
     return proponentes, pagination
 
 
-def load_movimento(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
+def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=None, order_by=None):
 
     params = {'AND': []}
     movimento_loader = DataLoader(table_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
@@ -266,25 +266,25 @@ def load_movimento(page_specs=None, use_pagination=True, parameters=None, parent
     if parent:
         params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
 
-    if parameters:
+    if filters:
 
-        if parameters.get('CONVENIOS'):
+        if filters.get('CONVENIOS'):
 
-            convenios_dict, _ = load_convenios(parameters=parameters.pop('CONVENIOS'), use_pagination=False)
+            convenios_dict, _ = load_convenios(filters=filters.pop('CONVENIOS'), use_pagination=False)
             params['AND'] += [{'NR_CONVENIO': {'in': [conv['NR_CONVENIO'] for conv in convenios_dict]}}]
 
-    if parameters:
-        params['AND'] += [parameters]
+    if filters:
+        params['AND'] += [filters]
 
     if params['AND']:
-        parameters = params
+        filters = params
   
-    movimento, pagination = movimento_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by, use_pagination=use_pagination)
+    movimento, pagination = movimento_loader.load(page_specs=page_specs, filters=filters, order_by=order_by, use_pagination=use_pagination)
 
     return movimento, pagination
 
 
-def load_municipios(page_specs=None, use_pagination=True, parameters=None, parent=None, order_by=None):
+def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=None, order_by=None):
 
     params = {'AND': []}
     municipios_loader = DataLoader(table_name='municipios', dtypes=dtypes_municipios, decimal='.')
@@ -292,20 +292,20 @@ def load_municipios(page_specs=None, use_pagination=True, parameters=None, paren
     if parent:
         params['AND'] += [{'codigo_ibge': {'eq': parent['COD_MUNIC_IBGE']}}]
 
-    if parameters:
+    if filters:
 
-        if parameters.get('PROPONENTE'):
+        if filters.get('PROPONENTE'):
 
-            proponentes_dict, _ = load_proponentes(parameters=parameters.pop('PROPONENTE'), use_pagination=False)
+            proponentes_dict, _ = load_proponentes(filters=filters.pop('PROPONENTE'), use_pagination=False)
             params['AND'] += [{'codigo_ibge': {'in': [prop['COD_MUNIC_IBGE'] for prop in proponentes_dict]}}]
     
 
-    if parameters:
-        params['AND'] += [parameters]
+    if filters:
+        params['AND'] += [filters]
 
     if params['AND']:
-        parameters = params
+        filters = params
 
-    municipios, pagination = municipios_loader.load(page_specs=page_specs, parameters=parameters, order_by=order_by, use_pagination=use_pagination)
+    municipios, pagination = municipios_loader.load(page_specs=page_specs, filters=filters, order_by=order_by, use_pagination=use_pagination)
 
     return municipios, pagination
