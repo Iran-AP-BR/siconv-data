@@ -1,27 +1,103 @@
+"""
+Defines the minimum and maximum limits of a range of values.
+"""
+input FloatRange {
+    min: Float
+    max: Float
+}
+
+"""
+Defines the minimum and maximum limits of a range of values.
+"""
+input StringRange {
+    min: String
+    max: String
+}
+
+"""
+Defines the minimum and maximum limits of a range of values.
+"""
+input DatetimeRange {
+    min: Datetime
+    max: Datetime
+}
+
+"""
+Defines a set of filtering commands to be applied to field of Float type.
+The commands may be:
+
+1. __eq__: _equal to_
+2. __diff__: _different_
+3. __in__: _in list_.
+4. __bt__: _between two values_. 
+5. __gt__: _greater than_
+6. __gte__: _greater than or equal to_
+7. __lt__: _less than_
+8. __lte__: _less than or equal to_
+"""
 input FloatFilters {
     eq: Float
     diff: Float
     in: [Float!]
+    bt: FloatRange
     gt: Float
     gte: Float
     lt: Float
     lte: Float
 } 
 
+"""
+Defines a set of filtering commands to be applied to field of Datetime type.
+The commands may be:
+
+1. __eq__: _equal to_
+2. __diff__: _different_
+3. __in__: _in list_.
+4. __bt__: _between two values_. 
+5. __gt__: _greater than_
+6. __gte__: _greater than or equal to_
+7. __lt__: _less than_
+8. __lte__: _less than or equal to_
+"""
 input DateFilters {
     eq: Datetime
     diff: Datetime
     in: [Datetime!]
+    bt: DatetimeRange
     gt: Datetime
     gte: Datetime
     lt: Datetime
     lte: Datetime
 } 
 
+"""
+Defines a set of filtering commands to be applied to field of String type.
+The commands may be:
+
+1. __eq__: _equal to_
+2. __diff__: _different_
+3. __in__: _in list_.
+4. __bt__: _between two values_. 
+5. __gt__: _greater than_
+6. __gte__: _greater than or equal to_
+7. __lt__: _less than_
+8. __lte__: _less than or equal to_
+9. __ct__: _contains_
+10. __ctx__: _contains exact (whole word)_
+11. __sw__: _starts with_
+12. __swx__: _starts with exact (whole word)_
+13. __ew__: _ends with_
+14. __ewx__: _ends with exact (whole word)_
+"""
 input StringFilters {
     eq: String
     diff: String
     in: [String!]
+    bt: StringRange
+    gt: String
+    gte: String
+    lt: String
+    lte: String
     ct: String
     ctx: String
     ew: String
@@ -29,8 +105,6 @@ input StringFilters {
     sw: String
     swx: String
 } 
-
-
 
 """
 Pagination specifications. Use to set the number of items in a page (page_length) and to select the page to be returned.
@@ -40,46 +114,10 @@ input PageSpecs {
     page_length: Int
 }
 
+
 """
-Each field in this filter especification accepts the following commands:
-
-1. __eq__: _equal to_
-2. __gt__: _greater than_
-3. __gte__: _greater than or equal to_
-4. __lt__: _less than_
-5. __lte__: _less than or equal to_
-6. __ct__: _contains_
-7. __ctx__: _contains exact (whole word)_
-8. __bt__: _between two values_. 
-9. __in__: _in list_.
-10. __sw__: _starts with_
-11. __swx__: _starts with exact (whole word)_
-12. __ew__: _ends with_
-13. __ewx__: _ends with exact (whole word)_
-
-Usage:
->
-**_<command>$<value>_**
->
-Where value may be, depending on command, a single element, a list or a range.
->
-Each element may be, depending on command and field, a string, int, float ou date. Use pipe (|) as list or range separator, like this ...
-
-> For list:
-
-**_DATA:"in$2020-05-03|2020-03-01|2020-04-30"_**
-
-> For range:
-
-**_DATA:"in$2020-05-03|2020-03-01"_**
-
-To negate the commands, use exclamation mark (!).
->
-**_Ex: !eq$, !gt$ ..._**
->
-Commands can be combined by using logical operators && (_and_) and || (_or_). Parentheses can be used as well:
->
-**_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
+Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
+whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterMunicipios {
     codigo_ibge: StringFilters
@@ -89,53 +127,16 @@ input FilterMunicipios {
     estado: StringFilters
     latitude: FloatFilters
     longitude: FloatFilters
+    PROPONENTE: FilterProponentes
 
     OR: [FilterMunicipios!]
     AND: [FilterMunicipios!]
     NOT: FilterMunicipios
-    PROPONENTE: FilterProponentes
 }
 
 """
-Each field in this filter especification accepts the following commands:
-
-1. __eq__: _equal to_
-2. __gt__: _greater than_
-3. __gte__: _greater than or equal to_
-4. __lt__: _less than_
-5. __lte__: _less than or equal to_
-6. __ct__: _contains_
-7. __ctx__: _contains exact (whole word)_
-8. __bt__: _between two values_. 
-9. __in__: _in list_.
-10. __sw__: _starts with_
-11. __swx__: _starts with exact (whole word)_
-12. __ew__: _ends with_
-13. __ewx__: _ends with exact (whole word)_
-
-Usage:
->
-**_<command>$<value>_**
->
-Where value may be, depending on command, a single element, a list or a range.
->
-Each element may be, depending on command and field, a string, int, float ou date. Use pipe (|) as list or range separator, like this ...
-
-> For list:
-
-**_DATA:"in$2020-05-03|2020-03-01|2020-04-30"_**
-
-> For range:
-
-**_DATA:"in$2020-05-03|2020-03-01"_**
-
-To negate the commands, use exclamation mark (!).
->
-**_Ex: !eq$, !gt$ ..._**
->
-Commands can be combined by using logical operators && (_and_) and || (_or_). Parentheses can be used as well:
->
-**_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
+Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
+whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterEmendas {
     NR_EMENDA: StringFilters,
@@ -149,45 +150,8 @@ input FilterEmendas {
 }
 
 """
-Each field in this filter especification accepts the following commands:
-
-1. __eq__: _equal to_
-2. __gt__: _greater than_
-3. __gte__: _greater than or equal to_
-4. __lt__: _less than_
-5. __lte__: _less than or equal to_
-6. __ct__: _contains_
-7. __ctx__: _contains exact (whole word)_
-8. __bt__: _between two values_. 
-9. __in__: _in list_.
-10. __sw__: _starts with_
-11. __swx__: _starts with exact (whole word)_
-12. __ew__: _ends with_
-13. __ewx__: _ends with exact (whole word)_
-
-Usage:
->
-**_<command>$<value>_**
->
-Where value may be, depending on command, a single element, a list or a range.
->
-Each element may be, depending on command and field, a string, int, float ou date. Use pipe (|) as list or range separator, like this ...
-
-> For list:
-
-**_DATA:"in$2020-05-03|2020-03-01|2020-04-30"_**
-
-> For range:
-
-**_DATA:"in$2020-05-03|2020-03-01"_**
-
-To negate the commands, use exclamation mark (!).
->
-**_Ex: !eq$, !gt$ ..._**
->
-Commands can be combined by using logical operators && (_and_) and || (_or_). Parentheses can be used as well:
->
-**_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
+Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
+whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterProponentes {
     IDENTIF_PROPONENTE: StringFilters
@@ -204,45 +168,8 @@ input FilterProponentes {
 }
 
 """
-Each field in this filter especification accepts the following commands:
-
-1. __eq__: _equal to_
-2. __gt__: _greater than_
-3. __gte__: _greater than or equal to_
-4. __lt__: _less than_
-5. __lte__: _less than or equal to_
-6. __ct__: _contains_
-7. __ctx__: _contains exact (whole word)_
-8. __bt__: _between two values_. 
-9. __in__: _in list_.
-10. __sw__: _starts with_
-11. __swx__: _starts with exact (whole word)_
-12. __ew__: _ends with_
-13. __ewx__: _ends with exact (whole word)_
-
-Usage:
->
-**_<command>$<value>_**
->
-Where value may be, depending on command, a single element, a list or a range.
->
-Each element may be, depending on command and field, a string, int, float ou date. Use pipe (|) as list or range separator, like this ...
-
-> For list:
-
-**_DATA:"in$2020-05-03|2020-03-01|2020-04-30"_**
-
-> For range:
-
-**_DATA:"in$2020-05-03|2020-03-01"_**
-
-To negate the commands, use exclamation mark (!).
->
-**_Ex: !eq$, !gt$ ..._**
->
-Commands can be combined by using logical operators && (_and_) and || (_or_). Parentheses can be used as well:
->
-**_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
+Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
+whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterMovimento {
     NR_CONVENIO: StringFilters
@@ -259,45 +186,8 @@ input FilterMovimento {
 }
 
 """
-Each field in this filter especification accepts the following commands:
-
-1. __eq__: _equal to_
-2. __gt__: _greater than_
-3. __gte__: _greater than or equal to_
-4. __lt__: _less than_
-5. __lte__: _less than or equal to_
-6. __ct__: _contains_
-7. __ctx__: _contains exact (whole word)_
-8. __bt__: _between two values_. 
-9. __in__: _in list_.
-10. __sw__: _starts with_
-11. __swx__: _starts with exact (whole word)_
-12. __ew__: _ends with_
-13. __ewx__: _ends with exact (whole word)_
-
-Usage:
->
-**_<command>$<value>_**
->
-Where value may be, depending on command, a single element, a list or a range.
->
-Each element may be, depending on command and field, a string, int, float ou date. Use pipe (|) as list or range separator, like this ...
-
-> For list:
-
-**_DATA:"in$2020-05-03|2020-03-01|2020-04-30"_**
-
-> For range:
-
-**_DATA:"in$2020-05-03|2020-03-01"_**
-
-To negate the commands, use exclamation mark (!).
->
-**_Ex: !eq$, !gt$ ..._**
->
-Commands can be combined by using logical operators && (_and_) and || (_or_). Parentheses can be used as well:
->
-**_DATA:"(bt$2009-02-01|2009-04-30 && !eq$2009-04-24) || gt$2020-01-01"_**
+Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
+whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterConvenios {
     NR_CONVENIO: StringFilters
@@ -329,46 +219,51 @@ input FilterConvenios {
 }
 
 """
-Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
-The 'field' parameter must be a single name, or a list of names, of existing fields.
+Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
+The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
+for ascending, or "DESC", for descending.
 """
-input OrderByMunicipios {
-    field: [FieldsMunicipios]
-    ascending: Boolean = true
+input SortMunicipios {
+    fields: [FieldsMunicipios]
+    order: SortOrder = ASC
 }
 
 """
-Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
-The 'field' parameter must be a single name, or a list of names, of existing fields.
+Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
+The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
+for ascending, or "DESC", for descending.
 """
-input OrderByEmendas {
-    field: [FieldsEmendas]
-    ascending: Boolean = true
+input SortEmendas {
+    fields: [FieldsEmendas]
+    order: SortOrder = ASC
 }
 
 """
-Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
-The 'field' parameter must be a single name, or a list of names, of existing fields.
+Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
+The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
+for ascending, or "DESC", for descending.
 """
-input OrderByProponentes {
-    field: [FieldsProponentes]
-    ascending: Boolean = true
+input SortProponentes {
+    fields: [FieldsProponentes]
+    order: SortOrder = ASC
 }
 
 """
-Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
-The 'field' parameter must be a single name, or a list of names, of existing fields.
+Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
+The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
+for ascending, or "DESC", for descending.
 """
-input OrderByMovimento {
-    field: [FieldsMovimento]
-    ascending: Boolean = true
+input SortMovimento {
+    fields: [FieldsMovimento]
+    order: SortOrder = ASC
 }
 
 """
-Classification specifications. Use to set the fields by which the records will be ordered and if the order will be ascending or not.
-The 'field' parameter must be a single name, or a list of names, of existing fields.
+Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
+The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
+for ascending, or "DESC", for descending.
 """
-input OrderByConvenios {
-    field: [FieldsConvenios]
-    ascending: Boolean = true
+input SortConvenios {
+    fields: [FieldsConvenios]
+    order: SortOrder = ASC
 }

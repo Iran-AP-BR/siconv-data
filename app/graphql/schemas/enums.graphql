@@ -1,3 +1,6 @@
+"""
+List o field names for Municipios table.
+"""
 enum FieldsMunicipios {
     codigo_ibge
     nome_municipio
@@ -8,12 +11,18 @@ enum FieldsMunicipios {
     longitude
 }
 
+"""
+List o field names for Emendas table.
+"""
 enum FieldsEmendas {
     NR_EMENDA
     NOME_PARLAMENTAR
     TIPO_PARLAMENTAR
 }
 
+"""
+List o field names for Proponentes table.
+"""
 enum FieldsProponentes {
     IDENTIF_PROPONENTE
     NM_PROPONENTE
@@ -22,6 +31,9 @@ enum FieldsProponentes {
     COD_MUNIC_IBGE
 }
 
+"""
+List o field names for Movimento table.
+"""
 enum FieldsMovimento {
     NR_CONVENIO
     DATA
@@ -31,6 +43,9 @@ enum FieldsMovimento {
     NOME_FORNECEDOR
 }
 
+"""
+List o field names for Convenios table.
+"""
 enum FieldsConvenios {
     NR_CONVENIO 
     DIA_ASSIN_CONV
@@ -51,4 +66,12 @@ enum FieldsConvenios {
     MODALIDADE
     IDENTIF_PROPONENTE
     OBJETO_PROPOSTA
+}
+
+"""
+Sort order options.
+"""
+enum SortOrder {
+    ASC
+    DESC
 }

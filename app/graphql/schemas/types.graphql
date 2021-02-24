@@ -2,8 +2,14 @@ schema {
     query: Query
 }
 
+"""
+Personalized scalar "Datetime".
+"""
 scalar Datetime
 
+"""
+Defines a type for pagination attributes.
+"""
 type Pagination {
     page: Int!
     page_length: Int!
@@ -11,6 +17,9 @@ type Pagination {
     items_count: Int!
 }
 
+"""
+Defines a type "Municipio" associated to Municipios table.
+"""
 type Municipio {
     codigo_ibge: ID!
     nome_municipio: String
@@ -19,10 +28,14 @@ type Municipio {
     estado: String
     latitude: Float
     longitude: Float
-    PROPONENTES(page_specs: PageSpecs, filters: FilterProponentes, order_by: OrderByProponentes): ProponentesResult
-
+    PROPONENTES(page_specs: PageSpecs,
+                filters: FilterProponentes,
+                sort: SortProponentes): ProponentesResult
 }
 
+"""
+Defines a type "Movimento" associated to Movimento table.
+"""
 type Movimento {
     NR_CONVENIO: String!
     DATA: Datetime
@@ -33,16 +46,24 @@ type Movimento {
     CONVENIO: Convenio
 }
 
+"""
+Defines a type "Proponente" associated to Proponentes table.
+"""
 type Proponente {
     IDENTIF_PROPONENTE: ID!
     NM_PROPONENTE: String
     UF_PROPONENTE: String
     MUNIC_PROPONENTE: String
     COD_MUNIC_IBGE: String
-    CONVENIOS(page_specs: PageSpecs, filters: FilterConvenios, order_by: OrderByConvenios): ConveniosResult
     MUNICIPIO: Municipio
+    CONVENIOS(page_specs: PageSpecs,
+              filters: FilterConvenios,
+              sort: SortConvenios): ConveniosResult
 }
 
+"""
+Defines a type "Convenio" associated to Convenios table.
+"""
 type Convenio {
     NR_CONVENIO: ID!
     DIA_ASSIN_CONV: Datetime
@@ -63,76 +84,122 @@ type Convenio {
     MODALIDADE: String
     IDENTIF_PROPONENTE: String
     OBJETO_PROPOSTA: String
-    EMENDAS(page_specs: PageSpecs, filters: FilterEmendas, order_by: OrderByEmendas): EmendasResult
     PROPONENTE: Proponente
-    MOVIMENTO(page_specs: PageSpecs, filters: FilterMovimento, order_by: OrderByMovimento): MovimentoResult
+    EMENDAS(page_specs: PageSpecs,
+            filters: FilterEmendas,
+            sort: SortEmendas): EmendasResult
+    MOVIMENTO(page_specs: PageSpecs,
+              filters: FilterMovimento,
+              sort: SortMovimento): MovimentoResult
 }
 
+"""
+Defines a type "Emenda" associated to Emendas table.
+"""
 type Emenda {
     NR_EMENDA: ID!
     NOME_PARLAMENTAR: String
     TIPO_PARLAMENTAR: String
-    CONVENIOS(page_specs: PageSpecs, filters: FilterConvenios, order_by: OrderByConvenios): ConveniosResult
+    CONVENIOS(page_specs: PageSpecs, 
+              filters: FilterConvenios,
+              sort: SortConvenios): ConveniosResult
 }
 
+"""
+Defines a type "Atributos" which represents some standard attributes related to the dataset, 
+including "DATA_ATUAL" (current date).
+"""
+type Atributos {
+    errors: [String]
+    DATA_ATUAL: Datetime
+    SIT_CONVENIO: [String]
+    NATUREZA_JURIDICA: [String]
+    MODALIDADE: [String]
+}
+
+"""
+Defines a type intended to represent the result of Query for "Municipios", along with pagination. 
+If errors occur, it'll be informed in "errors" field.
+"""
 type MunicipiosResult {
     pagination: Pagination
     errors: [String]
     items: [Municipio]
 }
 
+"""
+Defines a type intended to represent the result of Query for "Convenios", along with pagination. 
+If errors occur, it'll be informed in "errors" field.
+"""
 type ConveniosResult {
     pagination: Pagination
     errors: [String]
     items: [Convenio]
 }
 
+"""
+Defines a type intended to represent the result of Query for "Emendas", along with pagination. 
+If errors occur, it'll be informed in "errors" field.
+"""
 type EmendasResult {
     pagination: Pagination
     errors: [String]
     items: [Emenda]
 }
 
+"""
+Defines a type intended to represent the result of Query for "Proponentes", along with pagination. 
+If errors occur, it'll be informed in "errors" field.
+"""
 type ProponentesResult {
     pagination: Pagination
     errors: [String]
     items: [Proponente]
 }
 
+"""
+Defines a type intended to represent the result of Query for "Movimento", along with pagination. 
+If errors occur, it'll be informed in "errors" field.
+"""
 type MovimentoResult {
     pagination: Pagination
     errors: [String]
     items: [Movimento]
 }
 
+"""
+Difines the queries.
+"""
 type Query {
     buscarMunicipios(
         page_specs: PageSpecs,
         filters: FilterMunicipios,
-        order_by: OrderByMunicipios
+        sort: SortMunicipios
         ): MunicipiosResult!
 
     buscarEmendas(
         page_specs: PageSpecs,
         filters: FilterEmendas,
-        order_by: OrderByEmendas
+        sort: SortEmendas
         ): EmendasResult!
 
     buscarProponentes(
         page_specs: PageSpecs,
         filters: FilterProponentes,
-        order_by: OrderByProponentes
+        sort: SortProponentes
         ): ProponentesResult!
 
     buscarMovimento(
         page_specs: PageSpecs,
         filters: FilterMovimento,
-        order_by: OrderByMovimento
+        sort: SortMovimento
         ): MovimentoResult!
 
     buscarConvenios(
         page_specs: PageSpecs,
         filters: FilterConvenios,
-        order_by: OrderByConvenios
+        sort: SortConvenios
         ): ConveniosResult!
+
+    buscarAtributos: Atributos!
 }

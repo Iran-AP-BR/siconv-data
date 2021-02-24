@@ -6,6 +6,7 @@ from .translators import *
 
 translators = {
     'eq': translator_eq,
+    'diff': translator_diff,
     'ct': translator_ct,
     'ctx': translator_ctx,
     'sw': translator_sw,
@@ -25,7 +26,7 @@ def filter_constructor(filters):
         expr = ''
         op = ''
         for cmd in cmds:
-            translated = translators[cmd](field, cmds[cmd])
+            translated = translators[cmd.lower()](field, cmds[cmd])
             expr += f' {op} {translated}'
             op = 'and'
         
@@ -37,17 +38,17 @@ def filter_constructor(filters):
     expr = ''
     opr = ''
     for f in filters:
-        if f in ['OR', 'AND']:
+        if f.upper() in ['OR', 'AND']:
             expr2 = ''
             opr2 = ''
             for d in filters[f]:
                 expr2 += f' {opr2} ({filter_constructor(d)})'
                 expr2 = expr2.strip()
-                opr2 = 'and' if f == 'AND' else 'or'
+                opr2 = 'and' if f.upper() == 'AND' else 'or'
                 
             opr3 = 'and' if expr else ''
             expr += f' {opr3} {expr2}'
-        elif f == 'NOT':
+        elif f.upper() == 'NOT':
             expr += f' {opr} not ({filter_constructor(filters[f])})'
         else:
             expr += f' {opr} {transl(f, filters[f])}'

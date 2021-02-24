@@ -2,10 +2,11 @@
 """resolvers.
    """
 
-def resolve(load_function, single=False, obj=None, info=None, page_specs=None, filters=None, order_by=None):
+def resolve(load_function, single=False, obj=None, info=None, page_specs=None, filters=None, sort=None):
     try:
 
-        data, pagination = load_function(page_specs=page_specs, filters=filters, parent=obj, order_by=order_by, use_pagination=False if single else True)
+        data, pagination = load_function(parent=obj, page_specs=page_specs, filters=filters, 
+                                         sort=sort, use_pagination=False if single else True)
         
         if not single:
              payload = {
@@ -13,7 +14,7 @@ def resolve(load_function, single=False, obj=None, info=None, page_specs=None, f
                   "items": data
             }
         else:
-            payload = data[0]
+            payload = data[0] if type(data) is list else data
 
 
     except Exception as error:
@@ -30,3 +31,4 @@ from .resolvers_emendas import *
 from .resolvers_proponentes import *
 from .resolvers_movimento import *
 from .resolvers_municipios import *
+from .resolvers_atributos import *

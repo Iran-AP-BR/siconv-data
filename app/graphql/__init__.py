@@ -37,6 +37,7 @@ query.set_field("buscarConvenios", resolve_convenios)
 query.set_field("buscarProponentes", resolve_proponentes)
 query.set_field("buscarMovimento", resolve_movimento)
 query.set_field("buscarMunicipios", resolve_municipios)
+query.set_field("buscarAtributos", resolve_atributos)
 
 convenio = ObjectType("Convenio")
 convenio.set_field("PROPONENTE", resolve_conv_proponente)

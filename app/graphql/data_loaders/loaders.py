@@ -10,6 +10,62 @@ import os
 from math import ceil
 
 
+convenios_settings = {
+    'table_name': 'convenios',
+    'dtypes': dtypes_convenios, 
+    'parse_dates': parse_dates_convenios,
+    'auxiliary_table': {
+                        'name': 'emendas_convenios',
+                        'dtypes': dtypes_emendas_convenios,
+                        'pivot_column': 'NR_CONVENIO',
+                        'data_column': 'NR_EMENDA',
+                        'aggregated_column': 'EMENDAS'
+                        }
+    }
+
+emendas_settings = {
+    'table_name': 'emendas',
+    'dtypes': dtypes_emendas, 
+    'parse_dates': [],
+    'auxiliary_table': {
+                        'name': 'emendas_convenios',
+                        'dtypes': dtypes_emendas_convenios,
+                        'pivot_column': 'NR_EMENDA',
+                        'data_column': 'NR_CONVENIO',
+                        'aggregated_column': 'CONVENIOS'
+                        }
+    }
+
+proponentes_settings = {
+    'table_name': 'proponentes',
+    'dtypes': dtypes_proponentes, 
+    'parse_dates': [],
+    'auxiliary_table': None
+    }
+
+movimento_settings = {
+    'table_name': 'movimento',
+    'dtypes': dtypes_movimento, 
+    'parse_dates': parse_dates_movimento,
+    'auxiliary_table': None,
+    'decimal': ','
+    }
+
+municipios_settings = {
+    'table_name': 'municipios',
+    'dtypes': dtypes_municipios, 
+    'parse_dates': [],
+    'auxiliary_table': None,
+    'decimal': '.'
+    }
+
+
+
+def get_current_date():
+    with open(os.path.join(app.config.get('DATA_FOLDER'), app.config.get('CURRENT_DATE_FILENAME')), 'r') as fd:
+        return fd.read().strip()
+
+
 class DataLoader(object):
     def __init__(self, table_name, dtypes, parse_dates=[], decimal=',', auxiliary_table=None):
         self.dtypes = dtypes
@@ -61,9 +117,7 @@ class DataLoader(object):
         return table
 
     def __load__(self):
-        # Get tables' current date
-        with open(os.path.join(app.config.get('DATA_FOLDER'), app.config.get('CURRENT_DATE_FILENAME')), 'r') as fd:
-            current_date = fd.read()
+        current_date = get_current_date()
 
         if app.config.get(self.__current_date_var__) != current_date or app.config.get(self.__table_name_var__) is None:
 
@@ -78,7 +132,7 @@ class DataLoader(object):
 
         return app.config.get(self.__table_name_var__)
 
-    def load(self, page_specs=None, use_pagination=True, filters=None, order_by=None):
+    def load(self, page_specs=None, use_pagination=True, filters=None, sort=None):
         conditions = filter_constructor(filters=filters)
         data_frame = self.__load__()
         pagination = None
@@ -86,10 +140,16 @@ class DataLoader(object):
         if conditions:
             data_frame = data_frame.query(conditions)
         
-        if order_by:
-            by = order_by.get('field')
-            ascending = order_by.get('ascending')
-            data_frame = data_frame.sort_values(by=by, ascending=ascending)
+        if sort:
+            by = sort.get('fields')
+            if sort.get('order').upper() == "ASC":
+                ascending = True
+            elif sort.get('order').upper() == "DESC":
+                ascending = False
+            else:
+                raise Exception('Sort order must be "ASC" or "DESC".')
+            
+            data_frame = data_frame.sort_values(by=by, ascending=ascending, key=lambda col: col.str.lower() if type(col) is str else col)
         
         if use_pagination and len(data_frame) > 0:
             items_count, page_count, idx_first, idx_last, page_specs = self.__pagination_(
@@ -111,18 +171,11 @@ class DataLoader(object):
 ##############################################
 
 
-def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, order_by=None):
+def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     params = {'AND': []}
-    auxiliary_table = {
-        'name': 'emendas_convenios',
-        'dtypes': dtypes_emendas_convenios,
-        'pivot_column': 'NR_CONVENIO',
-        'data_column': 'NR_EMENDA',
-        'aggregated_column': 'EMENDAS'
-    }
 
-    convenios_loader = DataLoader(table_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios, auxiliary_table=auxiliary_table)
+    convenios_loader = DataLoader(**convenios_settings)
 
     if parent:
 
@@ -165,7 +218,7 @@ def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=No
             filters = params
         
         convenios, pagination = convenios_loader.load(page_specs=page_specs, filters=filters, 
-                        order_by=order_by, use_pagination=use_pagination)
+                        sort=sort, use_pagination=use_pagination)
     else:
         emendas = []
         pagination = None
@@ -173,19 +226,11 @@ def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=No
     return convenios, pagination
 
 
-def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None, order_by=None):
+def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     params = {'AND': []}
 
-    auxiliary_table = {
-        'name': 'emendas_convenios',
-        'dtypes': dtypes_emendas_convenios,
-        'pivot_column': 'NR_EMENDA',
-        'data_column': 'NR_CONVENIO',
-        'aggregated_column': 'CONVENIOS'
-    }
-
-    emendas_loader = DataLoader(table_name='emendas', dtypes=dtypes_emendas, auxiliary_table=auxiliary_table)
+    emendas_loader = DataLoader(**emendas_settings)
 
     if parent:
         params['AND'] += [{'CONVENIOS': {'ctx': parent['NR_CONVENIO']}}]
@@ -210,7 +255,7 @@ def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None
             filters = params
 
         emendas, pagination = emendas_loader.load(page_specs=page_specs, filters=filters, 
-                                                  order_by=order_by, use_pagination=use_pagination)
+                                                  sort=sort, use_pagination=use_pagination)
     else:
         emendas = []
         pagination = None
@@ -218,10 +263,11 @@ def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None
     return emendas, pagination
 
 
-def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=None, order_by=None):
+def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     params = {'AND': []}
-    proponentes_loader = DataLoader(table_name='proponentes', dtypes=dtypes_proponentes)
+
+    proponentes_loader = DataLoader(**proponentes_settings)
 
     if parent:
 
@@ -253,15 +299,16 @@ def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=
     if params['AND']:
         filters = params
 
-    proponentes, pagination = proponentes_loader.load(page_specs=page_specs, filters=filters, order_by=order_by, use_pagination=use_pagination)
+    proponentes, pagination = proponentes_loader.load(page_specs=page_specs, filters=filters, sort=sort, use_pagination=use_pagination)
 
     return proponentes, pagination
 
 
-def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=None, order_by=None):
+def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     params = {'AND': []}
-    movimento_loader = DataLoader(table_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
+
+    movimento_loader = DataLoader(**movimento_settings)
 
     if parent:
         params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
@@ -279,15 +326,17 @@ def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=No
     if params['AND']:
         filters = params
   
-    movimento, pagination = movimento_loader.load(page_specs=page_specs, filters=filters, order_by=order_by, use_pagination=use_pagination)
+    movimento, pagination = movimento_loader.load(page_specs=page_specs, filters=filters, sort=sort, 
+                                                  use_pagination=use_pagination)
 
     return movimento, pagination
 
 
-def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=None, order_by=None):
+def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     params = {'AND': []}
-    municipios_loader = DataLoader(table_name='municipios', dtypes=dtypes_municipios, decimal='.')
+
+    municipios_loader = DataLoader(**municipios_settings)
 
     if parent:
         params['AND'] += [{'codigo_ibge': {'eq': parent['COD_MUNIC_IBGE']}}]
@@ -306,6 +355,21 @@ def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=N
     if params['AND']:
         filters = params
 
-    municipios, pagination = municipios_loader.load(page_specs=page_specs, filters=filters, order_by=order_by, use_pagination=use_pagination)
+    municipios, pagination = municipios_loader.load(page_specs=page_specs, filters=filters, sort=sort, use_pagination=use_pagination)
 
     return municipios, pagination
+
+def load_atributos(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+
+    convenios, _ = load_convenios(use_pagination=False)
+    
+    atributos = {'DATA_ATUAL': get_current_date(), 'SIT_CONVENIO': set(), 'NATUREZA_JURIDICA': set(), 'MODALIDADE': set()}
+    
+    for conv in convenios:
+        atributos['SIT_CONVENIO'].add(conv.get('SIT_CONVENIO') if conv.get('SIT_CONVENIO') else '#indefinido')
+        atributos['NATUREZA_JURIDICA'].add(conv.get('NATUREZA_JURIDICA') if conv.get('NATUREZA_JURIDICA') else '#indefinido')
+        atributos['MODALIDADE'].add(conv.get('MODALIDADE') if conv.get('MODALIDADE') else '#indefinido')
+
+    atributos = {key: list(atributos[key]) if key != 'DATA_ATUAL' else atributos[key] for key in atributos}
+
+    return atributos, None

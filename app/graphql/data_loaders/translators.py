@@ -6,31 +6,41 @@ import datetime
 def __prepare__(field, argument):
     if type(argument) is list:
         dtype = type(argument[0])
+    elif type(argument) is dict:
+        dtype = type(argument.get(list(argument.keys())[0]))
     else:
         dtype = type(argument)
-    
+
+
     if dtype is str:
         if type(argument) is list:
             argument = list(map(lambda x: x.lower(), argument))
+        elif type(argument) is dict:
+            argument = { arg[0].lower(): f"'{arg[1]}'" for arg in list(map(lambda x: (x, argument[x].lower()), argument))} 
         else:
             argument = f"'{argument.lower()}'"
     
         field = f'{field}.str.lower()'
     
     if dtype == datetime.datetime:
-        if type(argument) is not list:
+        if type(argument) is list:
+            pass
+        elif type(argument) is dict:
+            argument = { arg[0].lower(): f"'{arg[1]}'" for arg in list(map(lambda x: (x, argument[x]), argument))} 
+        else:
             argument = f"'{argument}'"
+
 
     return field, argument
 
 
 def translator_eq(field, argument):
     field, argument = __prepare__(field, argument)
+    return f"{field}=={argument}".strip()
 
-    if argument == "''":
-        return f"{field}.isna()".strip()
-    else:
-        return f"{field}=={argument}".strip()
+def translator_diff(field, argument):
+    field, argument = __prepare__(field, argument)
+    return f"{field}!={argument}".strip()
 
 
 def translator_gt(field, argument):
@@ -92,7 +102,7 @@ def translator_in(field, argument):
 
 
 def translator_bt(field, argument):
-    inf = f"'{argument[0]}'" if type(argument[0]) == str else argument[0]
-    sup = f"'{argument[1]}'" if type(argument[1]) == str else argument[1]
-    field, _ = __prepare__(field, argument)
+    field, argument = __prepare__(field, argument)
+    inf = argument.get('min')
+    sup = argument.get('max')
     return f"{field}.between({inf}, {sup})".strip()
