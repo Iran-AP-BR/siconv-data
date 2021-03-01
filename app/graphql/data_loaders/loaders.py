@@ -372,6 +372,7 @@ def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=N
 
     return municipios, pagination
 
+
 def load_atributos(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     convenios, _ = load_convenios(use_pagination=False)
@@ -383,6 +384,7 @@ def load_atributos(page_specs=None, use_pagination=True, filters=None, parent=No
         atributos['NATUREZA_JURIDICA'].add(conv.get('NATUREZA_JURIDICA') if conv.get('NATUREZA_JURIDICA') else '#indefinido')
         atributos['MODALIDADE'].add(conv.get('MODALIDADE') if conv.get('MODALIDADE') else '#indefinido')
 
-    atributos = {key: list(atributos[key]) if key != 'DATA_ATUAL' else atributos[key] for key in atributos}
+    atributos = {key: sorted(list(atributos[key])) if key != 'DATA_ATUAL' else atributos[key] for key in atributos}
 
     return atributos, None
+

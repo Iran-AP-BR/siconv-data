@@ -23,6 +23,7 @@ def create_app():
     import app.rest as rest
     import app.graphql as graphql
     import app.views as views
+    from app.graphql.resources import load_all
     
     rest.init_routes(app.config)
     graphql.init_routes()
@@ -30,18 +31,9 @@ def create_app():
     app.register_blueprint(views.blueprint)
     app.register_blueprint(rest.blueprint)
     app.register_blueprint(graphql.blueprint)
-    '''
-    from app.graphql.data_loaders.loaders import (DataLoader, dtypes_convenios, dtypes_emendas,
-                                                 dtypes_movimento, dtypes_municipios, dtypes_proponentes,
-                                                 parse_dates_convenios, parse_dates_movimento)
-    
+   
     with app.app_context():
-       DataLoader(table_name='convenios',dtypes=dtypes_convenios, parse_dates=parse_dates_convenios).load(use_pagination=False)
-       DataLoader(table_name='emendas',dtypes=dtypes_emendas).load(use_pagination=False)
-       DataLoader(table_name='proponentes',dtypes=dtypes_proponentes).load(use_pagination=False)
-       DataLoader(table_name='municipios',dtypes=dtypes_municipios).load(use_pagination=False)
-       DataLoader(table_name='movimento',dtypes=dtypes_movimento, parse_dates=parse_dates_movimento).load(use_pagination=False)
-    '''
+      load_all()
     #print(app.url_map)
     return app
 
