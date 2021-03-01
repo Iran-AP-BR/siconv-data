@@ -142,13 +142,26 @@ class DataLoader(object):
         
         if sort:
             by = sort.get('fields')
-            if sort.get('order').upper() == "ASC":
-                ascending = True
-            elif sort.get('order').upper() == "DESC":
-                ascending = False
-            else:
-                raise Exception('Sort order must be "ASC" or "DESC".')
+            order = sort.get('order')
             
+            if not by:
+                raise Exception('Sort: fields must not be None.')
+
+            if type(by) is not list:
+                by = [by]
+
+            if type(order) is not list:
+                order = [order]
+            
+            if order == []:
+                order = len(by)*['ASC']
+
+            ascending = list(map(lambda x: True if x.upper()=='ASC' else (False if x.upper()=='DESC' else None), order))
+            
+            if None in ascending:
+                raise Exception('Sort order must be "ASC" or "DESC".')
+            if len(by) != len(order):
+                raise Exception('Sort: fields and order length must be the same.')
             data_frame = data_frame.sort_values(by=by, ascending=ascending, key=lambda col: col.str.lower() if type(col) is str else col)
         
         if use_pagination and len(data_frame) > 0:

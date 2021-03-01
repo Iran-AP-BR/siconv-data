@@ -221,49 +221,49 @@ input FilterConvenios {
 """
 Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
 The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
-for ascending, or "DESC", for descending.
+for ascending, or "DESC", for descending, or a list of that values. The length of both fields and order must be the same.
 """
 input SortMunicipios {
     fields: [FieldsMunicipios]
-    order: SortOrder = ASC
+    order: [SortOrder!] = []
 }
 
 """
 Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
 The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
-for ascending, or "DESC", for descending.
+for ascending, or "DESC", for descending, or a list of that values. The length of both fields and order must be the same.
 """
 input SortEmendas {
     fields: [FieldsEmendas]
-    order: SortOrder = ASC
+    order: [SortOrder!] = []
 }
 
 """
 Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
 The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
-for ascending, or "DESC", for descending.
+for ascending, or "DESC", for descending, or a list of that values. The length of both fields and order must be the same.
 """
 input SortProponentes {
     fields: [FieldsProponentes]
-    order: SortOrder = ASC
+    order: [SortOrder!] = []
 }
 
 """
 Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
 The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
-for ascending, or "DESC", for descending.
+for ascending, or "DESC", for descending, or a list of that values. The length of both fields and order must be the same.
 """
 input SortMovimento {
     fields: [FieldsMovimento]
-    order: SortOrder = ASC
+    order: [SortOrder!] = []
 }
 
 """
 Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
 The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
-for ascending, or "DESC", for descending.
+for ascending, or "DESC", for descending, or a list of that values. The length of both fields and order must be the same.
 """
 input SortConvenios {
     fields: [FieldsConvenios]
-    order: SortOrder = ASC
+    order: [SortOrder!] = []
 }
