@@ -17,13 +17,15 @@ def create_app():
     
     from .config import Config
     app.config.from_object(Config())
-    
+
     CORS(app)
 
+    from .database import config_db
+    config_db(app)
+    
     import app.rest as rest
     import app.graphql as graphql
     import app.views as views
-    from app.graphql.resources import load_all
     
     rest.init_routes(app.config)
     graphql.init_routes()
@@ -32,8 +34,7 @@ def create_app():
     app.register_blueprint(rest.blueprint)
     app.register_blueprint(graphql.blueprint)
    
-    with app.app_context():
-      load_all()
+
     #print(app.url_map)
     return app
 
