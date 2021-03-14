@@ -32,7 +32,7 @@ class Convenio(db.Model):
 
     IDENTIF_PROPONENTE = db.Column(db.String, db.ForeignKey('proponentes.IDENTIF_PROPONENTE'), unique=False, nullable=False)
 
-    EMENDAS = db.relationship("Emenda", secondary=convenios_emendas_association, back_populates="CONVENIOS")
+    EMENDAS = db.relationship("Emenda", secondary=convenios_emendas_association, back_populates="CONVENIOS", lazy='dynamic')
     MOVIMENTOS = db. relationship("Movimento", backref="CONVENIO")
 
 

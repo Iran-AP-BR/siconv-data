@@ -16,7 +16,7 @@ class Municipio(db.Model):
     latitude = db.Column(db.Float, unique=False, nullable=True)
     longitude = db.Column(db.Float, unique=False, nullable=True)
 
-    PROPONENTES = db.relationship("Proponente", backref="MUNICIPIO")
+    PROPONENTES = db.relationship("Proponente", backref="MUNICIPIO", lazy='dynamic')
 
     def __init__(self, **kwargs):
 

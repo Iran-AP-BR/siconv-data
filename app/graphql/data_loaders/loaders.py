@@ -1,310 +1,215 @@
 # coding: utf-8
 """loaders.
-   """
+    """
 
-import pandas as pd
-from .dtypes import *
 from flask import current_app as app
 from app.graphql.data_loaders.filtering import filter_constructor
 import os
 from math import ceil
 
+from app.database import db, Convenio, Emenda, Movimento, Proponente, Municipio, DataAtual
 
-convenios_settings = {
-    'table_name': 'convenios',
-    'dtypes': dtypes_convenios, 
-    'parse_dates': parse_dates_convenios,
-    'auxiliary_table': {
-                        'name': 'emendas_convenios',
-                        'dtypes': dtypes_emendas_convenios,
-                        'pivot_column': 'NR_CONVENIO',
-                        'data_column': 'NR_EMENDA',
-                        'aggregated_column': 'EMENDAS'
-                        }
+from sqlalchemy import text, desc, func
+from sqlalchemy.orm import joinedload
+
+tables = {
+          'convenios': Convenio,
+          'emendas': Emenda,
+          'proponentes': Proponente,
+          'movimento': Movimento,
+          'municipios': Municipio
+          }
+
+def sort_constructor(sort):
+    if sort:
+        sort_fields = [text(field) for field in sort.get('fields')]
+        sort_fields = [(desc(field) if sort.get('order')[p].upper()=='DESC' else field) for p, field in enumerate(sort_fields)]
+    else:
+        sort_fields = [text('')]
+
+    return sort_fields
+
+def pagination_constructor(table_name=None, conditions=None, page_specs=None, items_count=None):
+    assert table_name is not None and conditions is not None and items_count is None or \
+           table_name is None and conditions is None and items_count is not None, \
+           'Assertion error in pagination_constructor.'
+
+    page = page_specs.get(
+        'page') if page_specs and page_specs.get('page') else 1
+    page_length = page_specs.get('page_length') if page_specs and page_specs.get(
+        'page_length') else app.config.get('GRAPHQL_DEFAULT_PAGE_LENGTH')
+    
+    if not items_count:
+        sql = f'select count(*) from {table_name}'
+        if conditions:
+            sql = f'{sql} where {conditions}'
+
+        items_count = db.engine.execute(text(sql)).scalar()
+
+    page_count = ceil(items_count / page_length)
+
+    if page > page_count:
+        page = page_count
+
+    if page == 0:
+        page_length = 0
+
+    offset = (page - 1) * page_length if page > 0 else 0
+
+    page_specs = {'page': page, 'page_length': page_length}
+
+    pagination = {
+        "page": page,
+        "page_length": page_length,
+        "page_count": page_count,
+        "items_count": items_count
     }
 
-emendas_settings = {
-    'table_name': 'emendas',
-    'dtypes': dtypes_emendas, 
-    'parse_dates': [],
-    'auxiliary_table': {
-                        'name': 'emendas_convenios',
-                        'dtypes': dtypes_emendas_convenios,
-                        'pivot_column': 'NR_EMENDA',
-                        'data_column': 'NR_CONVENIO',
-                        'aggregated_column': 'CONVENIOS'
-                        }
-    }
-
-proponentes_settings = {
-    'table_name': 'proponentes',
-    'dtypes': dtypes_proponentes, 
-    'parse_dates': [],
-    'auxiliary_table': None
-    }
-
-movimento_settings = {
-    'table_name': 'movimento',
-    'dtypes': dtypes_movimento, 
-    'parse_dates': parse_dates_movimento,
-    'auxiliary_table': None,
-    'decimal': ','
-    }
-
-municipios_settings = {
-    'table_name': 'municipios',
-    'dtypes': dtypes_municipios, 
-    'parse_dates': [],
-    'auxiliary_table': None,
-    'decimal': '.'
-    }
-
-
-
-def get_current_date():
-    with open(os.path.join(app.config.get('DATA_FOLDER'), app.config.get('CURRENT_DATE_FILENAME')), 'r') as fd:
-        return fd.read().strip()
-
+    return pagination, offset, page_specs
 
 class DataLoader(object):
-    def __init__(self, table_name, dtypes, parse_dates=[], decimal=',', auxiliary_table=None):
-        self.dtypes = dtypes
-        self.parse_dates = parse_dates
+    
+    def __init__(self, table_name, db):
         self.table_name = table_name
-        self.auxiliary_table = auxiliary_table
-        self.decimal = decimal
-        self.__current_date_var__ = f'{table_name.upper()}_CURRENT_DATE'
-        self.__table_name_var__ = table_name.upper()
+        self.table = tables[table_name]
+        self.db = db
 
-    def __pagination_(self, data_frame, page_specs):
-        page = page_specs.get(
-            'page') if page_specs and page_specs.get('page') else 1
-        page_length = page_specs.get('page_length') if page_specs and page_specs.get(
-            'page_length') else app.config.get('GRAPHQL_DEFAULT_PAGE_LENGTH')
-        items_count = len(data_frame)
-        page_count = ceil(items_count / page_length)
-
-        if page > page_count:
-            page = page_count
-
-        if page == 0:
-            page_length = 0
-
-        idx_first = (page - 1) * page_length if page > 0 else 0
-        idx_last = idx_first + page_length
-
-        page_specs = {'page': page, 'page_length': page_length}
-
-        return items_count, page_count, idx_first, idx_last, page_specs
-
-    def __read_data__(self, tbl_name=None, dtypes=None, parse_dates=[]):
-        tbl = pd.read_csv(os.path.join(app.config['DATA_FOLDER'], f'{tbl_name}{app.config["FILE_EXTENTION"]}'),
-                                                            compression=app.config['COMPRESSION_METHOD'], sep=';',
-                                                            decimal=self.decimal, dayfirst=True, dtype=dtypes,
-                                                            parse_dates=parse_dates)
+    def load(self, page_specs=None, filters=None, sort=None, use_pagination=True):
         
-        return tbl
-
-    def __aggregate_auxiliary_table__(self, table):
-
-        tbl = self.__read_data__(self.auxiliary_table.get('name'), self.auxiliary_table.get('dtypes'))
-
-        tbl[self.auxiliary_table.get('aggregated_column')] = tbl[[self.auxiliary_table.get('pivot_column'), self.auxiliary_table.get('data_column')]].groupby(by=self.auxiliary_table.get('pivot_column')).transform(lambda x: ','.join(x))
-        tbl = tbl[[self.auxiliary_table.get('pivot_column'), self.auxiliary_table.get('aggregated_column')]].drop_duplicates()
-
-        table = table.merge(tbl, how='left', on=self.auxiliary_table.get('pivot_column'))
-
-        return table
-
-    def __load__(self):
-        current_date = get_current_date()
-
-        if app.config.get(self.__current_date_var__) != current_date or app.config.get(self.__table_name_var__) is None:
-
-            tbl = self.__read_data__(self.table_name, self.dtypes, self.parse_dates)
-
-            if self.auxiliary_table:
-                tbl = self.__aggregate_auxiliary_table__(table=tbl)
-
-            app.config[self.__table_name_var__] = tbl.fillna('')
-
-            app.config[self.__current_date_var__] = current_date
-
-        return app.config.get(self.__table_name_var__)
-
-    def load(self, page_specs=None, use_pagination=True, filters=None, sort=None):
         conditions = filter_constructor(filters=filters)
-        data_frame = self.__load__()
         pagination = None
 
-        if conditions:
-            data_frame = data_frame.query(conditions)
+        sort_fields = sort_constructor(sort)
+
+        query = self.db.session.query(self.table).filter(text(conditions)).order_by(*sort_fields)
+
+        if use_pagination:
+            pagination, offset, page_specs = pagination_constructor(table_name=self.table_name, 
+                                                        conditions=conditions, page_specs=page_specs)
+
+            query = query.offset(offset).limit(page_specs.get('page_length'))
         
-        if sort:
-            by = sort.get('fields')
-            order = sort.get('order')
-            
-            if not by:
-                raise Exception('Sort: fields must not be None.')
 
-            if type(by) is not list:
-                by = [by]
-
-            if type(order) is not list:
-                order = [order]
-            
-            if order == []:
-                order = len(by)*['ASC']
-
-            ascending = list(map(lambda x: True if x.upper()=='ASC' else (False if x.upper()=='DESC' else None), order))
-            
-            if None in ascending:
-                raise Exception('Sort order must be "ASC" or "DESC".')
-            if len(by) != len(order):
-                raise Exception('Sort: fields and order length must be the same.')
-            data_frame = data_frame.sort_values(by=by, ascending=ascending, key=lambda col: col.str.lower() if type(col) is str else col)
+        data = query.all()
         
-        if use_pagination and len(data_frame) > 0:
-            items_count, page_count, idx_first, idx_last, page_specs = self.__pagination_(
-                data_frame, page_specs)
-            data_frame = data_frame[idx_first:idx_last]
-
-            pagination = {
-                "page": page_specs.get('page'),
-                "page_length": page_specs.get('page_length'),
-                "page_count": page_count,
-                "items_count": items_count
-            }
-
-        data_frame_dict = data_frame.to_dict('records')
-
-        return data_frame_dict, pagination
+        return data, pagination
 
 
 ##############################################
+
+def rows2dict(rows, attr=None):
+    data_dict = []
+    
+    for row in rows:
+        d = {}
+        if attr:
+            d = { mtm: getattr(row, mtm) for mtm in attr }
+
+        for column in row.__table__.columns:
+            d[column.name] = str(getattr(row, column.name))
+
+        data_dict += [d]
+
+    return data_dict
+
+def load_data(table_name=None, query=None, filters=None, sort=None, page_specs=None, use_pagination=True):
+    assert table_name is not None and query is None or \
+           table_name is None and query is not None, 'Assertion error in load_data.'
+
+    if table_name:
+        query = db.session.query(tables[table_name])
+
+    fltr = filter_constructor(filters=filters)
+    srt = sort_constructor(sort=sort)
+    query = query.filter(text(fltr)).order_by(*srt)
+    items_count = query.count()
+
+    offset = 0
+    if use_pagination:
+        pagination, offset, page_specs = pagination_constructor(page_specs=page_specs, items_count=items_count)
+        query = query.offset(offset).limit(page_specs.get('page_length'))
+
+    return query.all(), pagination
 
 
 def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     params = {'AND': []}
 
-    convenios_loader = DataLoader(**convenios_settings)
+    convenios_loader = DataLoader(table_name='convenios', db=db)
 
     if parent:
+        if parent.get('CONVENIOS'): #CONVENIOS
+            dta, pagination = load_data(query=parent.get('CONVENIOS'), filters=filters, sort=sort, page_specs=page_specs)
+            data_dict = rows2dict(dta, attr=['EMENDAS', 'PROPONENTE'])
 
-        if parent.get('NR_EMENDA'):
-            params['AND'] += [{'EMENDAS': {'ctx': parent['NR_EMENDA']}}]
-        elif parent.get('IDENTIF_PROPONENTE'):
+            return data_dict, pagination
+
+        elif parent.get('IDENTIF_PROPONENTE'): #CONVENIO
             params['AND'] += [{'IDENTIF_PROPONENTE': {'eq': parent['IDENTIF_PROPONENTE']}}]
-        else:
-            params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
 
+        elif parent.get('NR_CONVENIO'): #CONVENIO
+            params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
+    
+        else:
+            raise Exception('load_convenios: Unknown parent')
 
     if filters:
+        params['AND'] += [filters]
 
-        if filters.get('MOVIMENTO'):
+    if params['AND']:
+        filters = params
 
-            movimentos_dict, _ = load_movimento(filters=filters.pop('MOVIMENTO'), use_pagination=False)
-            params['AND'] += [{'NR_CONVENIO': {'in': [mov['NR_CONVENIO'] for mov in movimentos_dict]}}]
-    
-        if filters.get('EMENDAS'):
-
-            emendas_dict, _ = load_emendas(filters=filters.pop('EMENDAS'), use_pagination=False)
-            d = []
-            for emd in emendas_dict:
-                d += emd['CONVENIOS'].split(',')
-                
-            params['AND'] += [{'NR_CONVENIO': {'in': d}}]
-
-        if filters.get('PROPONENTE'):
-
-            proponentes_dict, _ = load_proponentes(filters=filters.pop('PROPONENTE'), use_pagination=False)
-            params['AND'] += [{'IDENTIF_PROPONENTE': {'in': [prop['IDENTIF_PROPONENTE'] for prop in proponentes_dict]}}]
-
-
-
-    if params is not None:   
-        if filters:
-            params['AND'] += [filters]
-
-        if params['AND']:
-            filters = params
-        
-        convenios, pagination = convenios_loader.load(page_specs=page_specs, filters=filters, 
+    data, pagination = convenios_loader.load(page_specs=page_specs, filters=filters, 
                         sort=sort, use_pagination=use_pagination)
-    else:
-        emendas = []
-        pagination = None
-
-    return convenios, pagination
+    
+    data_dict = rows2dict(data, attr=['EMENDAS', 'PROPONENTE'])
+    return data_dict, pagination
 
 
 def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     params = {'AND': []}
 
-    emendas_loader = DataLoader(**emendas_settings)
-
+    emendas_loader = DataLoader(table_name='emendas', db=db)
     if parent:
-        params['AND'] += [{'CONVENIOS': {'ctx': parent['NR_CONVENIO']}}]
+        if parent.get('NR_CONVENIO'): #EMENDAS
+            emds = [emd.NR_EMENDA for emd in parent.get('EMENDAS')]
+
+            params['AND'] += [{'NR_EMENDA': {'in': emds}}]
+        else:
+            raise Exception('load_emendas: Unknown parent')
 
     if filters:
-    
-        if filters.get('CONVENIOS'):
+        params['AND'] += [filters]
 
-            convenios_dict, _ = load_convenios(filters=filters.pop('CONVENIOS'), use_pagination=False)
-            d = []
-            for conv in convenios_dict:
-                d += conv['EMENDAS'].split(',')
-                
-            params['AND'] += [{'NR_EMENDA': {'in': d}}]
+    if params['AND']:
+        filters = params
 
 
-    if params is not None:   
-        if filters:
-            params['AND'] += [filters]
-
-        if params['AND']:
-            filters = params
-
-        emendas, pagination = emendas_loader.load(page_specs=page_specs, filters=filters, 
+    data, pagination = emendas_loader.load(page_specs=page_specs, filters=filters, 
                                                   sort=sort, use_pagination=use_pagination)
-    else:
-        emendas = []
-        pagination = None
 
-    return emendas, pagination
+    data_dict = rows2dict(data, attr=['CONVENIOS'])
+    
+    return data_dict, pagination
 
 
 def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     params = {'AND': []}
 
-    proponentes_loader = DataLoader(**proponentes_settings)
+    proponentes_loader = DataLoader(table_name='proponentes', db=db)
 
     if parent:
-
-        if parent.get('IDENTIF_PROPONENTE'):
-
+        if parent.get('IDENTIF_PROPONENTE'): #PROPONENTE
             params['AND'] += [{'IDENTIF_PROPONENTE': {'eq': parent['IDENTIF_PROPONENTE']}}]
 
-        else:
-
+        elif parent.get('codigo_ibge'): #PROPONENTES
             params['AND'] += [{'COD_MUNIC_IBGE': {'eq': parent['codigo_ibge']}}]
-
-
-    if filters:
-
-        if filters.get('CONVENIOS'):
-
-            convenios_dict, _ = load_convenios(filters=filters.pop('CONVENIOS'), use_pagination=False)
-            params['AND'] += [{'IDENTIF_PROPONENTE': {'in': [conv['IDENTIF_PROPONENTE'] for conv in convenios_dict]}}]
-
-        if filters.get('MUNICIPIOS'):
-
-            municipios_dict, _ = load_municipios(filters=filters.pop('MUNICIPIOS'), use_pagination=False)
-            params['AND'] += [{'COD_MUNIC_IBGE': {'in': [mun['codigo_ibge'] for mun in municipios_dict]}}]
-
+        
+        else:
+            raise Exception('load_proponentes: Unknown parent')
 
     if filters:
         params['AND'] += [filters]
@@ -312,55 +217,50 @@ def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=
     if params['AND']:
         filters = params
 
-    proponentes, pagination = proponentes_loader.load(page_specs=page_specs, filters=filters, sort=sort, use_pagination=use_pagination)
-
-    return proponentes, pagination
+    data, pagination = proponentes_loader.load(page_specs=page_specs, filters=filters,
+                                                  sort=sort, use_pagination=use_pagination)
+    data_dict = rows2dict(data, attr=['CONVENIOS', 'MUNICIPIO'])
+    return data_dict, pagination
 
 
 def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     params = {'AND': []}
 
-    movimento_loader = DataLoader(**movimento_settings)
+    movimento_loader = DataLoader(table_name='movimento', db=db)
 
     if parent:
-        params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
+        if parent.get('NR_CONVENIO'): #CONVENIO
+            params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
 
-    if filters:
-
-        if filters.get('CONVENIOS'):
-
-            convenios_dict, _ = load_convenios(filters=filters.pop('CONVENIOS'), use_pagination=False)
-            params['AND'] += [{'NR_CONVENIO': {'in': [conv['NR_CONVENIO'] for conv in convenios_dict]}}]
+        else:
+            raise Exception('load_movimento: Unknown parent')
 
     if filters:
         params['AND'] += [filters]
 
     if params['AND']:
         filters = params
-  
-    movimento, pagination = movimento_loader.load(page_specs=page_specs, filters=filters, sort=sort, 
+
+    data, pagination = movimento_loader.load(page_specs=page_specs, filters=filters, sort=sort, 
                                                   use_pagination=use_pagination)
 
-    return movimento, pagination
+    data_dict = rows2dict(data)
+    return data_dict, pagination
 
 
 def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     params = {'AND': []}
 
-    municipios_loader = DataLoader(**municipios_settings)
+    municipios_loader = DataLoader(table_name='municipios', db=db)
 
     if parent:
-        params['AND'] += [{'codigo_ibge': {'eq': parent['COD_MUNIC_IBGE']}}]
+        if parent.get('COD_MUNIC_IBGE'):
+            params['AND'] += [{'codigo_ibge': {'eq': parent['COD_MUNIC_IBGE']}}]
 
-    if filters:
-
-        if filters.get('PROPONENTE'):
-
-            proponentes_dict, _ = load_proponentes(filters=filters.pop('PROPONENTE'), use_pagination=False)
-            params['AND'] += [{'codigo_ibge': {'in': [prop['COD_MUNIC_IBGE'] for prop in proponentes_dict]}}]
-    
+        else:
+            raise Exception('load_municipio: Unknown parent')
 
     if filters:
         params['AND'] += [filters]
@@ -368,23 +268,14 @@ def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=N
     if params['AND']:
         filters = params
 
-    municipios, pagination = municipios_loader.load(page_specs=page_specs, filters=filters, sort=sort, use_pagination=use_pagination)
-
-    return municipios, pagination
+    data, pagination = municipios_loader.load(page_specs=page_specs, filters=filters,
+                                                sort=sort, use_pagination=use_pagination)
+    data_dict = rows2dict(data, attr=['PROPONENTES'])
+    return data_dict, pagination
 
 
 def load_atributos(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
-    convenios, _ = load_convenios(use_pagination=False)
-    
-    atributos = {'DATA_ATUAL': get_current_date(), 'SIT_CONVENIO': set(), 'NATUREZA_JURIDICA': set(), 'MODALIDADE': set()}
-    
-    for conv in convenios:
-        atributos['SIT_CONVENIO'].add(conv.get('SIT_CONVENIO') if conv.get('SIT_CONVENIO') else '#indefinido')
-        atributos['NATUREZA_JURIDICA'].add(conv.get('NATUREZA_JURIDICA') if conv.get('NATUREZA_JURIDICA') else '#indefinido')
-        atributos['MODALIDADE'].add(conv.get('MODALIDADE') if conv.get('MODALIDADE') else '#indefinido')
 
-    atributos = {key: sorted(list(atributos[key])) if key != 'DATA_ATUAL' else atributos[key] for key in atributos}
-
-    return atributos, None
+    return {}, None
 

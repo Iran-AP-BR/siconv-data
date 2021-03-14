@@ -5,22 +5,26 @@ import datetime
 
 def __prepare__(field, argument):
     if type(argument) is list:
-        dtype = type(argument[0])
+        dtype = type(argument[0]) if argument != [] else int
+    
     elif type(argument) is dict:
         dtype = type(argument.get(list(argument.keys())[0]))
+    
     else:
         dtype = type(argument)
 
 
     if dtype is str:
         if type(argument) is list:
-            argument = list(map(lambda x: x.lower(), argument))
+            argument = list(map(lambda x: f"'{x.lower()}'", argument))
+            
         elif type(argument) is dict:
             argument = { arg[0].lower(): f"'{arg[1]}'" for arg in list(map(lambda x: (x, argument[x].lower()), argument))} 
+        
         else:
             argument = f"'{argument.lower()}'"
     
-        field = f'{field}.str.lower()'
+        field = f'lower({field})'
     
     if dtype == datetime.datetime:
         if type(argument) is list:
@@ -65,44 +69,44 @@ def translator_lte(field, argument):
 
 def translator_ct(field, argument):
     field, argument = __prepare__(field, argument)
-    return f"{field}.str.contains({argument}, na=False)".strip()
+    argument = f"{argument[0]}%{argument[1:-1]}%{argument[-1]}"
+    return f"{field} like {argument}".strip()
 
 
 def translator_ctx(field, argument):
-    argument = "'\\b" + argument + "\\b'"
-    field, _ = __prepare__(field, '')
-    return f"{field}.str.contains(r{argument}, na=False, regex=True)".strip()
+    field, argument = __prepare__(field, argument)
+    argument2 = f"{argument[0]}% {argument[1:-1]} %{argument[-1]}"
+    return f"({field} like {argument2} or {field} == {argument})".strip()
 
 
 def translator_sw(field, argument):
     field, argument = __prepare__(field, argument)
-    return f"{field}.str.startswith({argument}, na=False)".strip()
+    argument = f"{argument[:-1]}%{argument[-1]}"
+    return f"{field} like {argument}".strip()
 
 
 def translator_swx(field, argument):
-    argument = "'^" + argument + "\\b.*'"
-    field, _ = __prepare__(field, argument)
-    return f"{field}.str.match(r{argument}, na=False)".strip()
-
+    field, argument = __prepare__(field, argument)
+    argument2 = f"{argument[:-1]} %{argument[-1]}"
+    return f"({field} like {argument2} or {field} == {argument})".strip()
 
 def translator_ew(field, argument):
     field, argument = __prepare__(field, argument)
-    return f"{field}.str.endswith({argument}, na=False)".strip()
-
+    argument = f"{argument[0]}%{argument[1:]}"
+    return f"{field} like {argument}".strip()
 
 def translator_ewx(field, argument):
-    argument = "'.*\\b" + argument + "$'"
-    field, _ = __prepare__(field, argument)
-    return f"{field}.str.match(r{argument}, na=False)".strip()
-
+    field, argument = __prepare__(field, argument)
+    argument2 = f"{argument[0]}% {argument[1:]}"
+    return f"({field} like {argument2} or {field} == {argument})".strip()
 
 def translator_in(field, argument):
     field, argument = __prepare__(field, argument)
-    return f"{field}.isin({argument})".strip()
-
+    argument = f"({','.join(argument)})"
+    return f"{field} in {argument}".strip()
 
 def translator_bt(field, argument):
     field, argument = __prepare__(field, argument)
     inf = argument.get('min')
     sup = argument.get('max')
-    return f"{field}.between({inf}, {sup})".strip()
+    return f"({field} >= {inf} and {field} <= {sup})".strip()

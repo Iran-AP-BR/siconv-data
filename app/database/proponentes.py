@@ -15,7 +15,7 @@ class Proponente(db.Model):
 
     COD_MUNIC_IBGE = db.Column(db.String, db.ForeignKey('municipios.codigo_ibge'), unique=False, nullable=False)
 
-    CONVENIOS = db.relationship("Convenio", backref="PROPONENTE")
+    CONVENIOS = db.relationship("Convenio", backref="PROPONENTE", lazy='dynamic')
 
     def __init__(self, **kwargs):
 

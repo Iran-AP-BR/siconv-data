@@ -32,29 +32,27 @@ def filter_constructor(filters):
         
         return f'{expr.strip()}'
 
-    if not filters:
-        return None
-
     expr = ''
-    opr = ''
-    for f in filters:
-        if f.upper() in ['OR', 'AND']:
-            expr2 = ''
-            opr2 = ''
-            for d in filters[f]:
-                expr2 += f' {opr2} ({filter_constructor(d)})'
-                expr2 = expr2.strip()
-                opr2 = 'and' if f.upper() == 'AND' else 'or'
-                
-            opr3 = 'and' if expr else ''
-            expr += f' {opr3} {expr2}'
-        elif f.upper() == 'NOT':
-            expr += f' {opr} not ({filter_constructor(filters[f])})'
-        else:
-            expr += f' {opr} {transl(f, filters[f])}'
-        
-        expr = expr.strip()
-        opr = 'and'
+    if filters:
+        opr = ''
+        for f in filters:
+            if f.upper() in ['OR', 'AND']:
+                expr2 = ''
+                opr2 = ''
+                for d in filters[f]:
+                    expr2 += f' {opr2} ({filter_constructor(d)})'
+                    expr2 = expr2.strip()
+                    opr2 = 'and' if f.upper() == 'AND' else 'or'
+                    
+                opr3 = 'and' if expr else ''
+                expr += f' {opr3} {expr2}'
+            elif f.upper() == 'NOT':
+                expr += f' {opr} not ({filter_constructor(filters[f])})'
+            else:
+                expr += f' {opr} {transl(f, filters[f])}'
+            
+            expr = expr.strip()
+            opr = 'and'
 
     return f'{expr}'
 

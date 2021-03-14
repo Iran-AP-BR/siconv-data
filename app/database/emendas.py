@@ -13,7 +13,7 @@ class Emenda(db.Model):
     NOME_PARLAMENTAR = db.Column(db.String, unique=False, nullable=False)
     TIPO_PARLAMENTAR = db.Column(db.String, unique=False, nullable=False)
 
-    CONVENIOS = db.relationship("Convenio", secondary=convenios_emendas_association, back_populates="EMENDAS")
+    CONVENIOS = db.relationship("Convenio", secondary=convenios_emendas_association, back_populates="EMENDAS", lazy='dynamic')
 
     def __init__(self, **kwargs):
 
