@@ -20,5 +20,3 @@ class Config(object):
 
 
     GRAPHQL_DEFAULT_PAGE_LENGTH = 50
-
-

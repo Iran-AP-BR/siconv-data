@@ -5,7 +5,59 @@ import requests
 import os
 from pathlib import Path
 from datetime import datetime
-from logger import app_log
+from app.logger import app_log
+
+
+parse_dates_convenios = ['DIA_ASSIN_CONV', 'DIA_PUBL_CONV',
+                         'DIA_INIC_VIGENC_CONV', 'DIA_FIM_VIGENC_CONV', 'DIA_LIMITE_PREST_CONTAS']
+parse_dates_movimento = ['DATA']
+
+dtypes_convenios = {
+    'NR_CONVENIO': 'object',
+    'DIA_ASSIN_CONV': 'object',
+    'SIT_CONVENIO': 'object',
+    'INSTRUMENTO_ATIVO': 'object',
+    'DIA_PUBL_CONV': 'object',
+    'DIA_INIC_VIGENC_CONV': 'object',
+    'DIA_FIM_VIGENC_CONV': 'object',
+    'DIA_LIMITE_PREST_CONTAS': 'object',
+    'VL_GLOBAL_CONV': 'float64',
+    'VL_REPASSE_CONV': 'float64',
+    'VL_CONTRAPARTIDA_CONV': 'float64',
+    'COD_ORGAO_SUP': 'object',
+    'DESC_ORGAO_SUP': 'object',
+    'NATUREZA_JURIDICA': 'object',
+    'COD_ORGAO': 'object',
+    'DESC_ORGAO': 'object',
+    'MODALIDADE': 'object',
+    'IDENTIF_PROPONENTE': 'object',
+    'OBJETO_PROPOSTA': 'object'
+}
+
+dtypes_movimento = {
+    'NR_CONVENIO': 'object',
+    'DATA': 'object',
+    'VALOR': 'float64',
+    'TIPO': 'object',
+    'IDENTIF_FORNECEDOR': 'object',
+    'NOME_FORNECEDOR': 'object'
+}
+
+dtypes_emendas_convenios = {
+    'NR_EMENDA': 'object',
+    'NR_CONVENIO': 'object',
+    'VALOR_REPASSE_EMENDA': 'float64'
+}
+
+dtypes_municipios = {
+    'codigo_ibge': 'object',
+    'nome_municipio': 'object',
+    'codigo_uf': 'object',
+    'uf': 'object',
+    'estado': 'object',
+    'latitude': 'float64',
+    'longitude': 'float64'
+}
 
 
 class UpToDateException(Exception):
@@ -34,7 +86,7 @@ emendas_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTA
 emendas_drop_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR', 'VALOR_REPASSE_EMENDA']
 emendas_final_cols = ['NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR']
 
-emendas_convenios_cols = ['NR_EMENDA', 'NR_CONVENIO']#, 'VALOR_REPASSE_EMENDA']
+emendas_convenios_cols = ['NR_EMENDA', 'NR_CONVENIO']
 
 desembolsos_cols = ["NR_CONVENIO", "DATA_DESEMBOLSO", "VL_DESEMBOLSADO"]
 contrapartidas_cols = ["NR_CONVENIO", "DT_INGRESSO_CONTRAPARTIDA", "VL_INGRESSO_CONTRAPARTIDA"]
@@ -213,7 +265,7 @@ def fix_movimento(movimento):
 
     return movimento
 
-def update():
+def update_csv():
     try:
         #fetch data
         data_atual, proponentes, convenios, emendas, emendas_convenios, movimento = fetch_data()
@@ -221,7 +273,7 @@ def update():
         #fix data
         movimento = fix_movimento(movimento)
         
-        app_log.info('[Updating]')
+        app_log.info('[Updating csv files]')
        
         feedback(label='-> proponentes', value='updating...')
         proponentes.to_csv(os.path.join(config.DATA_FOLDER, f'proponentes{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
@@ -262,10 +314,94 @@ def update():
     
     return True
 
+def update_database():
+    def read_data(tbl_name, compression=config.COMPRESSION_METHOD, dtypes=str, parse_dates=[], decimal=','):
+        tbl = pd.read_csv(os.path.join(config.DATA_FOLDER, f'{tbl_name}{config.FILE_EXTENTION}'),
+            compression=compression, sep=';', decimal=decimal, dayfirst=True, dtype=dtypes,
+            parse_dates=parse_dates)
+        return tbl
+
+    def get_current_date():
+        with open(os.path.join(config.DATA_FOLDER, config.CURRENT_DATE_FILENAME), 'r') as fd:
+            return fd.read()
+
+        return ''
+
+    try:      
+
+        app_log.info('[Updating Database]')
+
+        feedback(label='-> proponentes', value='updating...')
+        proponentes = read_data(tbl_name='proponentes')
+        proponentes.to_sql('proponentes', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        feedback(label='-> proponentes', value='Success!')
+
+        feedback(label='-> convenios', value='updating...')
+        convenios = read_data(tbl_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
+        convenios.to_sql('convenios', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        feedback(label='-> convenios', value='Success!')
+
+        feedback(label='-> situacoes', value='updating...')
+        situacoes = convenios[['SIT_CONVENIO']].drop_duplicates().fillna('#indefinido')
+        situacoes.to_sql('situacoes', con=engine, if_exists='replace', index=False)
+        feedback(label='-> situacoes', value='Success!')
+
+        feedback(label='-> naturezas', value='updating...')
+        naturezas = convenios[['NATUREZA_JURIDICA']].drop_duplicates().fillna('#indefinido')
+        naturezas.to_sql('naturezas', con=engine, if_exists='replace', index=False)
+        feedback(label='-> naturezas', value='Success!')
+
+        feedback(label='-> modalidades', value='updating...')
+        modalidades = convenios[['MODALIDADE']].drop_duplicates().fillna('#indefinido')
+        modalidades.to_sql('modalidades', con=engine, if_exists='replace', index=False)
+        feedback(label='-> modalidades', value='Success!')
+        
+        feedback(label='-> emendas', value='updating...')
+        emendas = read_data(tbl_name='emendas')
+        emendas.to_sql('emendas', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        feedback(label='-> emendas', value='Success!')
+
+        feedback(label='-> emendas_convenios', value='updating...')
+        emendas_convenios = read_data(tbl_name='emendas_convenios', dtypes=dtypes_emendas_convenios)
+        emendas_convenios.to_sql('convenios_emendas_association', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        feedback(label='-> emendas_convenios', value='Success!')
+
+        feedback(label='-> movimento', value='updating...')
+        movimento = read_data(tbl_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
+        movimento.to_sql('movimento', con=engine, if_exists='replace', index=True, index_label='MOV_ID', chunksize=chunksize)
+        feedback(label='-> movimento', value='Success!')
+
+        feedback(label='-> municipios', value='updating...')
+        municipios = read_data(tbl_name='municipios', dtypes=dtypes_municipios, decimal='.')
+        municipios.to_sql('municipios', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        feedback(label='-> municipios', value='Success!')
+
+        feedback(label='-> data atual', value='updating...')
+        data_atual = pd.DataFrame({'data_atual': [datetime_validation(get_current_date())]}).astype('datetime64[ns]')
+        data_atual.to_sql('data_atual', con=engine, if_exists='replace', index=False)
+        feedback(label='-> data atual', value='Success!')
+
+        app_log.info('Processo finalizado com sucesso!')
+
+    except UpToDateException as e:
+        app_log.info(e.message)
+        return True
+    except UnchangedException as e:
+        app_log.info(e.message)
+        return False
+    except Exception as e:
+        app_log.info(repr(e))
+        app_log.info('Processo falhou!')
+        return False
+    
+    return True
+
 
 if __name__ == '__main__':
     from apscheduler.schedulers.blocking import BlockingScheduler
     from dotenv import load_dotenv
+    from sqlalchemy.ext.declarative import declarative_base
+    import sqlalchemy as sa
 
     env_path = '/home/siconvdata/.env'
     if Path(env_path).is_file():
@@ -273,15 +409,36 @@ if __name__ == '__main__':
     else:
         load_dotenv(dotenv_path='.env', override=True)
 
-    from config import Config
+    from app.config import Config
 
     config = Config()
+
+    metadata = sa.MetaData()
+    Base = declarative_base(metadata=metadata)
+    engine = sa.create_engine(Config.SQLALCHEMY_DATABASE_URI)
     
+
+    chunksize = 100000
+
+ 
     sched = BlockingScheduler()
 
-    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='*/52', max_instances=1)
+    download_ok = False
+    database_ok = False
+
+    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='*/15', max_instances=1)
     def update_job():
-        if update() or datetime.utcnow().hour >= 21:
+        global download_ok
+        global database_ok
+
+        if not download_ok:
+            download_ok = update_csv()
+
+        if not database_ok:
+            database_ok = update_database()
+        
+        if (download_ok and database_ok) or datetime.utcnow().hour >= 21:
             sched.shutdown(wait=False)
 
     sched.start()
+
