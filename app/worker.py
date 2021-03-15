@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 from datetime import datetime
 from logger import app_log
-#from config import config
 
 
 class UpToDateException(Exception):
@@ -34,7 +33,8 @@ convenios_cols = ["NR_CONVENIO", "ID_PROPOSTA", "DIA_ASSIN_CONV", "SIT_CONVENIO"
 emendas_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR', 'VALOR_REPASSE_EMENDA']
 emendas_drop_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR', 'VALOR_REPASSE_EMENDA']
 emendas_final_cols = ['NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR']
-emendas_convenios_cols = ['NR_EMENDA', 'NR_CONVENIO', 'VALOR_REPASSE_EMENDA']
+
+emendas_convenios_cols = ['NR_EMENDA', 'NR_CONVENIO']#, 'VALOR_REPASSE_EMENDA']
 
 desembolsos_cols = ["NR_CONVENIO", "DATA_DESEMBOLSO", "VL_DESEMBOLSADO"]
 contrapartidas_cols = ["NR_CONVENIO", "DT_INGRESSO_CONTRAPARTIDA", "VL_INGRESSO_CONTRAPARTIDA"]
@@ -276,7 +276,7 @@ if __name__ == '__main__':
     from config import Config
 
     config = Config()
-
+    
     sched = BlockingScheduler()
 
     @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='*/52', max_instances=1)

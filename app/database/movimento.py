@@ -10,9 +10,9 @@ class Movimento(db.Model):
 
     __tablename__ = 'movimento'
 
-    id = db.Column(db.String, unique=True, nullable=False, primary_key=True)
+    MOV_ID = db.Column(db.BigInteger, unique=True, nullable=False, primary_key=True, autoincrement=True)
     DATA = db.Column(db.DateTime, unique=False, nullable=True)
-    VALOR = db.Column(db.Numeric(10, 2), unique=False, nullable=True)
+    VALOR = db.Column(db.Float, unique=False, nullable=True)
     TIPO = db.Column(db.String, unique=False, nullable=False)
     IDENTIF_FORNECEDOR = db.Column(db.String, unique=False, nullable=False)
     NOME_FORNECEDOR= db.Column(db.String, unique=False, nullable=False)
@@ -21,7 +21,6 @@ class Movimento(db.Model):
 
     def __init__(self, **kwargs):
 
-        self.id = uuid4().hex
         self.NR_CONVENIO = kwargs.get('NR_CONVENIO')
         self.DATA = kwargs.get('DATA')
         self.VALOR = kwargs.get('VALOR')

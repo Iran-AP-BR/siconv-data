@@ -3,3 +3,4 @@
 /logs
 **/csv_files
 /venv
+**/.pyc

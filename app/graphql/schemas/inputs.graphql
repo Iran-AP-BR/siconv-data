@@ -9,6 +9,14 @@ input FloatRange {
 """
 Defines the minimum and maximum limits of a range of values.
 """
+input IntRange {
+    min: Int
+    max: Int
+}
+
+"""
+Defines the minimum and maximum limits of a range of values.
+"""
 input StringRange {
     min: String
     max: String
@@ -44,6 +52,30 @@ input FloatFilters {
     gte: Float
     lt: Float
     lte: Float
+} 
+
+"""
+Defines a set of filtering commands to be applied to field of Int type.
+The commands may be:
+
+1. __eq__: _equal to_
+2. __diff__: _different_
+3. __in__: _in list_.
+4. __bt__: _between two values_. 
+5. __gt__: _greater than_
+6. __gte__: _greater than or equal to_
+7. __lt__: _less than_
+8. __lte__: _less than or equal to_
+"""
+input IntFilters {
+    eq: Int
+    diff: Int
+    in: [Int!]
+    bt: IntRange
+    gt: Int
+    gte: Int
+    lt: Int
+    lte: Int
 } 
 
 """
@@ -114,7 +146,6 @@ input PageSpecs {
     page_length: Int
 }
 
-
 """
 Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
 whose can be used to connect, aggregate or negate filter parts:
@@ -172,6 +203,7 @@ Defines a set of fields to be used in filtering. It includes special words (OR, 
 whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterMovimento {
+    MOV_ID: IntFilters
     NR_CONVENIO: StringFilters
     DATA: DateFilters
     VALOR: FloatFilters

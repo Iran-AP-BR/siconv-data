@@ -19,9 +19,9 @@ class Convenio(db.Model):
     DIA_INIC_VIGENC_CONV = db.Column(db.DateTime, unique=False, nullable=True)
     DIA_FIM_VIGENC_CONV = db.Column(db.DateTime, unique=False, nullable=True)
     DIA_LIMITE_PREST_CONTAS = db.Column(db.DateTime, unique=False, nullable=True)
-    VL_GLOBAL_CONV = db.Column(db.Numeric(10, 2), unique=False, nullable=True)
-    VL_REPASSE_CONV = db.Column(db.Numeric(10, 2), unique=False, nullable=True)
-    VL_CONTRAPARTIDA_CONV = db.Column(db.Numeric(10, 2), unique=False, nullable=True)
+    VL_GLOBAL_CONV = db.Column(db.Float, unique=False, nullable=True)
+    VL_REPASSE_CONV = db.Column(db.Float, unique=False, nullable=True)
+    VL_CONTRAPARTIDA_CONV = db.Column(db.Float, unique=False, nullable=True)
     COD_ORGAO_SUP = db.Column(db.String, unique=False, nullable=True)
     DESC_ORGAO_SUP = db.Column(db.String, unique=False, nullable=True)
     NATUREZA_JURIDICA = db.Column(db.String, unique=False, nullable=True)
@@ -33,7 +33,7 @@ class Convenio(db.Model):
     IDENTIF_PROPONENTE = db.Column(db.String, db.ForeignKey('proponentes.IDENTIF_PROPONENTE'), unique=False, nullable=False)
 
     EMENDAS = db.relationship("Emenda", secondary=convenios_emendas_association, back_populates="CONVENIOS", lazy='dynamic')
-    MOVIMENTOS = db. relationship("Movimento", backref="CONVENIO")
+    MOVIMENTOS = db. relationship("Movimento", backref="CONVENIO", lazy='dynamic')
 
 
     def __init__(self, **kwargs):

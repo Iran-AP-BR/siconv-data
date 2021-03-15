@@ -34,7 +34,6 @@ def __prepare__(field, argument):
         else:
             argument = f"'{argument}'"
 
-
     return field, argument
 
 

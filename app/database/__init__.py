@@ -15,3 +15,4 @@ from .movimento import Movimento
 from .proponentes import Proponente
 from .municipios import Municipio
 from .data_atual import DataAtual
+from .atributos import Situacao, Natureza, Modalidade

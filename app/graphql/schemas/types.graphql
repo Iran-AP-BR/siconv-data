@@ -37,6 +37,7 @@ type Municipio {
 Defines a type "Movimento" associated to Movimento table.
 """
 type Movimento {
+    MOV_ID: ID!
     NR_CONVENIO: String!
     DATA: Datetime
     VALOR: Float
@@ -73,9 +74,9 @@ type Convenio {
     DIA_INIC_VIGENC_CONV: Datetime
     DIA_FIM_VIGENC_CONV: Datetime
     DIA_LIMITE_PREST_CONTAS: Datetime
-    VL_GLOBAL_CONV: String
-    VL_REPASSE_CONV: String
-    VL_CONTRAPARTIDA_CONV: String
+    VL_GLOBAL_CONV: Float
+    VL_REPASSE_CONV: Float
+    VL_CONTRAPARTIDA_CONV: Float
     COD_ORGAO_SUP: String
     DESC_ORGAO_SUP: String
     NATUREZA_JURIDICA: String

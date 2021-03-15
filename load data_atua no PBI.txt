@@ -1,4 +1,0 @@
-let
-    Fonte =Table.FromColumns({Lines.FromBinary(Web.Contents("http://localhost:5000/data_atual", [Headers=[#"x-api-key"="000"]]), null, null, 65001)})
-in
-    Fonte

@@ -4,13 +4,9 @@
 
 from flask import current_app as app
 from app.graphql.data_loaders.filtering import filter_constructor
-import os
 from math import ceil
-
-from app.database import db, Convenio, Emenda, Movimento, Proponente, Municipio, DataAtual
-
+from app.database import db, Convenio, Emenda, Movimento, Proponente, Municipio, DataAtual, Situacao, Natureza, Modalidade
 from sqlalchemy import text, desc, func
-from sqlalchemy.orm import joinedload
 
 tables = {
           'convenios': Convenio,
@@ -21,7 +17,7 @@ tables = {
           }
 
 def sort_constructor(sort):
-    if sort:
+    if sort is not None:
         sort_fields = [text(field) for field in sort.get('fields')]
         sort_fields = [(desc(field) if sort.get('order')[p].upper()=='DESC' else field) for p, field in enumerate(sort_fields)]
     else:
@@ -39,7 +35,7 @@ def pagination_constructor(table_name=None, conditions=None, page_specs=None, it
     page_length = page_specs.get('page_length') if page_specs and page_specs.get(
         'page_length') else app.config.get('GRAPHQL_DEFAULT_PAGE_LENGTH')
     
-    if not items_count:
+    if items_count is None:
         sql = f'select count(*) from {table_name}'
         if conditions:
             sql = f'{sql} where {conditions}'
@@ -67,42 +63,12 @@ def pagination_constructor(table_name=None, conditions=None, page_specs=None, it
 
     return pagination, offset, page_specs
 
-class DataLoader(object):
-    
-    def __init__(self, table_name, db):
-        self.table_name = table_name
-        self.table = tables[table_name]
-        self.db = db
-
-    def load(self, page_specs=None, filters=None, sort=None, use_pagination=True):
-        
-        conditions = filter_constructor(filters=filters)
-        pagination = None
-
-        sort_fields = sort_constructor(sort)
-
-        query = self.db.session.query(self.table).filter(text(conditions)).order_by(*sort_fields)
-
-        if use_pagination:
-            pagination, offset, page_specs = pagination_constructor(table_name=self.table_name, 
-                                                        conditions=conditions, page_specs=page_specs)
-
-            query = query.offset(offset).limit(page_specs.get('page_length'))
-        
-
-        data = query.all()
-        
-        return data, pagination
-
-
-##############################################
-
 def rows2dict(rows, attr=None):
     data_dict = []
     
     for row in rows:
         d = {}
-        if attr:
+        if attr is not None:
             d = { mtm: getattr(row, mtm) for mtm in attr }
 
         for column in row.__table__.columns:
@@ -116,7 +82,8 @@ def load_data(table_name=None, query=None, filters=None, sort=None, page_specs=N
     assert table_name is not None and query is None or \
            table_name is None and query is not None, 'Assertion error in load_data.'
 
-    if table_name:
+
+    if table_name is not None:
         query = db.session.query(tables[table_name])
 
     fltr = filter_constructor(filters=filters)
@@ -134,148 +101,138 @@ def load_data(table_name=None, query=None, filters=None, sort=None, page_specs=N
 
 def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
-    params = {'AND': []}
+    pagination = None
+    
+    if parent is not None:
+        if parent.get('CONVENIOS') is not None:
+            data, pagination = load_data(query=parent.get('CONVENIOS'), filters=filters, sort=sort,
+                                        page_specs=page_specs, use_pagination=use_pagination)
 
-    convenios_loader = DataLoader(table_name='convenios', db=db)
-
-    if parent:
-        if parent.get('CONVENIOS'): #CONVENIOS
-            dta, pagination = load_data(query=parent.get('CONVENIOS'), filters=filters, sort=sort, page_specs=page_specs)
-            data_dict = rows2dict(dta, attr=['EMENDAS', 'PROPONENTE'])
-
-            return data_dict, pagination
-
-        elif parent.get('IDENTIF_PROPONENTE'): #CONVENIO
-            params['AND'] += [{'IDENTIF_PROPONENTE': {'eq': parent['IDENTIF_PROPONENTE']}}]
-
-        elif parent.get('NR_CONVENIO'): #CONVENIO
-            params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
+        elif parent.get('CONVENIO') is not None:
+            data = [parent.get('CONVENIO')]
     
         else:
             raise Exception('load_convenios: Unknown parent')
-
-    if filters:
-        params['AND'] += [filters]
-
-    if params['AND']:
-        filters = params
-
-    data, pagination = convenios_loader.load(page_specs=page_specs, filters=filters, 
-                        sort=sort, use_pagination=use_pagination)
     
-    data_dict = rows2dict(data, attr=['EMENDAS', 'PROPONENTE'])
+    else:
+        data, pagination = load_data(table_name='convenios', filters=filters, sort=sort,
+                                    page_specs=page_specs, use_pagination=use_pagination)
+
+
+    data_dict = rows2dict(data, attr=['EMENDAS', 'PROPONENTE', 'MOVIMENTOS'])
+
     return data_dict, pagination
 
 
 def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
-    params = {'AND': []}
+    pagination = None
+    
+    if parent is not None:
+        if parent.get('EMENDAS') is not None:
+            data, pagination = load_data(query=parent.get('EMENDAS'), filters=filters, sort=sort,
+                                        page_specs=page_specs, use_pagination=use_pagination)
 
-    emendas_loader = DataLoader(table_name='emendas', db=db)
-    if parent:
-        if parent.get('NR_CONVENIO'): #EMENDAS
-            emds = [emd.NR_EMENDA for emd in parent.get('EMENDAS')]
-
-            params['AND'] += [{'NR_EMENDA': {'in': emds}}]
+        elif parent.get('EMENDA') is not None:
+            data = [parent.get('EMENDA')]
+    
         else:
             raise Exception('load_emendas: Unknown parent')
+    
+    else:
+        data, pagination = load_data(table_name='emendas', filters=filters, sort=sort,
+                                    page_specs=page_specs, use_pagination=use_pagination)
 
-    if filters:
-        params['AND'] += [filters]
-
-    if params['AND']:
-        filters = params
-
-
-    data, pagination = emendas_loader.load(page_specs=page_specs, filters=filters, 
-                                                  sort=sort, use_pagination=use_pagination)
 
     data_dict = rows2dict(data, attr=['CONVENIOS'])
-    
-    return data_dict, pagination
 
+    return data_dict, pagination
 
 def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
-    params = {'AND': []}
+    pagination = None
+    
+    if parent is not None:
+        if parent.get('PROPONENTES') is not None:
+            data, pagination = load_data(query=parent.get('PROPONENTES'), filters=filters, sort=sort,
+                                        page_specs=page_specs, use_pagination=use_pagination)
 
-    proponentes_loader = DataLoader(table_name='proponentes', db=db)
-
-    if parent:
-        if parent.get('IDENTIF_PROPONENTE'): #PROPONENTE
-            params['AND'] += [{'IDENTIF_PROPONENTE': {'eq': parent['IDENTIF_PROPONENTE']}}]
-
-        elif parent.get('codigo_ibge'): #PROPONENTES
-            params['AND'] += [{'COD_MUNIC_IBGE': {'eq': parent['codigo_ibge']}}]
-        
+        elif parent.get('PROPONENTE') is not None:
+            data = [parent.get('PROPONENTE')]
+    
         else:
             raise Exception('load_proponentes: Unknown parent')
+    
+    else:
+        data, pagination = load_data(table_name='proponentes', filters=filters, sort=sort,
+                                    page_specs=page_specs, use_pagination=use_pagination)
 
-    if filters:
-        params['AND'] += [filters]
 
-    if params['AND']:
-        filters = params
-
-    data, pagination = proponentes_loader.load(page_specs=page_specs, filters=filters,
-                                                  sort=sort, use_pagination=use_pagination)
     data_dict = rows2dict(data, attr=['CONVENIOS', 'MUNICIPIO'])
+
     return data_dict, pagination
 
 
 def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
-    params = {'AND': []}
-
-    movimento_loader = DataLoader(table_name='movimento', db=db)
-
-    if parent:
-        if parent.get('NR_CONVENIO'): #CONVENIO
-            params['AND'] += [{'NR_CONVENIO': {'eq': parent['NR_CONVENIO']}}]
+    pagination = None
+    
+    if parent is not None:
+        if parent.get('MOVIMENTOS') is not None:
+            data, pagination = load_data(query=parent.get('MOVIMENTOS'), filters=filters, sort=sort,
+                                        page_specs=page_specs, use_pagination=use_pagination)
 
         else:
             raise Exception('load_movimento: Unknown parent')
+    
+    else:
+        data, pagination = load_data(table_name='movimento', filters=filters, sort=sort,
+                                    page_specs=page_specs, use_pagination=use_pagination)
 
-    if filters:
-        params['AND'] += [filters]
-
-    if params['AND']:
-        filters = params
-
-    data, pagination = movimento_loader.load(page_specs=page_specs, filters=filters, sort=sort, 
-                                                  use_pagination=use_pagination)
-
-    data_dict = rows2dict(data)
+    data_dict = rows2dict(data, attr=['CONVENIO'])
+    
     return data_dict, pagination
-
 
 def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
-    params = {'AND': []}
-
-    municipios_loader = DataLoader(table_name='municipios', db=db)
-
-    if parent:
-        if parent.get('COD_MUNIC_IBGE'):
-            params['AND'] += [{'codigo_ibge': {'eq': parent['COD_MUNIC_IBGE']}}]
+    pagination = None
+    
+    if parent is not None:
+        if parent.get('MUNICIPIO') is not None:
+            data = [parent.get('MUNICIPIO')]
 
         else:
-            raise Exception('load_municipio: Unknown parent')
+            raise Exception('load_municipios: Unknown parent')
+    
+    else:
+        data, pagination = load_data(table_name='municipios', filters=filters, sort=sort,
+                                    page_specs=page_specs, use_pagination=use_pagination)
 
-    if filters:
-        params['AND'] += [filters]
-
-    if params['AND']:
-        filters = params
-
-    data, pagination = municipios_loader.load(page_specs=page_specs, filters=filters,
-                                                sort=sort, use_pagination=use_pagination)
     data_dict = rows2dict(data, attr=['PROPONENTES'])
+    
     return data_dict, pagination
 
 
 def load_atributos(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+    
+    atributos = {
+                 'DATA_ATUAL': db.session.query(DataAtual).first().DATA_ATUAL,
+                 'SIT_CONVENIO': [
+                                  situacao.SIT_CONVENIO 
+                                  for situacao in 
+                                  db.session.query(Situacao).order_by(text('SIT_CONVENIO')).all()
+                                  ],
+                 'NATUREZA_JURIDICA': [
+                                       natureza.NATUREZA_JURIDICA
+                                       for natureza in 
+                                       db.session.query(Natureza).order_by(text('NATUREZA_JURIDICA')).all()
+                                       ],
+                 'MODALIDADE': [
+                                modalidade.MODALIDADE
+                                for modalidade in
+                                db.session.query(Modalidade).order_by(text('MODALIDADE')).all()
+                                ]
+                 }
 
-
-    return {}, None
+    return atributos, None
 
