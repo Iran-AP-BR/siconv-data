@@ -6,7 +6,7 @@ from flask import Blueprint
 from ariadne import load_schema_from_path, make_executable_schema, ObjectType, ScalarType
 from .resolvers import *
 import os
-import dateutil
+from dateutil.parser import parse as date_parse
 from datetime import datetime
 
 #GRAPHQL_BLUEPRINT_NAME = 'graphql'
@@ -29,7 +29,7 @@ def serialize_datetime(value):
 
 @datetime_scalar.value_parser
 def parse_datetime_value(value):
-    return dateutil.parser.parse(value)
+    return date_parse(value)
 
 
 query = ObjectType("Query")

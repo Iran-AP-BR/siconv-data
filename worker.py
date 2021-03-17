@@ -130,8 +130,8 @@ def get_last_date():
         return None
 
 def fetch_data():
-    #url = 'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
-    url = 'C:\\Users\\jrans\\Desktop\\git\\siconv\\downloads'
+    url = 'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
+    #url = 'C:\\Users\\joseias\\Desktop\\git\\siconv\\downloads'
 
     Path(config.DATA_FOLDER).mkdir(parents=True, exist_ok=True)
 
@@ -427,7 +427,7 @@ if __name__ == '__main__':
 
     chunksize = 100000
 
-    '''
+    
     sched = BlockingScheduler()
 
     download_ok = False
@@ -451,4 +451,5 @@ if __name__ == '__main__':
     '''
     update_csv()
     update_database()
+    '''
 

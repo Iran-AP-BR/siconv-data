@@ -102,7 +102,7 @@ def load_data(table_name=None, query=None, filters=None, sort=None, page_specs=N
 def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
 
     pagination = None
-    
+
     if parent is not None:
         if parent.get('CONVENIOS') is not None:
             data, pagination = load_data(query=parent.get('CONVENIOS'), filters=filters, sort=sort,

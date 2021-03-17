@@ -158,7 +158,6 @@ input FilterMunicipios {
     estado: StringFilters
     latitude: FloatFilters
     longitude: FloatFilters
-    PROPONENTE: FilterProponentes
 
     OR: [FilterMunicipios!]
     AND: [FilterMunicipios!]
@@ -173,7 +172,6 @@ input FilterEmendas {
     NR_EMENDA: StringFilters,
     NOME_PARLAMENTAR: StringFilters
     TIPO_PARLAMENTAR: StringFilters
-    CONVENIOS: FilterConvenios
 
     OR: [FilterEmendas!]
     AND: [FilterEmendas!]
@@ -190,8 +188,6 @@ input FilterProponentes {
     UF_PROPONENTE: StringFilters
     MUNIC_PROPONENTE: StringFilters
     COD_MUNIC_IBGE: StringFilters
-    CONVENIOS: FilterConvenios
-    MUNICIPIOS: FilterMunicipios
 
     OR: [FilterProponentes!]
     AND: [FilterProponentes!]
@@ -210,7 +206,6 @@ input FilterMovimento {
     TIPO: StringFilters
     IDENTIF_FORNECEDOR: StringFilters
     NOME_FORNECEDOR: StringFilters
-    CONVENIOS: FilterConvenios
 
     OR: [FilterMovimento!]
     AND: [FilterMovimento!]
@@ -241,9 +236,6 @@ input FilterConvenios {
     MODALIDADE: StringFilters
     IDENTIF_PROPONENTE: StringFilters
     OBJETO_PROPOSTA: StringFilters
-    EMENDAS: FilterEmendas
-    PROPONENTE: FilterProponentes
-    MOVIMENTO: FilterMovimento
 
     OR: [FilterConvenios!]
     AND: [FilterConvenios!]
