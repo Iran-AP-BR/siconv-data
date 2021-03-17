@@ -39,7 +39,7 @@ def __prepare__(field, argument):
 
 def translator_eq(field, argument):
     field, argument = __prepare__(field, argument)
-    return f"{field}=={argument}".strip()
+    return f"{field}={argument}".strip()
 
 def translator_diff(field, argument):
     field, argument = __prepare__(field, argument)
