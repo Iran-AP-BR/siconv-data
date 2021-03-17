@@ -35,6 +35,7 @@ dtypes_convenios = {
 }
 
 dtypes_movimento = {
+    'MOV_ID': 'object',
     'NR_CONVENIO': 'object',
     'DATA': 'object',
     'VALOR': 'float64',
@@ -45,8 +46,7 @@ dtypes_movimento = {
 
 dtypes_emendas_convenios = {
     'NR_EMENDA': 'object',
-    'NR_CONVENIO': 'object',
-    'VALOR_REPASSE_EMENDA': 'float64'
+    'NR_CONVENIO': 'object'
 }
 
 dtypes_municipios = {
@@ -82,15 +82,15 @@ proponentes_drop = ["NM_PROPONENTE", "UF_PROPONENTE", "MUNIC_PROPONENTE", "COD_M
 propostas_cols = ["ID_PROPOSTA", "UF_PROPONENTE", "MUNIC_PROPONENTE", "COD_MUNIC_IBGE", "COD_ORGAO_SUP", "DESC_ORGAO_SUP", "NATUREZA_JURIDICA", "COD_ORGAO", "DESC_ORGAO", "MODALIDADE", "IDENTIF_PROPONENTE", "OBJETO_PROPOSTA"]
 convenios_cols = ["NR_CONVENIO", "ID_PROPOSTA", "DIA_ASSIN_CONV", "SIT_CONVENIO", "INSTRUMENTO_ATIVO", "DIA_PUBL_CONV", "DIA_INIC_VIGENC_CONV", "DIA_FIM_VIGENC_CONV", "DIA_LIMITE_PREST_CONTAS", "VL_GLOBAL_CONV", "VL_REPASSE_CONV", "VL_CONTRAPARTIDA_CONV"]
 
-emendas_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR', 'VALOR_REPASSE_EMENDA']
-emendas_drop_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR', 'VALOR_REPASSE_EMENDA']
+emendas_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR']
+emendas_drop_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR']
 emendas_final_cols = ['NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR']
 
 emendas_convenios_cols = ['NR_EMENDA', 'NR_CONVENIO']
 
-desembolsos_cols = ["NR_CONVENIO", "DATA_DESEMBOLSO", "VL_DESEMBOLSADO"]
+desembolsos_cols = ["ID_DESEMBOLSO", "NR_CONVENIO", "DATA_DESEMBOLSO", "VL_DESEMBOLSADO"]
 contrapartidas_cols = ["NR_CONVENIO", "DT_INGRESSO_CONTRAPARTIDA", "VL_INGRESSO_CONTRAPARTIDA"]
-pagamentos_cols = ["NR_CONVENIO", "IDENTIF_FORNECEDOR", "NOME_FORNECEDOR", "DATA_PAG", "VL_PAGO"]
+pagamentos_cols = ["NR_MOV_FIN", "NR_CONVENIO", "IDENTIF_FORNECEDOR", "NOME_FORNECEDOR", "DATA_PAG", "VL_PAGO"]
 
 def datetime_validation(txt):
     try:
@@ -130,7 +130,8 @@ def get_last_date():
         return None
 
 def fetch_data():
-    url = 'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
+    #url = 'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
+    url = 'C:\\Users\\jrans\\Desktop\\git\\siconv\\downloads'
 
     Path(config.DATA_FOLDER).mkdir(parents=True, exist_ok=True)
 
@@ -213,17 +214,23 @@ def fetch_data():
     feedback(label='-> movimento', value='transforming...')
     convs = convenios['NR_CONVENIO'].unique()
     desembolsos = desembolsos[desembolsos['NR_CONVENIO'].isin(convs) & desembolsos['DATA_DESEMBOLSO'].notna()]
-    desembolsos.columns = ['NR_CONVENIO', 'DATA', 'VALOR']
+    desembolsos.columns = ['MOV_ID', 'NR_CONVENIO', 'DATA', 'VALOR']
+    desembolsos['MOV_ID'] = 'D' + desembolsos['MOV_ID']
     desembolsos['TIPO'] = 'D'
+    
     contrapartidas = contrapartidas[contrapartidas['NR_CONVENIO'].isin(convs) & contrapartidas['DT_INGRESSO_CONTRAPARTIDA'].notna()]
     contrapartidas.columns = ['NR_CONVENIO', 'DATA', 'VALOR']
+    contrapartidas['MOV_ID'] = 'C' + contrapartidas.index.astype(str)
     contrapartidas['TIPO'] = 'C'
+
     pagamentos = pagamentos[pagamentos['NR_CONVENIO'].isin(convs) & pagamentos['DATA_PAG'].notna()]
-    pagamentos.columns = ['NR_CONVENIO', 'IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR', 'DATA', 'VALOR']
-    pagamentos.loc[pagamentos['IDENTIF_FORNECEDOR'].isna(), 'IDENTIF_FORNECEDOR'] = '#N/D'
-    pagamentos.loc[pagamentos['NOME_FORNECEDOR'].isna(), 'NOME_FORNECEDOR'] = '#N/D'
+    pagamentos.columns = ['MOV_ID', 'NR_CONVENIO', 'IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR', 'DATA', 'VALOR']
+    pagamentos['MOV_ID'] = 'P' + pagamentos['MOV_ID']
     pagamentos['TIPO'] = 'P'
+
     movimento = pd.concat([desembolsos, contrapartidas, pagamentos], ignore_index=True, sort=False)
+    movimento.loc[movimento['IDENTIF_FORNECEDOR'].isna(), 'IDENTIF_FORNECEDOR'] = '#N/D'
+    movimento.loc[movimento['NOME_FORNECEDOR'].isna(), 'NOME_FORNECEDOR'] = '#N/D'
     feedback(label='-> movimento', value='Success!')
 
     return data_atual, proponentes, convenios, emendas, emendas_convenios, movimento
@@ -368,7 +375,7 @@ def update_database():
 
         feedback(label='-> movimento', value='updating...')
         movimento = read_data(tbl_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
-        movimento.to_sql('movimento', con=engine, if_exists='replace', index=True, index_label='MOV_ID', chunksize=chunksize)
+        movimento.to_sql('movimento', con=engine, if_exists='replace', index=False, chunksize=chunksize)
         feedback(label='-> movimento', value='Success!')
 
         feedback(label='-> municipios', value='updating...')
@@ -420,7 +427,7 @@ if __name__ == '__main__':
 
     chunksize = 100000
 
- 
+    '''
     sched = BlockingScheduler()
 
     download_ok = False
@@ -441,4 +448,7 @@ if __name__ == '__main__':
             sched.shutdown(wait=False)
 
     sched.start()
+    '''
+    update_csv()
+    update_database()
 

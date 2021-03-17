@@ -7,6 +7,7 @@ from ariadne import load_schema_from_path, make_executable_schema, ObjectType, S
 from .resolvers import *
 import os
 import dateutil
+from datetime import datetime
 
 #GRAPHQL_BLUEPRINT_NAME = 'graphql'
 #GRAPHQL_BLUEPRINT_URL_PREFIX = '/graphql'
@@ -15,6 +16,7 @@ import dateutil
 blueprint = Blueprint('graphql', __name__, url_prefix='/graphql')
 
 datetime_scalar = ScalarType("Datetime")
+
 @datetime_scalar.serializer
 def serialize_datetime(value):
     try:
@@ -62,6 +64,6 @@ type_defs = load_schema_from_path(os.path.join(
 
 
 schema = make_executable_schema(
-    type_defs, query, convenio, proponente, emenda, movimento, municipio, datetime_scalar)
+    type_defs, datetime_scalar, query, convenio, proponente, emenda, movimento, municipio)
 
 from app.graphql.routes import init_routes

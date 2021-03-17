@@ -63,16 +63,16 @@ def pagination_constructor(table_name=None, conditions=None, page_specs=None, it
 
     return pagination, offset, page_specs
 
-def rows2dict(rows, attr=None):
+def rows2dict(rows, attrs=None):
     data_dict = []
     
     for row in rows:
         d = {}
-        if attr is not None:
-            d = { mtm: getattr(row, mtm) for mtm in attr }
-
+        if attrs is not None:
+            d = { attr: getattr(row, attr) for attr in attrs }
+        
         for column in row.__table__.columns:
-            d[column.name] = str(getattr(row, column.name))
+            d[column.name] = getattr(row, column.name)
 
         data_dict += [d]
 
@@ -119,7 +119,7 @@ def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=No
                                     page_specs=page_specs, use_pagination=use_pagination)
 
 
-    data_dict = rows2dict(data, attr=['EMENDAS', 'PROPONENTE', 'MOVIMENTOS'])
+    data_dict = rows2dict(data, attrs=['EMENDAS', 'PROPONENTE', 'MOVIMENTOS'])
 
     return data_dict, pagination
 
@@ -144,7 +144,7 @@ def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None
                                     page_specs=page_specs, use_pagination=use_pagination)
 
 
-    data_dict = rows2dict(data, attr=['CONVENIOS'])
+    data_dict = rows2dict(data, attrs=['CONVENIOS'])
 
     return data_dict, pagination
 
@@ -168,7 +168,7 @@ def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=
                                     page_specs=page_specs, use_pagination=use_pagination)
 
 
-    data_dict = rows2dict(data, attr=['CONVENIOS', 'MUNICIPIO'])
+    data_dict = rows2dict(data, attrs=['CONVENIOS', 'MUNICIPIO'])
 
     return data_dict, pagination
 
@@ -189,7 +189,7 @@ def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=No
         data, pagination = load_data(table_name='movimento', filters=filters, sort=sort,
                                     page_specs=page_specs, use_pagination=use_pagination)
 
-    data_dict = rows2dict(data, attr=['CONVENIO'])
+    data_dict = rows2dict(data, attrs=['CONVENIO'])
     
     return data_dict, pagination
 
@@ -208,7 +208,7 @@ def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=N
         data, pagination = load_data(table_name='municipios', filters=filters, sort=sort,
                                     page_specs=page_specs, use_pagination=use_pagination)
 
-    data_dict = rows2dict(data, attr=['PROPONENTES'])
+    data_dict = rows2dict(data, attrs=['PROPONENTES'])
     
     return data_dict, pagination
 
