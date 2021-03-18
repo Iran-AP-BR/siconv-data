@@ -131,7 +131,7 @@ def get_last_date():
 
 def fetch_data():
     url = 'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
-    #url = 'C:\\Users\\joseias\\Desktop\\git\\siconv\\downloads'
+    #url = 'C:\\Users\\jrans\\Desktop\\git\\siconv\\downloads'
 
     Path(config.DATA_FOLDER).mkdir(parents=True, exist_ok=True)
 
@@ -322,11 +322,22 @@ def update_csv():
     return True
 
 def update_database():
-    def read_data(tbl_name, compression=config.COMPRESSION_METHOD, dtypes=str, parse_dates=[], decimal=','):
+    def read_data(tbl_name, compression=config.COMPRESSION_METHOD, dtypes=str, parse_dates=[], 
+                  decimal=',', chunksize=None, usecols=None):
         tbl = pd.read_csv(os.path.join(config.DATA_FOLDER, f'{tbl_name}{config.FILE_EXTENTION}'),
             compression=compression, sep=';', decimal=decimal, dayfirst=True, dtype=dtypes,
-            parse_dates=parse_dates)
+            parse_dates=parse_dates, chunksize=chunksize, usecols=usecols)
+        
         return tbl
+
+    def write_db(data_frame, table_name, chunked=False):
+        if chunked:
+            if_exists = 'replace'
+            for df in data_frame:
+                df.to_sql(table_name, con=engine, if_exists=if_exists, index=False)
+                if_exists = 'append'
+        else:
+            data_frame.to_sql(table_name, con=engine, if_exists='replace', index=False)
 
     def get_current_date():
         with open(os.path.join(config.DATA_FOLDER, config.CURRENT_DATE_FILENAME), 'r') as fd:
@@ -339,53 +350,54 @@ def update_database():
         app_log.info('[Updating Database]')
 
         feedback(label='-> proponentes', value='updating...')
-        proponentes = read_data(tbl_name='proponentes')
-        proponentes.to_sql('proponentes', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        proponentes = read_data(tbl_name='proponentes', chunksize=chunksize)
+        write_db(proponentes, 'proponentes', chunked=True)
         feedback(label='-> proponentes', value='Success!')
 
         feedback(label='-> convenios', value='updating...')
-        convenios = read_data(tbl_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios)
-        convenios.to_sql('convenios', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        convenios = read_data(tbl_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios, chunksize=chunksize)
+        write_db(convenios, 'convenios', chunked=True)
         feedback(label='-> convenios', value='Success!')
 
         feedback(label='-> situacoes', value='updating...')
-        situacoes = convenios[['SIT_CONVENIO']].drop_duplicates().fillna('#indefinido')
-        situacoes.to_sql('situacoes', con=engine, if_exists='replace', index=False)
+        atributos = read_data(tbl_name='convenios', usecols=['SIT_CONVENIO', 'NATUREZA_JURIDICA', 'MODALIDADE'], dtypes=str)
+        situacoes = atributos['SIT_CONVENIO'].drop_duplicates().fillna('#indefinido')
+        write_db(situacoes, 'situacoes')
         feedback(label='-> situacoes', value='Success!')
 
         feedback(label='-> naturezas', value='updating...')
-        naturezas = convenios[['NATUREZA_JURIDICA']].drop_duplicates().fillna('#indefinido')
-        naturezas.to_sql('naturezas', con=engine, if_exists='replace', index=False)
+        naturezas = atributos['NATUREZA_JURIDICA'].drop_duplicates().fillna('#indefinido')
+        write_db(naturezas, 'naturezas')
         feedback(label='-> naturezas', value='Success!')
 
         feedback(label='-> modalidades', value='updating...')
-        modalidades = convenios[['MODALIDADE']].drop_duplicates().fillna('#indefinido')
-        modalidades.to_sql('modalidades', con=engine, if_exists='replace', index=False)
+        modalidades = atributos['MODALIDADE'].drop_duplicates().fillna('#indefinido')
+        write_db(modalidades, 'modalidades')
         feedback(label='-> modalidades', value='Success!')
         
         feedback(label='-> emendas', value='updating...')
-        emendas = read_data(tbl_name='emendas')
-        emendas.to_sql('emendas', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        emendas = read_data(tbl_name='emendas', chunksize=chunksize)
+        write_db(emendas, 'emendas', chunked=True)
         feedback(label='-> emendas', value='Success!')
 
         feedback(label='-> emendas_convenios', value='updating...')
-        emendas_convenios = read_data(tbl_name='emendas_convenios', dtypes=dtypes_emendas_convenios)
-        emendas_convenios.to_sql('convenios_emendas_association', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        emendas_convenios = read_data(tbl_name='emendas_convenios', dtypes=dtypes_emendas_convenios, chunksize=chunksize)
+        write_db(emendas_convenios, 'emendas_convenios', chunked=True)
         feedback(label='-> emendas_convenios', value='Success!')
 
         feedback(label='-> movimento', value='updating...')
-        movimento = read_data(tbl_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento)
-        movimento.to_sql('movimento', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        movimento = read_data(tbl_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento, chunksize=chunksize)
+        write_db(movimento, 'movimento', chunked=True)
         feedback(label='-> movimento', value='Success!')
 
         feedback(label='-> municipios', value='updating...')
-        municipios = read_data(tbl_name='municipios', dtypes=dtypes_municipios, decimal='.')
-        municipios.to_sql('municipios', con=engine, if_exists='replace', index=False, chunksize=chunksize)
+        municipios = read_data(tbl_name='municipios', dtypes=dtypes_municipios, decimal='.', chunksize=chunksize)
+        write_db(municipios, 'municipios', chunked=True)
         feedback(label='-> municipios', value='Success!')
 
         feedback(label='-> data atual', value='updating...')
         data_atual = pd.DataFrame({'data_atual': [datetime_validation(get_current_date())]}).astype('datetime64[ns]')
-        data_atual.to_sql('data_atual', con=engine, if_exists='replace', index=False)
+        write_db(data_atual, 'data_atual')
         feedback(label='-> data atual', value='Success!')
 
         app_log.info('Processo finalizado com sucesso!')
@@ -427,7 +439,7 @@ if __name__ == '__main__':
 
     chunksize = 100000
 
-    
+       
     sched = BlockingScheduler()
 
     download_ok = False
@@ -449,7 +461,7 @@ if __name__ == '__main__':
 
     sched.start()
     '''
-    update_csv()
+    #update_csv()
     update_database()
     '''
 
