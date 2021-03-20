@@ -5,8 +5,17 @@ import requests
 import os
 from pathlib import Path
 from datetime import datetime
+from dateutil.parser import parse as date_parse
 from app.logger import app_log
 
+#Constants
+DOWNLOAD_SUCCESS = 1
+DOWNLOAD_UPTODATE = 2
+DOWNLOAD_NEEDED = 0
+
+DATABASE_SUCCESS = 1
+DATABASE_UPTODATE = 2
+DATABASE_NEEDED = 0
 
 parse_dates_convenios = ['DIA_ASSIN_CONV', 'DIA_PUBL_CONV',
                          'DIA_INIC_VIGENC_CONV', 'DIA_FIM_VIGENC_CONV', 'DIA_LIMITE_PREST_CONTAS']
@@ -61,18 +70,19 @@ dtypes_municipios = {
 
 
 class UpToDateException(Exception):
-    """Custom exception to be raised data is up to date"""
+    """Custom exception to be raised if data is up to date"""
     
-    def __init__(self, expression, message):
+    def __init__(self, expression='', message=''):
         self.expression = expression
         self.message = message
 
 class UnchangedException(Exception):
-    """Custom exception to be raised the data was not changed since last download"""
+    """Custom exception to be raised if data was not changed"""
     
-    def __init__(self, expression, message):
+    def __init__(self, expression='', message=''):
         self.expression = expression
         self.message = message
+
 
 #columns definitions
 proponentes_cols = ["IDENTIF_PROPONENTE", "NM_PROPONENTE"]
@@ -94,26 +104,12 @@ pagamentos_cols = ["NR_MOV_FIN", "NR_CONVENIO", "IDENTIF_FORNECEDOR", "NOME_FORN
 
 def datetime_validation(txt):
     try:
-        dtm = txt.split(' ')
-        dt = dtm[0].split('/')
-        tm = dtm[1].split(':')
-        if len(dtm) != 2 or len(dt) != 3 or len(tm) != 3:
-            raise
-        dtime = datetime(int(dt[2]), int(dt[1]), int(dt[0]), int(tm[0]), int(tm[1]), int(tm[2]))
+        dtime = date_parse(txt, dayfirst=True)
     except Exception as e:
+        app_log.error(str(e))
         return None
 
     return dtime
-
-def getCurrentDate():
-    url = 'http://plataformamaisbrasil.gov.br/download-de-dados'
-    response = requests.get(url, stream=True)
-
-    p = response.text.find('dos dados: <strong>﻿')
-    dt = response.text[p+20:p+39].strip()
-    if datetime_validation(dt) is None:
-        raise Exception(f'Invalid datetime: {dt}')
-    return datetime_validation(dt)
 
 def feedback(label='', value=''):
     label_length = 30
@@ -122,16 +118,40 @@ def feedback(label='', value=''):
     value = '-'*value_length + ' ' + value
     app_log.info(label[:label_length] + value[-value_length:])
 
-def get_last_date():
-    try:
-        last_date = pd.read_csv(os.path.join(config.DATA_FOLDER, 'data_atual.txt'), sep=';', dtype=str)
-        return datetime_validation(last_date.columns[0])
-    except:
-        return None
+def get_csv_date(with_exception=False):
+    with open(os.path.join(config.DATA_FOLDER, config.CURRENT_DATE_FILENAME), 'r') as fd:
+        return datetime_validation(fd.read())
+    if with_exception:
+        raise Exception(f'Não foi possível obter a data atual. Arquivo: {config.CURRENT_DATE_FILENAME}.')
+    
+    return None
+
+def checkUpdate(current_date, last_date):
+    today = datetime.utcnow()
+    today = datetime(today.year, today.month, today.day)
+    
+    if last_date:
+        if  last_date >= today:
+            raise UpToDateException()
+
+        if last_date == current_date:
+            raise UnchangedException()
 
 def fetch_data():
-    url = 'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
-    #url = 'C:\\Users\\jrans\\Desktop\\git\\siconv\\downloads'
+    def getCurrentDate():
+        url = config.CURRENT_DATE_URI #'http://plataformamaisbrasil.gov.br/download-de-dados'
+        response = requests.get(url, stream=True)
+
+        p = response.text.find('dos dados: <strong>﻿')
+        dt = response.text[p+20:p+39].strip()
+        current_date = datetime_validation(dt)
+        if current_date is None:
+            raise Exception(f'Invalid datetime: {dt}')
+        return current_date
+
+
+    #url = config.DOWNLOAD_URI #'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
+    url = config.DOWNLOAD_URI #'C:\\Users\\jrans\\Desktop\\git\\siconv\\downloads'
 
     Path(config.DATA_FOLDER).mkdir(parents=True, exist_ok=True)
 
@@ -139,24 +159,16 @@ def fetch_data():
 
     feedback(label='-> data atual', value='connecting...')    
     
-    last_date = get_last_date()
-    today = datetime.now()
-    today = datetime(today.year, today.month, today.day)
-    
     current_date = getCurrentDate()
     current_date_str = current_date.strftime("%d/%m/%Y %H:%M:%S")
 
     data_atual = pd.DataFrame(data={current_date_str: []})
 
     feedback(label='-> data atual', value=current_date_str)
-    if last_date:
-        if  last_date >= today:
-            raise UpToDateException('', 'Dados já estão atualizados.')
 
-        if last_date >= current_date:
-            raise UnchangedException('', 'Dados inalterados na origem.')
-
-
+    last_date = get_csv_date()
+    checkUpdate(current_date, last_date)
+    
     app_log.info('[Fetching data]')
     
     feedback(label='-> proponentes', value='connecting...')
@@ -308,20 +320,18 @@ def update_csv():
 
         app_log.info('Processo finalizado com sucesso!')
 
-    except UpToDateException as e:
-        app_log.info(e.message)
-        return True
-    except UnchangedException as e:
-        app_log.info(e.message)
-        return False
+    except UpToDateException:
+        app_log.info('CSV: Dados já estão atualizados.')
+        return DOWNLOAD_UPTODATE
+    except UnchangedException:
+        app_log.info('CSV: Dados inalterados na origem.')
+        return DOWNLOAD_NEEDED
     except Exception as e:
-        app_log.info(repr(e))
-        app_log.info('Processo falhou!')
-        return False
+        raise Exception(f'CSV files: {str(e)}')
     
-    return True
-
-def update_database():
+    return DOWNLOAD_SUCCESS
+    
+def update_database(last_date, force_update=False):
     def read_data(tbl_name, compression=config.COMPRESSION_METHOD, dtypes=str, parse_dates=[], 
                   decimal=',', chunksize=None, usecols=None):
         tbl = pd.read_csv(os.path.join(config.DATA_FOLDER, f'{tbl_name}{config.FILE_EXTENTION}'),
@@ -339,15 +349,14 @@ def update_database():
         else:
             data_frame.to_sql(table_name, con=engine, if_exists='replace', index=False)
 
-    def get_current_date():
-        with open(os.path.join(config.DATA_FOLDER, config.CURRENT_DATE_FILENAME), 'r') as fd:
-            return fd.read()
-
-        return ''
 
     try:      
 
         app_log.info('[Updating Database]')
+
+        current_date = get_csv_date(with_exception=True)
+        if not force_update:
+            checkUpdate(current_date, last_date)
 
         feedback(label='-> proponentes', value='updating...')
         proponentes = read_data(tbl_name='proponentes', chunksize=chunksize)
@@ -396,24 +405,22 @@ def update_database():
         feedback(label='-> municipios', value='Success!')
 
         feedback(label='-> data atual', value='updating...')
-        data_atual = pd.DataFrame({'data_atual': [datetime_validation(get_current_date())]}).astype('datetime64[ns]')
+        data_atual = pd.DataFrame({'data_atual': [get_csv_date()]}).astype('datetime64[ns]')
         write_db(data_atual, 'data_atual')
         feedback(label='-> data atual', value='Success!')
 
         app_log.info('Processo finalizado com sucesso!')
 
-    except UpToDateException as e:
-        app_log.info(e.message)
-        return True
-    except UnchangedException as e:
-        app_log.info(e.message)
-        return False
+    except UpToDateException:
+        app_log.info('Database: Dados já estão atualizados.')
+        return DATABASE_UPTODATE
+    except UnchangedException:
+        app_log.info('Database: Dados inalterados na origem.')
+        return DATABASE_NEEDED
     except Exception as e:
-        app_log.info(repr(e))
-        app_log.info('Processo falhou!')
-        return False
+        raise Exception(f'Database: {str(e)}')
     
-    return True
+    return DATABASE_SUCCESS
 
 
 if __name__ == '__main__':
@@ -421,6 +428,7 @@ if __name__ == '__main__':
     from dotenv import load_dotenv
     from sqlalchemy.ext.declarative import declarative_base
     import sqlalchemy as sa
+    from sqlalchemy import text
 
     env_path = '/home/siconvdata/.env'
     if Path(env_path).is_file():
@@ -435,33 +443,39 @@ if __name__ == '__main__':
     metadata = sa.MetaData()
     Base = declarative_base(metadata=metadata)
     engine = sa.create_engine(Config.SQLALCHEMY_DATABASE_URI)
-    
+
+    db_current_date = engine.execute(text('select data_atual from data_atual')).scalar()
+    db_current_date = datetime_validation(db_current_date)
 
     chunksize = 100000
 
-       
     sched = BlockingScheduler()
 
-    download_ok = False
-    database_ok = False
+    download_status = DOWNLOAD_NEEDED
+    database_status = DATABASE_NEEDED
 
-    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute='*/15', max_instances=1)
+    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute=57, max_instances=1)
     def update_job():
-        global download_ok
-        global database_ok
+        global download_status
+        global database_status
 
-        if not download_ok:
-            download_ok = update_csv()
 
-        if not database_ok:
-            database_ok = update_database()
-        
-        if (download_ok and database_ok) or datetime.utcnow().hour >= 21:
-            sched.shutdown(wait=False)
+        try:
+            if download_status == DOWNLOAD_NEEDED:
+                download_status = update_csv()
+
+            if database_status == DATABASE_NEEDED:
+                force_update = True if download_status==DOWNLOAD_SUCCESS else False
+                database_status = update_database(db_current_date, force_update=force_update)
+            
+            if (download_status in [DOWNLOAD_SUCCESS, DOWNLOAD_UPTODATE] and 
+                database_status in [DATABASE_SUCCESS, DATABASE_UPTODATE]) or \
+                    datetime.utcnow().hour >= 21:
+                sched.shutdown(wait=False)
+
+        except Exception as e:
+            app_log.info(str(e))
+            app_log.info('Processo falhou!')
+            return False
 
     sched.start()
-    '''
-    #update_csv()
-    update_database()
-    '''
-

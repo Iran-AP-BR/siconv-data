@@ -11,12 +11,15 @@ class Config(object):
     CURRENT_DATE_FILENAME = 'data_atual.txt'
     TABLE_LIST = ['emendas', 'emendas_convenios', 'convenios', 'proponentes', 'movimento', 'municipios']
 
-    DATA_FOLDER = os.getenv('DATA_FOLDER', default=os.path.join(os.path.realpath('..'), 'csv_files'))
-    API_KEY_ENABLED = os.getenv('API_KEY_ENABLED', default=False)
+    DATA_FOLDER = os.getenv('DATA_FOLDER')
+    API_KEY_ENABLED = True if os.getenv('API_KEY_ENABLED', default='false').lower()=='true' else False
     API_KEY = os.getenv('API_KEY')
     
-    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI', default=f'sqlite:///{DATA_FOLDER}/db.sqlite')
-    SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', default=False)
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
+    SQLALCHEMY_TRACK_MODIFICATIONS = True if os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', default='false').lower()=='true' else False
 
 
     GRAPHQL_DEFAULT_PAGE_LENGTH = 50
+
+    CURRENT_DATE_URI = os.getenv('CURRENT_DATE_URI')
+    DOWNLOAD_URI = os.getenv('DOWNLOAD_URI')
