@@ -17,9 +17,11 @@ class Config(object):
     
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     SQLALCHEMY_TRACK_MODIFICATIONS = True if os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', default='false').lower()=='true' else False
-
+    SQLALCHEMY_POOL_RECYCLE = int(os.getenv('SQLALCHEMY_POOL_RECYCLE', default=299))
+    SQLALCHEMY_POOL_TIMEOUT = int(os.getenv('SQLALCHEMY_POOL_TIMEOUT', default=20))
 
     GRAPHQL_DEFAULT_PAGE_LENGTH = 50
 
     CURRENT_DATE_URI = os.getenv('CURRENT_DATE_URI')
     DOWNLOAD_URI = os.getenv('DOWNLOAD_URI')
+    CHUNK_SIZE=int(os.getenv('CHUNK_SIZE', default=10000))

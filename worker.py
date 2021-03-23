@@ -139,7 +139,7 @@ def checkUpdate(current_date, last_date):
 
 def fetch_data():
     def getCurrentDate():
-        url = config.CURRENT_DATE_URI #'http://plataformamaisbrasil.gov.br/download-de-dados'
+        url = config.CURRENT_DATE_URI
         response = requests.get(url, stream=True)
 
         p = response.text.find('dos dados: <strong>﻿')
@@ -150,8 +150,7 @@ def fetch_data():
         return current_date
 
 
-    #url = config.DOWNLOAD_URI #'http://plataformamaisbrasil.gov.br/images/docs/CGSIS/csv'
-    url = config.DOWNLOAD_URI #'C:\\Users\\jrans\\Desktop\\git\\siconv\\downloads'
+    url = config.DOWNLOAD_URI
 
     Path(config.DATA_FOLDER).mkdir(parents=True, exist_ok=True)
 
@@ -359,12 +358,12 @@ def update_database(last_date, force_update=False):
             checkUpdate(current_date, last_date)
 
         feedback(label='-> proponentes', value='updating...')
-        proponentes = read_data(tbl_name='proponentes', chunksize=chunksize)
+        proponentes = read_data(tbl_name='proponentes', chunksize=config.CHUNK_SIZE)
         write_db(proponentes, 'proponentes', chunked=True)
         feedback(label='-> proponentes', value='Success!')
 
         feedback(label='-> convenios', value='updating...')
-        convenios = read_data(tbl_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios, chunksize=chunksize)
+        convenios = read_data(tbl_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios, chunksize=config.CHUNK_SIZE)
         write_db(convenios, 'convenios', chunked=True)
         feedback(label='-> convenios', value='Success!')
 
@@ -385,22 +384,22 @@ def update_database(last_date, force_update=False):
         feedback(label='-> modalidades', value='Success!')
         
         feedback(label='-> emendas', value='updating...')
-        emendas = read_data(tbl_name='emendas', chunksize=chunksize)
+        emendas = read_data(tbl_name='emendas', chunksize=config.CHUNK_SIZE)
         write_db(emendas, 'emendas', chunked=True)
         feedback(label='-> emendas', value='Success!')
 
         feedback(label='-> emendas_convenios', value='updating...')
-        emendas_convenios = read_data(tbl_name='emendas_convenios', dtypes=dtypes_emendas_convenios, chunksize=chunksize)
+        emendas_convenios = read_data(tbl_name='emendas_convenios', dtypes=dtypes_emendas_convenios, chunksize=config.CHUNK_SIZE)
         write_db(emendas_convenios, 'emendas_convenios', chunked=True)
         feedback(label='-> emendas_convenios', value='Success!')
 
         feedback(label='-> movimento', value='updating...')
-        movimento = read_data(tbl_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento, chunksize=chunksize)
+        movimento = read_data(tbl_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento, chunksize=config.CHUNK_SIZE)
         write_db(movimento, 'movimento', chunked=True)
         feedback(label='-> movimento', value='Success!')
 
         feedback(label='-> municipios', value='updating...')
-        municipios = read_data(tbl_name='municipios', dtypes=dtypes_municipios, decimal='.', chunksize=chunksize)
+        municipios = read_data(tbl_name='municipios', dtypes=dtypes_municipios, decimal='.', chunksize=config.CHUNK_SIZE)
         write_db(municipios, 'municipios', chunked=True)
         feedback(label='-> municipios', value='Success!')
 
@@ -447,14 +446,12 @@ if __name__ == '__main__':
     db_current_date = engine.execute(text('select data_atual from data_atual')).scalar()
     db_current_date = datetime_validation(db_current_date)
 
-    chunksize = 100000
-
     sched = BlockingScheduler()
 
     download_status = DOWNLOAD_NEEDED
     database_status = DATABASE_NEEDED
 
-    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute=57, max_instances=1)
+    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute=15, max_instances=1)
     def update_job():
         global download_status
         global database_status
