@@ -29,7 +29,7 @@ def filter_constructor(filters):
             translated = translators[cmd.lower()](field, cmds[cmd])
             expr += f' {op} {translated}'
             op = 'and'
-        
+
         return f'{expr.strip()}'
 
     expr = ''
@@ -43,16 +43,16 @@ def filter_constructor(filters):
                     expr2 += f' {opr2} ({filter_constructor(d)})'
                     expr2 = expr2.strip()
                     opr2 = 'and' if f.upper() == 'AND' else 'or'
-                    
+
                 opr3 = 'and' if expr else ''
-                expr += f' {opr3} {expr2}'
+                expr += f' {opr3} ({expr2})'
             elif f.upper() == 'NOT':
                 expr += f' {opr} not ({filter_constructor(filters[f])})'
             else:
                 expr += f' {opr} {transl(f, filters[f])}'
-            
+
             expr = expr.strip()
             opr = 'and'
 
     return f'{expr}'
-
+    
