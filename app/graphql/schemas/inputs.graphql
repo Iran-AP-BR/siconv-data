@@ -139,6 +139,18 @@ input StringFilters {
 } 
 
 """
+Defines a set of filtering commands to be applied to field of YesNo type.
+The commands may be:
+
+1. __eq__: _equal to_
+2. __diff__: _different_
+"""
+input YesNoFilters {
+    eq: YesNo
+    diff: YesNo
+} 
+
+"""
 Pagination specifications. Use to set the number of items in a page (page_length) and to select the page to be returned.
 """
 input PageSpecs {
@@ -220,7 +232,7 @@ input FilterConvenios {
     NR_CONVENIO: StringFilters
     DIA_ASSIN_CONV: DateFilters
     SIT_CONVENIO: StringFilters
-    INSTRUMENTO_ATIVO: StringFilters
+    INSTRUMENTO_ATIVO: YesNoFilters
     DIA_PUBL_CONV: DateFilters
     DIA_INIC_VIGENC_CONV: DateFilters
     DIA_FIM_VIGENC_CONV: DateFilters
@@ -236,6 +248,8 @@ input FilterConvenios {
     MODALIDADE: StringFilters
     IDENTIF_PROPONENTE: StringFilters
     OBJETO_PROPOSTA: StringFilters
+    VALOR_REPASSE_EMENDA: FloatFilters
+    COM_EMENDAS: YesNoFilters
 
     OR: [FilterConvenios!]
     AND: [FilterConvenios!]

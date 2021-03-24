@@ -85,6 +85,8 @@ type Convenio {
     MODALIDADE: String
     IDENTIF_PROPONENTE: String
     OBJETO_PROPOSTA: String
+    VALOR_REPASSE_EMENDA: Float
+    COM_EMENDAS: String
     PROPONENTE: Proponente
     EMENDAS(page_specs: PageSpecs,
             filters: FilterEmendas,

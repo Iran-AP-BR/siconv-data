@@ -40,7 +40,9 @@ dtypes_convenios = {
     'DESC_ORGAO': 'object',
     'MODALIDADE': 'object',
     'IDENTIF_PROPONENTE': 'object',
-    'OBJETO_PROPOSTA': 'object'
+    'OBJETO_PROPOSTA': 'object',
+    'VALOR_REPASSE_EMENDA': 'float64',
+    'COM_EMENDAS': 'object'
 }
 
 dtypes_movimento = {
@@ -55,7 +57,8 @@ dtypes_movimento = {
 
 dtypes_emendas_convenios = {
     'NR_EMENDA': 'object',
-    'NR_CONVENIO': 'object'
+    'NR_CONVENIO': 'object',
+    'VALOR_REPASSE_EMENDA': 'float64'
 }
 
 dtypes_municipios = {
@@ -92,11 +95,11 @@ proponentes_drop = ["NM_PROPONENTE", "UF_PROPONENTE", "MUNIC_PROPONENTE", "COD_M
 propostas_cols = ["ID_PROPOSTA", "UF_PROPONENTE", "MUNIC_PROPONENTE", "COD_MUNIC_IBGE", "COD_ORGAO_SUP", "DESC_ORGAO_SUP", "NATUREZA_JURIDICA", "COD_ORGAO", "DESC_ORGAO", "MODALIDADE", "IDENTIF_PROPONENTE", "OBJETO_PROPOSTA"]
 convenios_cols = ["NR_CONVENIO", "ID_PROPOSTA", "DIA_ASSIN_CONV", "SIT_CONVENIO", "INSTRUMENTO_ATIVO", "DIA_PUBL_CONV", "DIA_INIC_VIGENC_CONV", "DIA_FIM_VIGENC_CONV", "DIA_LIMITE_PREST_CONTAS", "VL_GLOBAL_CONV", "VL_REPASSE_CONV", "VL_CONTRAPARTIDA_CONV"]
 
-emendas_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR']
-emendas_drop_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR']
+emendas_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR', 'VALOR_REPASSE_EMENDA']
+emendas_drop_cols = ['ID_PROPOSTA', 'NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR', 'VALOR_REPASSE_EMENDA']
 emendas_final_cols = ['NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR']
 
-emendas_convenios_cols = ['NR_EMENDA', 'NR_CONVENIO']
+emendas_convenios_cols = ['NR_EMENDA', 'NR_CONVENIO', 'VALOR_REPASSE_EMENDA']
 
 desembolsos_cols = ["ID_DESEMBOLSO", "NR_CONVENIO", "DATA_DESEMBOLSO", "VL_DESEMBOLSADO"]
 contrapartidas_cols = ["NR_CONVENIO", "DT_INGRESSO_CONTRAPARTIDA", "VL_INGRESSO_CONTRAPARTIDA"]
@@ -168,6 +171,7 @@ def fetch_data():
     last_date = get_csv_date()
     checkUpdate(current_date, last_date)
     
+
     app_log.info('[Fetching data]')
     
     feedback(label='-> proponentes', value='connecting...')
@@ -181,6 +185,7 @@ def fetch_data():
     feedback(label='-> convenios', value='connecting...')
     convenios = pd.read_csv(f'{url}/siconv_convenio.csv.zip', compression='zip', sep=';', dtype=str, usecols=convenios_cols)
     convenios = convenios[convenios['DIA_ASSIN_CONV'].notna()]
+    convenios.loc[convenios['INSTRUMENTO_ATIVO'].str.upper()=='NÃO', ['INSTRUMENTO_ATIVO']] = 'NAO'
     feedback(label='-> convenios', value=f'{len(convenios)}')
 
     feedback(label='-> emendas', value='connecting...')
@@ -199,14 +204,12 @@ def fetch_data():
     pagamentos = pd.read_csv(f'{url}/siconv_pagamento.csv.zip', compression='zip', sep=';', dtype=str, usecols=pagamentos_cols)
     feedback(label='-> pagamentos', value=f'{len(pagamentos)}')
 
+
     app_log.info('[Transforming data]')
 
-    feedback(label='-> convenios', value='transforming...')
+    feedback(label='-> proponentes', value='transforming...')
     propostas_proponentes = pd.merge(propostas, proponentes, how='inner', on='IDENTIF_PROPONENTE', left_index=False, right_index=False)
     convenios = pd.merge(convenios, propostas_proponentes, how='inner', on='ID_PROPOSTA', left_index=False, right_index=False)
-    feedback(label='-> convenios', value='Success!')
-
-    feedback(label='-> proponentes', value='transforming...')
     proponentes = convenios.filter(proponentes_final_cols).drop_duplicates()
     convenios = convenios.drop(columns=proponentes_drop).drop_duplicates()
     feedback(label='-> proponentes', value='Success!')
@@ -218,27 +221,37 @@ def fetch_data():
     feedback(label='-> emendas', value='Success!')
 
     feedback(label='-> emendas_convenios', value='transforming...')
-    emendas_convenios = emendas_convenios.filter(emendas_convenios_cols).drop_duplicates()
     convenios = convenios.drop(columns=['ID_PROPOSTA']).drop_duplicates()
+    emendas_convenios = emendas_convenios.filter(emendas_convenios_cols).drop_duplicates()
     feedback(label='-> emendas_convenios', value='Success!')
+
+    feedback(label='-> convenios', value='transforming...')
+    conv_repasse_emenda = emendas_convenios.filter(['NR_CONVENIO', 'VALOR_REPASSE_EMENDA'])
+    conv_repasse_emenda['VALOR_REPASSE_EMENDA'] = conv_repasse_emenda['VALOR_REPASSE_EMENDA'].str.replace(',', '.', regex=False)
+    conv_repasse_emenda['VALOR_REPASSE_EMENDA'] = conv_repasse_emenda['VALOR_REPASSE_EMENDA'].astype(float)
+    conv_repasse_emenda = conv_repasse_emenda.groupby('NR_CONVENIO', as_index=False).sum()
+    convenios = pd.merge(convenios, conv_repasse_emenda, how='left', on='NR_CONVENIO', left_index=False, right_index=False)
+    convenios['VALOR_REPASSE_EMENDA'] = convenios['VALOR_REPASSE_EMENDA'].fillna(0)
+    convenios['COM_EMENDAS'] = 'NAO' 
+    convenios.loc[convenios['VALOR_REPASSE_EMENDA']!=0, ['COM_EMENDAS']] = 'SIM' 
+    convenios['VALOR_REPASSE_EMENDA'] = convenios['VALOR_REPASSE_EMENDA'].astype(str)
+    convenios['VALOR_REPASSE_EMENDA'] = convenios['VALOR_REPASSE_EMENDA'].str.replace('.', ',', regex=False)
+    feedback(label='-> convenios', value='Success!')
 
     feedback(label='-> movimento', value='transforming...')
     convs = convenios['NR_CONVENIO'].unique()
     desembolsos = desembolsos[desembolsos['NR_CONVENIO'].isin(convs) & desembolsos['DATA_DESEMBOLSO'].notna()]
     desembolsos.columns = ['MOV_ID', 'NR_CONVENIO', 'DATA', 'VALOR']
     desembolsos['MOV_ID'] = 'D' + desembolsos['MOV_ID']
-    desembolsos['TIPO'] = 'D'
-    
+    desembolsos['TIPO'] = 'D'    
     contrapartidas = contrapartidas[contrapartidas['NR_CONVENIO'].isin(convs) & contrapartidas['DT_INGRESSO_CONTRAPARTIDA'].notna()]
     contrapartidas.columns = ['NR_CONVENIO', 'DATA', 'VALOR']
     contrapartidas['MOV_ID'] = 'C' + contrapartidas.index.astype(str)
     contrapartidas['TIPO'] = 'C'
-
     pagamentos = pagamentos[pagamentos['NR_CONVENIO'].isin(convs) & pagamentos['DATA_PAG'].notna()]
     pagamentos.columns = ['MOV_ID', 'NR_CONVENIO', 'IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR', 'DATA', 'VALOR']
     pagamentos['MOV_ID'] = 'P' + pagamentos['MOV_ID']
     pagamentos['TIPO'] = 'P'
-
     movimento = pd.concat([desembolsos, contrapartidas, pagamentos], ignore_index=True, sort=False)
     movimento.loc[movimento['IDENTIF_FORNECEDOR'].isna(), 'IDENTIF_FORNECEDOR'] = '#N/D'
     movimento.loc[movimento['NOME_FORNECEDOR'].isna(), 'NOME_FORNECEDOR'] = '#N/D'
@@ -294,23 +307,28 @@ def update_csv():
         app_log.info('[Updating csv files]')
        
         feedback(label='-> proponentes', value='updating...')
-        proponentes.to_csv(os.path.join(config.DATA_FOLDER, f'proponentes{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
+        proponentes.to_csv(os.path.join(config.DATA_FOLDER, f'proponentes{config.FILE_EXTENTION}'), 
+                            compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> proponentes', value='Success!')
 
         feedback(label='-> convenios', value='updating...')
-        convenios.to_csv(os.path.join(config.DATA_FOLDER, f'convenios{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
+        convenios.to_csv(os.path.join(config.DATA_FOLDER, f'convenios{config.FILE_EXTENTION}'),
+                            compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> convenios', value='Success!')
         
         feedback(label='-> emendas', value='updating...')
-        emendas.to_csv(os.path.join(config.DATA_FOLDER, f'emendas{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
+        emendas.to_csv(os.path.join(config.DATA_FOLDER, f'emendas{config.FILE_EXTENTION}'),
+                       compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> emendas', value='Success!')
 
         feedback(label='-> emendas_convenios', value='updating...')
-        emendas_convenios.to_csv(os.path.join(config.DATA_FOLDER, f'emendas_convenios{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
+        emendas_convenios.to_csv(os.path.join(config.DATA_FOLDER, f'emendas_convenios{config.FILE_EXTENTION}'),
+                                 compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> emendas_convenios', value='Success!')
 
         feedback(label='-> movimento', value='updating...')
-        movimento.to_csv(os.path.join(config.DATA_FOLDER, f'movimento{config.FILE_EXTENTION}'), compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
+        movimento.to_csv(os.path.join(config.DATA_FOLDER, f'movimento{config.FILE_EXTENTION}'),
+                                 compression=config.COMPRESSION_METHOD, sep=';', encoding='utf-8', index=False)
         feedback(label='-> movimento', value='Success!')
 
         feedback(label='-> data atual', value='updating...')
@@ -363,12 +381,14 @@ def update_database(last_date, force_update=False):
         feedback(label='-> proponentes', value='Success!')
 
         feedback(label='-> convenios', value='updating...')
-        convenios = read_data(tbl_name='convenios', dtypes=dtypes_convenios, parse_dates=parse_dates_convenios, chunksize=config.CHUNK_SIZE)
+        convenios = read_data(tbl_name='convenios', dtypes=dtypes_convenios,
+                              parse_dates=parse_dates_convenios, chunksize=config.CHUNK_SIZE)
         write_db(convenios, 'convenios', chunked=True)
         feedback(label='-> convenios', value='Success!')
 
         feedback(label='-> situacoes', value='updating...')
-        atributos = read_data(tbl_name='convenios', usecols=['SIT_CONVENIO', 'NATUREZA_JURIDICA', 'MODALIDADE'], dtypes=str)
+        atributos = read_data(tbl_name='convenios',
+                              usecols=['SIT_CONVENIO', 'NATUREZA_JURIDICA', 'MODALIDADE'], dtypes=str)
         situacoes = atributos['SIT_CONVENIO'].drop_duplicates().fillna('#indefinido')
         write_db(situacoes, 'situacoes')
         feedback(label='-> situacoes', value='Success!')
@@ -389,17 +409,20 @@ def update_database(last_date, force_update=False):
         feedback(label='-> emendas', value='Success!')
 
         feedback(label='-> emendas_convenios', value='updating...')
-        emendas_convenios = read_data(tbl_name='emendas_convenios', dtypes=dtypes_emendas_convenios, chunksize=config.CHUNK_SIZE)
+        emendas_convenios = read_data(tbl_name='emendas_convenios',
+                                      dtypes=dtypes_emendas_convenios, chunksize=config.CHUNK_SIZE)
         write_db(emendas_convenios, 'emendas_convenios', chunked=True)
         feedback(label='-> emendas_convenios', value='Success!')
 
         feedback(label='-> movimento', value='updating...')
-        movimento = read_data(tbl_name='movimento', dtypes=dtypes_movimento, parse_dates=parse_dates_movimento, chunksize=config.CHUNK_SIZE)
+        movimento = read_data(tbl_name='movimento', dtypes=dtypes_movimento,
+                              parse_dates=parse_dates_movimento, chunksize=config.CHUNK_SIZE)
         write_db(movimento, 'movimento', chunked=True)
         feedback(label='-> movimento', value='Success!')
 
         feedback(label='-> municipios', value='updating...')
-        municipios = read_data(tbl_name='municipios', dtypes=dtypes_municipios, decimal='.', chunksize=config.CHUNK_SIZE)
+        municipios = read_data(tbl_name='municipios', dtypes=dtypes_municipios, decimal='.',
+                               chunksize=config.CHUNK_SIZE)
         write_db(municipios, 'municipios', chunked=True)
         feedback(label='-> municipios', value='Success!')
 
@@ -443,9 +466,16 @@ if __name__ == '__main__':
     Base = declarative_base(metadata=metadata)
     engine = sa.create_engine(Config.SQLALCHEMY_DATABASE_URI)
 
-    db_current_date = engine.execute(text('select data_atual from data_atual')).scalar()
-    db_current_date = datetime_validation(db_current_date)
+    db_current_date = None
 
+    try:
+        db_current_date = engine.execute(text('select data_atual from data_atual')).scalar()
+        if type(db_current_date) == str:
+            db_current_date = datetime_validation(db_current_date)
+
+    except Exception as e:
+        app_log.warning(str(e))
+        
     sched = BlockingScheduler()
 
     download_status = DOWNLOAD_NEEDED

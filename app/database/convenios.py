@@ -29,6 +29,8 @@ class Convenio(db.Model):
     DESC_ORGAO = db.Column(db.String, unique=False, nullable=True)
     MODALIDADE = db.Column(db.String, unique=False, nullable=True)
     OBJETO_PROPOSTA = db.Column(db.String, unique=False, nullable=True)
+    VALOR_REPASSE_EMENDA = db.Column(db.Float, unique=False, nullable=True)
+    COM_EMENDAS = db.Column(db.String, unique=False, nullable=True)
 
     IDENTIF_PROPONENTE = db.Column(db.String, db.ForeignKey('proponentes.IDENTIF_PROPONENTE'), unique=False, nullable=False)
 
@@ -57,6 +59,8 @@ class Convenio(db.Model):
         self.MODALIDADE = kwargs.get('MODALIDADE')
         self.IDENTIF_PROPONENTE = kwargs.get('IDENTIF_PROPONENTE')
         self.OBJETO_PROPOSTA = kwargs.get('OBJETO_PROPOSTA')
+        self.VALOR_REPASSE_EMENDA = kwargs.get('VALOR_REPASSE_EMENDA')
+        self.COM_EMENDAS = kwargs.get('COM_EMENDAS')
         
     def __repr__(self):
         return "<Convenio(NR_CONVENIO={self.NR_CONVENIO!r})>".format(self=self)
