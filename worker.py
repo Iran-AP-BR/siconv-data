@@ -61,6 +61,13 @@ dtypes_emendas_convenios = {
     'VALOR_REPASSE_EMENDA': 'float64'
 }
 
+dtypes_emendas = {
+    'NR_EMENDA': 'object',
+    'NOME_PARLAMENTAR': 'object',
+    'TIPO_PARLAMENTAR': 'object',
+    'VALOR_REPASSE_EMENDA': 'float64'
+}
+
 dtypes_municipios = {
     'codigo_ibge': 'object',
     'nome_municipio': 'object',
@@ -214,16 +221,30 @@ def fetch_data():
     convenios = convenios.drop(columns=proponentes_drop).drop_duplicates()
     feedback(label='-> proponentes', value='Success!')
 
-    feedback(label='-> emendas', value='transforming...')
+    feedback(label='-> emendas_convenios', value='transforming...')
     emendas = emendas[emendas['NR_EMENDA'].notna()]
     emendas_convenios = pd.merge(emendas, convenios, how='inner', on='ID_PROPOSTA', left_index=False, right_index=False)
     emendas = emendas_convenios.filter(emendas_final_cols).drop_duplicates()
-    feedback(label='-> emendas', value='Success!')
 
-    feedback(label='-> emendas_convenios', value='transforming...')
     convenios = convenios.drop(columns=['ID_PROPOSTA']).drop_duplicates()
     emendas_convenios = emendas_convenios.filter(emendas_convenios_cols).drop_duplicates()
     feedback(label='-> emendas_convenios', value='Success!')
+
+
+    feedback(label='-> emendas', value='transforming...')
+    emenda_repasse_conv = emendas_convenios.filter(['NR_EMENDA', 'VALOR_REPASSE_EMENDA'])
+    emenda_repasse_conv['VALOR_REPASSE_EMENDA'] = emenda_repasse_conv['VALOR_REPASSE_EMENDA'].str.replace(',', '.', regex=False)
+    emenda_repasse_conv['VALOR_REPASSE_EMENDA'] = emenda_repasse_conv['VALOR_REPASSE_EMENDA'].astype(float)
+    emenda_repasse_conv = emenda_repasse_conv.groupby('NR_EMENDA', as_index=False).sum()
+
+    emendas = pd.merge(emendas, emenda_repasse_conv, how='left', on='NR_EMENDA', left_index=False, right_index=False)
+    emendas['VALOR_REPASSE_EMENDA'] = emendas['VALOR_REPASSE_EMENDA'].fillna(0)
+    emendas['VALOR_REPASSE_EMENDA'] = emendas['VALOR_REPASSE_EMENDA'].astype(str)
+    emendas['VALOR_REPASSE_EMENDA'] = emendas['VALOR_REPASSE_EMENDA'].str.replace('.', ',', regex=False)
+
+    feedback(label='-> emendas', value='Success!')
+
+
 
     feedback(label='-> convenios', value='transforming...')
     conv_repasse_emenda = emendas_convenios.filter(['NR_CONVENIO', 'VALOR_REPASSE_EMENDA'])
@@ -404,7 +425,7 @@ def update_database(last_date, force_update=False):
         feedback(label='-> modalidades', value='Success!')
         
         feedback(label='-> emendas', value='updating...')
-        emendas = read_data(tbl_name='emendas', chunksize=config.CHUNK_SIZE)
+        emendas = read_data(tbl_name='emendas', dtypes=dtypes_emendas, chunksize=config.CHUNK_SIZE)
         write_db(emendas, 'emendas', chunked=True)
         feedback(label='-> emendas', value='Success!')
 
@@ -505,4 +526,5 @@ if __name__ == '__main__':
             app_log.info('Processo falhou!')
             return False
 
-    sched.start()
+    #sched.start()
+    update_job()

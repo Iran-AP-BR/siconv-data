@@ -184,6 +184,7 @@ input FilterEmendas {
     NR_EMENDA: StringFilters,
     NOME_PARLAMENTAR: StringFilters
     TIPO_PARLAMENTAR: StringFilters
+    VALOR_REPASSE_EMENDA: FloatFilters
 
     OR: [FilterEmendas!]
     AND: [FilterEmendas!]

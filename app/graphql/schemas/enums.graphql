@@ -18,6 +18,7 @@ enum FieldsEmendas {
     NR_EMENDA
     NOME_PARLAMENTAR
     TIPO_PARLAMENTAR
+    VALOR_REPASSE_EMENDA
 }
 
 """
@@ -67,6 +68,8 @@ enum FieldsConvenios {
     MODALIDADE
     IDENTIF_PROPONENTE
     OBJETO_PROPOSTA
+    VALOR_REPASSE_EMENDA
+    COM_EMENDAS
 }
 
 """

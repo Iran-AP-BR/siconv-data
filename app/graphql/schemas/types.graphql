@@ -103,6 +103,7 @@ type Emenda {
     NR_EMENDA: ID!
     NOME_PARLAMENTAR: String
     TIPO_PARLAMENTAR: String
+    VALOR_REPASSE_EMENDA: Float
     CONVENIOS(page_specs: PageSpecs, 
               filters: FilterConvenios,
               sort: SortConvenios): ConveniosResult
