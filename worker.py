@@ -115,6 +115,7 @@ pagamentos_cols = ["NR_MOV_FIN", "NR_CONVENIO", "IDENTIF_FORNECEDOR", "NOME_FORN
 def datetime_validation(txt):
     try:
         dtime = date_parse(txt, dayfirst=True)
+    
     except Exception as e:
         app_log.error(str(e))
         return None
@@ -131,12 +132,13 @@ def feedback(label='', value=''):
 def get_csv_date(with_exception=False):
     with open(os.path.join(config.DATA_FOLDER, config.CURRENT_DATE_FILENAME), 'r') as fd:
         return datetime_validation(fd.read())
+
     if with_exception:
         raise Exception(f'Não foi possível obter a data atual. Arquivo: {config.CURRENT_DATE_FILENAME}.')
     
     return None
 
-def checkUpdate(current_date, last_date):
+def check_update(current_date, last_date):
     today = datetime.utcnow()
     today = datetime(today.year, today.month, today.day)
     
@@ -176,7 +178,7 @@ def fetch_data():
     feedback(label='-> data atual', value=current_date_str)
 
     last_date = get_csv_date()
-    checkUpdate(current_date, last_date)
+    check_update(current_date, last_date)
     
 
     app_log.info('[Fetching data]')
@@ -392,7 +394,7 @@ def update_database(last_date, force_update=False):
 
         current_date = get_csv_date(with_exception=True)
         if not force_update:
-            checkUpdate(current_date, last_date)
+            check_update(current_date, last_date)
 
         feedback(label='-> proponentes', value='updating...')
         proponentes = read_data(tbl_name='proponentes', chunksize=config.CHUNK_SIZE)
@@ -484,23 +486,13 @@ if __name__ == '__main__':
     metadata = sa.MetaData()
     Base = declarative_base(metadata=metadata)
     engine = sa.create_engine(Config.SQLALCHEMY_DATABASE_URI)
-
-    db_current_date = None
-
-    try:
-        db_current_date = engine.execute(text('select data_atual from data_atual')).scalar()
-        if type(db_current_date) == str:
-            db_current_date = datetime_validation(db_current_date)
-
-    except Exception as e:
-        app_log.warning(str(e))
         
     sched = BlockingScheduler()
 
     download_status = DOWNLOAD_NEEDED
     database_status = DATABASE_NEEDED
 
-    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute=15, max_instances=1)
+    @sched.scheduled_job('cron', day_of_week='*', hour='8/1', minute=52, max_instances=1)
     def update_job():
         global download_status
         global database_status
@@ -511,6 +503,13 @@ if __name__ == '__main__':
                 download_status = update_csv()
 
             if database_status == DATABASE_NEEDED:
+                db_current_date = None
+                current_date_table = 'data_atual'
+                if engine.dialect.has_table(engine, current_date_table):
+                    db_current_date = engine.execute(text(f'select data_atual from {current_date_table}')).scalar()
+                    if type(db_current_date) == str:
+                        db_current_date = datetime_validation(db_current_date)
+
                 force_update = True if download_status==DOWNLOAD_SUCCESS else False
                 database_status = update_database(db_current_date, force_update=force_update)
             

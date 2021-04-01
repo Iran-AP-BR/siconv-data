@@ -17,8 +17,8 @@ class Config(object):
     
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     SQLALCHEMY_TRACK_MODIFICATIONS = True if os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', default='false').lower()=='true' else False
-    SQLALCHEMY_POOL_RECYCLE = None #int(os.getenv('SQLALCHEMY_POOL_RECYCLE', default=299))
-    SQLALCHEMY_POOL_TIMEOUT = None #int(os.getenv('SQLALCHEMY_POOL_TIMEOUT', default=20))
+    SQLALCHEMY_POOL_RECYCLE = int(os.getenv('SQLALCHEMY_POOL_RECYCLE')) if os.getenv('SQLALCHEMY_POOL_RECYCLE') else None
+    SQLALCHEMY_POOL_TIMEOUT = int(os.getenv('SQLALCHEMY_POOL_TIMEOUT')) if os.getenv('SQLALCHEMY_POOL_TIMEOUT') else None
 
     GRAPHQL_DEFAULT_PAGE_LENGTH = 50
 
