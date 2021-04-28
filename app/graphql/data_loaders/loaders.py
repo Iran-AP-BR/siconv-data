@@ -5,43 +5,23 @@
 from flask import current_app as app
 from app.graphql.data_loaders.filtering import filter_constructor
 from math import ceil
-from app.database import db, Convenio, Emenda, Movimento, Proponente, Municipio, DataAtual, Situacao, Natureza, Modalidade
+from app import db
 from sqlalchemy import text, desc, func
 
-tables = {
-          'convenios': Convenio,
-          'emendas': Emenda,
-          'proponentes': Proponente,
-          'movimento': Movimento,
-          'municipios': Municipio
-          }
 
 def sort_constructor(sort):
     if sort is not None:
-        sort_fields = [text(field) for field in sort.get('fields')]
-        sort_fields = [(desc(field) if sort.get('order')[p].upper()=='DESC' else field) for p, field in enumerate(sort_fields)]
-    else:
-        sort_fields = [text('')]
+        return 'order by ' + ','.join([f"{field} {sort.get('order')[p]}" for p, field in enumerate(sort.get('fields'))])
 
-    return sort_fields
+    return ''
 
-def pagination_constructor(table_name=None, conditions=None, page_specs=None, items_count=None):
-    assert table_name is not None and conditions is not None and items_count is None or \
-           table_name is None and conditions is None and items_count is not None, \
-           'Assertion error in pagination_constructor.'
+def pagination_constructor(conditions=None, page_specs=None, items_count=None):
 
     page = page_specs.get(
         'page') if page_specs and page_specs.get('page') else 1
     page_length = page_specs.get('page_length') if page_specs and page_specs.get(
         'page_length') else app.config.get('GRAPHQL_DEFAULT_PAGE_LENGTH')
     
-    if items_count is None:
-        sql = f'select count(*) from {table_name}'
-        if conditions:
-            sql = f'{sql} where {conditions}'
-
-        items_count = db.engine.execute(text(sql)).scalar()
-
     page_count = ceil(items_count / page_length)
 
     if page > page_count:
@@ -63,176 +43,271 @@ def pagination_constructor(table_name=None, conditions=None, page_specs=None, it
 
     return pagination, offset, page_specs
 
-def rows2dict(rows, attrs=None):
-    data_dict = []
+
+def load_data(table_expression=None, selected_fields=None, groupby_fields=[], filters=None, sort=None,
+               page_specs=None, use_pagination=True, extra_filter=''):
+    assert selected_fields is not None
+    assert table_expression is not None
+
+    pagination = None
+    limit = ''
+
+    where = filter_constructor(filters=filters) if filter else ''
+    if extra_filter:
+        where = f"({where}) and ({extra_filter})" if where else extra_filter
     
-    for row in rows:
-        d = {}
-        if attrs is not None:
-            d = { attr: getattr(row, attr) for attr in attrs }
-        
-        for column in row.__table__.columns:
-            d[column.name] = getattr(row, column.name)
+    where = f"where {where}" if where else ''
 
-        data_dict += [d]
+    order_by = sort_constructor(sort)
+    group_by = f"group by {','.join(groupby_fields)}" if groupby_fields else ''
 
-    return data_dict
-
-def load_data(table_name=None, query=None, filters=None, sort=None, page_specs=None, use_pagination=True):
-    assert table_name is not None and query is None or \
-           table_name is None and query is not None, 'Assertion error in load_data.'
-
-
-    if table_name is not None:
-        query = db.session.query(tables[table_name])
-
-    fltr = filter_constructor(filters=filters)
-    srt = sort_constructor(sort=sort)
-    query = query.filter(text(fltr)).order_by(*srt)
-    items_count = query.count()
-
-    offset = 0
+    sql = f"select {', '.join(selected_fields.values())} from {table_expression} {where} {group_by}"
     if use_pagination:
+        items_count = db.engine.execute(text(f"select count(*) from ({sql})")).scalar()
         pagination, offset, page_specs = pagination_constructor(page_specs=page_specs, items_count=items_count)
-        query = query.offset(offset).limit(page_specs.get('page_length'))
-
-    return query.all(), pagination
-
-
-def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
-
-    pagination = None
-
-    if parent is not None:
-        if parent.get('CONVENIOS') is not None:
-            data, pagination = load_data(query=parent.get('CONVENIOS'), filters=filters, sort=sort,
-                                        page_specs=page_specs, use_pagination=use_pagination)
-
-        elif parent.get('CONVENIO') is not None:
-            data = [parent.get('CONVENIO')]
+        limit = f"limit {offset}, {page_specs.get('page_length')}"
     
-        else:
-            raise Exception('load_convenios: Unknown parent')
-    
-    else:
-        data, pagination = load_data(table_name='convenios', filters=filters, sort=sort,
-                                    page_specs=page_specs, use_pagination=use_pagination)
+    sql = f"{sql} {order_by} {limit}"
+    result = db.engine.execute(text(sql))
 
+    data = [{list(selected_fields.keys())[p]: r for p, r in enumerate(row)} for row in result]
 
-    data_dict = rows2dict(data, attrs=['EMENDAS', 'PROPONENTE', 'MOVIMENTOS'])
-
-    return data_dict, pagination
-
-
-def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
-
-    pagination = None
-    
-    if parent is not None:
-        if parent.get('EMENDAS') is not None:
-            data, pagination = load_data(query=parent.get('EMENDAS'), filters=filters, sort=sort,
-                                        page_specs=page_specs, use_pagination=use_pagination)
-
-        elif parent.get('EMENDA') is not None:
-            data = [parent.get('EMENDA')]
-    
-        else:
-            raise Exception('load_emendas: Unknown parent')
-    
-    else:
-        data, pagination = load_data(table_name='emendas', filters=filters, sort=sort,
-                                    page_specs=page_specs, use_pagination=use_pagination)
-
-
-    data_dict = rows2dict(data, attrs=['CONVENIOS'])
-
-    return data_dict, pagination
-
-def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
-
-    pagination = None
-    
-    if parent is not None:
-        if parent.get('PROPONENTES') is not None:
-            data, pagination = load_data(query=parent.get('PROPONENTES'), filters=filters, sort=sort,
-                                        page_specs=page_specs, use_pagination=use_pagination)
-
-        elif parent.get('PROPONENTE') is not None:
-            data = [parent.get('PROPONENTE')]
-    
-        else:
-            raise Exception('load_proponentes: Unknown parent')
-    
-    else:
-        data, pagination = load_data(table_name='proponentes', filters=filters, sort=sort,
-                                    page_specs=page_specs, use_pagination=use_pagination)
-
-
-    data_dict = rows2dict(data, attrs=['CONVENIOS', 'MUNICIPIO'])
-
-    return data_dict, pagination
-
-
-def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
-
-    pagination = None
-    
-    if parent is not None:
-        if parent.get('MOVIMENTOS') is not None:
-            data, pagination = load_data(query=parent.get('MOVIMENTOS'), filters=filters, sort=sort,
-                                        page_specs=page_specs, use_pagination=use_pagination)
-
-        else:
-            raise Exception('load_movimento: Unknown parent')
-    
-    else:
-        data, pagination = load_data(table_name='movimento', filters=filters, sort=sort,
-                                    page_specs=page_specs, use_pagination=use_pagination)
-
-    data_dict = rows2dict(data, attrs=['CONVENIO'])
-    
-    return data_dict, pagination
-
-def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
-
-    pagination = None
-    
-    if parent is not None:
-        if parent.get('MUNICIPIO') is not None:
-            data = [parent.get('MUNICIPIO')]
-
-        else:
-            raise Exception('load_municipios: Unknown parent')
-    
-    else:
-        data, pagination = load_data(table_name='municipios', filters=filters, sort=sort,
-                                    page_specs=page_specs, use_pagination=use_pagination)
-
-    data_dict = rows2dict(data, attrs=['PROPONENTES'])
-    
-    return data_dict, pagination
-
+    return data, pagination
 
 def load_atributos(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
     
     atributos = {
-                 'DATA_ATUAL': db.session.query(DataAtual).first().DATA_ATUAL,
+                 'DATA_ATUAL': db.engine.execute(text("select DATA_ATUAL from data_atual")).scalar(),
                  'SIT_CONVENIO': [
-                                  situacao.SIT_CONVENIO 
+                                  situacao[0]
                                   for situacao in 
-                                  db.session.query(Situacao).order_by(text('SIT_CONVENIO')).all()
+                                  db.engine.execute(text("select SIT_CONVENIO from situacoes order by SIT_CONVENIO"))
                                   ],
                  'NATUREZA_JURIDICA': [
-                                       natureza.NATUREZA_JURIDICA
+                                       natureza[0]
                                        for natureza in 
-                                       db.session.query(Natureza).order_by(text('NATUREZA_JURIDICA')).all()
+                                       db.engine.execute(text("select NATUREZA_JURIDICA from naturezas order by NATUREZA_JURIDICA"))
                                        ],
                  'MODALIDADE': [
-                                modalidade.MODALIDADE
+                                modalidade[0]
                                 for modalidade in
-                                db.session.query(Modalidade).order_by(text('MODALIDADE')).all()
+                                db.engine.execute(text("select MODALIDADE from modalidades order by MODALIDADE"))
                                 ]
                  }
 
     return atributos, None
 
+
+def load_fornecedores(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+    table_expression = 'movimento'
+    selected_fields = {'IDENTIF_FORNECEDOR': 'IDENTIF_FORNECEDOR', 
+                       'NOME_FORNECEDOR': 'NOME_FORNECEDOR',
+                       'PAGAMENTOS': 'round(sum(VALOR), 2) as PAGAMENTOS'}
+    
+    groupby_fields = ['IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR']
+
+
+    extra_filter = ''
+    if parent is not None:
+        if parent.get('NR_CONVENIO') is not None:
+            extra_filter = f"NR_CONVENIO = {parent.get('NR_CONVENIO')}"            
+
+        else:
+            raise Exception('load_fornecedores: Unknown parent')
+
+    extra_filter =  f"({extra_filter}) and TIPO = 'P'" if extra_filter else "TIPO = 'P'"
+
+    data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
+                                  groupby_fields=groupby_fields, filters=filters, sort=sort,
+                                  page_specs=page_specs, use_pagination=use_pagination,
+                                  extra_filter=extra_filter)
+
+    return data, pagination
+
+
+def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+    table_expression = 'convenios'
+    selected_fields = {'NR_CONVENIO': 'NR_CONVENIO',
+                       'DIA_ASSIN_CONV': 'DIA_ASSIN_CONV',
+                       'SIT_CONVENIO': 'SIT_CONVENIO',
+                       'INSTRUMENTO_ATIVO': 'INSTRUMENTO_ATIVO',
+                       'DIA_PUBL_CONV': 'DIA_PUBL_CONV',
+                       'DIA_INIC_VIGENC_CONV': 'DIA_INIC_VIGENC_CONV',
+                       'DIA_FIM_VIGENC_CONV': 'DIA_FIM_VIGENC_CONV',
+                       'DIA_LIMITE_PREST_CONTAS': 'DIA_LIMITE_PREST_CONTAS',
+                       'VL_GLOBAL_CONV': 'VL_GLOBAL_CONV',
+                       'VL_REPASSE_CONV': 'VL_REPASSE_CONV',
+                       'VL_CONTRAPARTIDA_CONV': 'VL_CONTRAPARTIDA_CONV',
+                       'COD_ORGAO_SUP': 'COD_ORGAO_SUP',
+                       'DESC_ORGAO_SUP': 'DESC_ORGAO_SUP',
+                       'NATUREZA_JURIDICA': 'NATUREZA_JURIDICA',
+                       'COD_ORGAO': 'COD_ORGAO',
+                       'DESC_ORGAO':'DESC_ORGAO',
+                       'MODALIDADE': 'MODALIDADE',
+                       'IDENTIF_PROPONENTE': 'IDENTIF_PROPONENTE',
+                       'OBJETO_PROPOSTA': 'OBJETO_PROPOSTA',
+                       'VALOR_REPASSE_EMENDA': 'VALOR_REPASSE_EMENDA',
+                       'COM_EMENDAS': 'COM_EMENDAS'}
+
+    groupby_fields = []
+
+    extra_filter = ''
+    if parent is not None:
+        if parent.get('IDENTIF_FORNECEDOR') is not None:
+            identif_fornecedor = parent.get('IDENTIF_FORNECEDOR')
+            nome_fornecedor = parent.get('NOME_FORNECEDOR')
+            id_fornecedor = f"('{identif_fornecedor}', '{nome_fornecedor}')"
+            sql_convs = f"select distinct NR_CONVENIO from movimento " \
+                        f"where (IDENTIF_FORNECEDOR, NOME_FORNECEDOR)={id_fornecedor}"
+            convs = db.engine.execute(text(sql_convs))
+            conv_list = [conv[0] for conv in convs]
+            extra_filter = f"NR_CONVENIO in ({','.join(conv_list)})"
+
+        elif parent.get('IDENTIF_PROPONENTE') is not None:
+            identif_proponente = parent.get('IDENTIF_PROPONENTE')
+            sql_convs = f"select distinct NR_CONVENIO from convenios " \
+                        f"where IDENTIF_PROPONENTE='{identif_proponente}'"
+            convs = db.engine.execute(text(sql_convs))
+            conv_list = [f"'{conv[0]}'" for conv in convs]
+            extra_filter = f"NR_CONVENIO in ({','.join(conv_list)})"
+
+        elif parent.get('NR_EMENDA') is not None:
+            nr_emenda = parent.get('NR_EMENDA')
+            sql_convs = f"select distinct NR_CONVENIO from emendas_convenios " \
+                        f"where NR_EMENDA='{nr_emenda}'"
+            convs = db.engine.execute(text(sql_convs))
+            conv_list = [f"'{conv[0]}'" for conv in convs]
+            extra_filter = f"NR_CONVENIO in ({','.join(conv_list)})"
+
+        else:
+            raise Exception('load_convenios: Unknown parent')
+
+    data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
+                                  groupby_fields=groupby_fields, filters=filters, sort=sort,
+                                  page_specs=page_specs, use_pagination=use_pagination,
+                                  extra_filter=extra_filter)
+    
+    return data, pagination
+
+def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+
+    table_expression = 'municipios'
+    selected_fields = {'codigo_ibge': 'codigo_ibge',
+                       'nome_municipio': 'nome_municipio',
+                       'codigo_uf': 'codigo_uf',
+                       'uf': 'uf',
+                       'estado': 'estado',
+                       'latitude': 'latitude',
+                       'longitude': 'longitude'}
+
+    groupby_fields = []
+
+    extra_filter = ''
+    if parent is not None:
+        if parent.get('COD_MUNIC_IBGE') is not None:
+            extra_filter = f"codigo_ibge = {parent.get('COD_MUNIC_IBGE')}"            
+
+        else:
+            raise Exception('load_municipios: Unknown parent')
+
+
+    data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
+                                  groupby_fields=groupby_fields, filters=filters, sort=sort,
+                                  page_specs=page_specs, use_pagination=use_pagination,
+                                  extra_filter=extra_filter)
+    
+    return data, pagination
+
+def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+
+    table_expression = 'proponentes'
+    selected_fields = {'IDENTIF_PROPONENTE': 'IDENTIF_PROPONENTE',
+                       'NM_PROPONENTE': 'NM_PROPONENTE',
+                       'UF_PROPONENTE': 'UF_PROPONENTE',
+                       'MUNIC_PROPONENTE': 'MUNIC_PROPONENTE',
+                       'COD_MUNIC_IBGE': 'COD_MUNIC_IBGE'}
+
+    groupby_fields = []
+
+    extra_filter = ''
+    if parent is not None:
+        if parent.get('codigo_ibge') is not None:
+            extra_filter = f"COD_MUNIC_IBGE = {parent.get('codigo_ibge')}"            
+
+        elif parent.get('IDENTIF_PROPONENTE') is not None:
+            extra_filter = f"IDENTIF_PROPONENTE = {parent.get('IDENTIF_PROPONENTE')}"            
+
+        else:
+            raise Exception('load_proponentes: Unknown parent')
+
+    data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
+                                  groupby_fields=groupby_fields, filters=filters, sort=sort,
+                                  page_specs=page_specs, use_pagination=use_pagination,
+                                  extra_filter=extra_filter)
+    
+    return data, pagination
+
+def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+
+    table_expression = 'emendas'
+    selected_fields = {'NR_EMENDA': 'NR_EMENDA',
+                       'NOME_PARLAMENTAR': 'NOME_PARLAMENTAR',
+                       'TIPO_PARLAMENTAR': 'TIPO_PARLAMENTAR',
+                       'VALOR_REPASSE_EMENDA': 'VALOR_REPASSE_EMENDA'}
+
+    groupby_fields = []
+
+    extra_filter = ''
+    if parent is not None:
+        if parent.get('NR_CONVENIO') is not None:
+            nr_convenio = parent.get('NR_CONVENIO')
+            sql_emds = f"select distinct NR_EMENDA from emendas_convenios " \
+                        f"where NR_CONVENIO='{nr_convenio}'"
+            emds = db.engine.execute(text(sql_emds))
+            emd_list = [f"'{emd[0]}'" for emd in emds]
+            extra_filter = f"NR_EMENDA in ({','.join(emd_list)})"
+
+        else:
+            raise Exception('load_emendas: Unknown parent')
+
+    data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
+                                  groupby_fields=groupby_fields, filters=filters, sort=sort,
+                                  page_specs=page_specs, use_pagination=use_pagination,
+                                  extra_filter=extra_filter)
+    
+    return data, pagination
+
+
+def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+
+    table_expression = 'movimento'
+    selected_fields = {'MOV_ID': 'MOV_ID',
+                       'NR_CONVENIO': 'NR_CONVENIO',
+                       'DATA': 'DATA',
+                       'VALOR': 'VALOR',
+                       'TIPO': 'TIPO',
+                       'IDENTIF_FORNECEDOR': 'IDENTIF_FORNECEDOR',
+                       'NOME_FORNECEDOR': 'NOME_FORNECEDOR'}
+
+    groupby_fields = []
+
+    extra_filter = ''
+    if parent is not None:
+        if parent.get('NR_CONVENIO') is not None:
+            extra_filter = f"NR_CONVENIO = {parent.get('NR_CONVENIO')}"            
+
+        elif parent.get('IDENTIF_FORNECEDOR') is not None:
+            identif_fornecedor = parent.get('IDENTIF_FORNECEDOR')
+            nome_fornecedor = parent.get('NOME_FORNECEDOR')
+            id_fornecedor = f"('{identif_fornecedor}', '{nome_fornecedor}')"
+            extra_filter = f"(IDENTIF_FORNECEDOR, NOME_FORNECEDOR) = {id_fornecedor}"
+
+        else:
+            raise Exception('load_movimento: Unknown parent')
+
+    data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
+                                  groupby_fields=groupby_fields, filters=filters, sort=sort,
+                                  page_specs=page_specs, use_pagination=use_pagination,
+                                  extra_filter=extra_filter)
+    
+    return data, pagination

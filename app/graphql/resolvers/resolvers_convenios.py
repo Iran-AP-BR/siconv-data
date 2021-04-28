@@ -16,3 +16,6 @@ def resolve_conv_proponente(obj, info, **kwargs):
 
 def resolve_conv_movimento(obj, info, **kwargs):
     return resolve(load_movimento, obj=obj, info=info, **kwargs)
+
+def resolve_conv_fornecedores(obj, info, **kwargs):
+    return resolve(load_fornecedores, obj=obj, info=info, **kwargs)

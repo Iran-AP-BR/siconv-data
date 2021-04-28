@@ -32,3 +32,4 @@ from .resolvers_proponentes import *
 from .resolvers_movimento import *
 from .resolvers_municipios import *
 from .resolvers_atributos import *
+from .resolvers_fornecedor import *

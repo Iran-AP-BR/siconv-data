@@ -34,6 +34,21 @@ type Municipio {
 }
 
 """
+Defines a type "Fornecedor".
+"""
+type Fornecedor {
+    IDENTIF_FORNECEDOR: String
+    NOME_FORNECEDOR: String
+    PAGAMENTOS: Float
+    CONVENIOS(page_specs: PageSpecs,
+              filters: FilterConvenios,
+              sort: SortConvenios): ConveniosResult
+    MOVIMENTO(page_specs: PageSpecs,
+              filters: FilterMovimento,
+              sort: SortMovimento): MovimentoResult
+}
+
+"""
 Defines a type "Movimento" associated to Movimento table.
 """
 type Movimento {
@@ -94,6 +109,9 @@ type Convenio {
     MOVIMENTO(page_specs: PageSpecs,
               filters: FilterMovimento,
               sort: SortMovimento): MovimentoResult
+    FORNECEDORES(page_specs: PageSpecs,
+              filters: FilterFornecedores,
+              sort: SortFornecedores): FornecedoresResult
 }
 
 """
@@ -119,6 +137,16 @@ type Atributos {
     SIT_CONVENIO: [String]
     NATUREZA_JURIDICA: [String]
     MODALIDADE: [String]
+}
+
+"""
+Defines a type intended to represent the result of Query for "Fornecedores", along with pagination. 
+If errors occur, it'll be informed in "errors" field.
+"""
+type FornecedoresResult {
+    pagination: Pagination
+    errors: [String]
+    items: [Fornecedor]
 }
 
 """
@@ -175,6 +203,12 @@ type MovimentoResult {
 Difines the queries.
 """
 type Query {
+    buscarFornecedores(
+        page_specs: PageSpecs,
+        filters: FilterFornecedores,
+        sort: SortFornecedores
+        ): FornecedoresResult!
+
     buscarMunicipios(
         page_specs: PageSpecs,
         filters: FilterMunicipios,

@@ -7,6 +7,9 @@
 
 from flask import Flask
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 def create_app():
     """This function has the role of create the app and initialize routes.
@@ -20,9 +23,10 @@ def create_app():
 
     CORS(app)
 
-    from .database import config_db
-    config_db(app)
-    
+    #from .database import config_db
+    #config_db(app)
+    db.init_app(app)
+
     import app.rest as rest
     import app.graphql as graphql
     import app.views as views

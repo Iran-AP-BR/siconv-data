@@ -33,6 +33,15 @@ enum FieldsProponentes {
 }
 
 """
+List o field names for Fornecedores.
+"""
+enum FieldsFornecedores {
+    IDENTIF_FORNECEDOR
+    NOME_FORNECEDOR
+    PAGAMENTOS
+}
+
+"""
 List o field names for Movimento table.
 """
 enum FieldsMovimento {
