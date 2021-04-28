@@ -63,7 +63,7 @@ def load_data(table_expression=None, selected_fields=None, groupby_fields=[], fi
 
     sql = f"select {', '.join(selected_fields.values())} from {table_expression} {where} {group_by}"
     if use_pagination:
-        items_count = db.engine.execute(text(f"select count(*) from ({sql})")).scalar()
+        items_count = db.engine.execute(text(f"select count(*) from ({sql}) a")).scalar()
         pagination, offset, page_specs = pagination_constructor(page_specs=page_specs, items_count=items_count)
         limit = f"limit {offset}, {page_specs.get('page_length')}"
     
