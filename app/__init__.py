@@ -23,8 +23,6 @@ def create_app():
 
     CORS(app)
 
-    #from .database import config_db
-    #config_db(app)
     db.init_app(app)
 
     import app.rest as rest
@@ -38,8 +36,6 @@ def create_app():
     app.register_blueprint(rest.blueprint)
     app.register_blueprint(graphql.blueprint)
    
-
-    #print(app.url_map)
     return app
 
 from app.views import index

@@ -189,7 +189,7 @@ def fetch_data():
 
     feedback(label='-> propostas', value='connecting...')
     propostas = pd.read_csv(f'{url}/siconv_proposta.csv.zip', compression='zip', sep=';', dtype=str, usecols=propostas_cols)
-    feedback(label='-> Propostas', value=f'{len(propostas)}')
+    feedback(label='-> propostas', value=f'{len(propostas)}')
 
     feedback(label='-> convenios', value='connecting...')
     convenios = pd.read_csv(f'{url}/siconv_convenio.csv.zip', compression='zip', sep=';', dtype=str, usecols=convenios_cols)
@@ -273,6 +273,8 @@ def fetch_data():
     pagamentos.columns = ['MOV_ID', 'NR_CONVENIO', 'IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR', 'DATA', 'VALOR']
     pagamentos['MOV_ID'] = 'P' + pagamentos['MOV_ID']
     pagamentos['TIPO'] = 'P'
+    pagamentos['IDENTIF_FORNECEDOR'] = pagamentos['IDENTIF_FORNECEDOR'].str.upper()
+    pagamentos['NOME_FORNECEDOR'] = pagamentos['NOME_FORNECEDOR'].str.upper()
     movimento = pd.concat([desembolsos, contrapartidas, pagamentos], ignore_index=True, sort=False)
     movimento.loc[movimento['IDENTIF_FORNECEDOR'].isna(), 'IDENTIF_FORNECEDOR'] = '#N/D'
     movimento.loc[movimento['NOME_FORNECEDOR'].isna(), 'NOME_FORNECEDOR'] = '#N/D'

@@ -45,7 +45,7 @@ def pagination_constructor(conditions=None, page_specs=None, items_count=None):
 
 
 def load_data(table_expression=None, selected_fields=None, groupby_fields=[], filters=None, sort=None,
-               page_specs=None, use_pagination=True, extra_filter=''):
+               page_specs=None, use_pagination=True):
     assert selected_fields is not None
     assert table_expression is not None
 
@@ -53,9 +53,6 @@ def load_data(table_expression=None, selected_fields=None, groupby_fields=[], fi
     limit = ''
 
     where = filter_constructor(filters=filters) if filter else ''
-    if extra_filter:
-        where = f"({where}) and ({extra_filter})" if where else extra_filter
-    
     where = f"where {where}" if where else ''
 
     order_by = sort_constructor(sort)
@@ -99,7 +96,8 @@ def load_atributos(page_specs=None, use_pagination=True, filters=None, parent=No
 
 
 def load_fornecedores(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
-    table_expression = 'movimento'
+    
+    table_expression = f"(select * from movimento where TIPO = 'P') f"
     selected_fields = {'IDENTIF_FORNECEDOR': 'IDENTIF_FORNECEDOR', 
                        'NOME_FORNECEDOR': 'NOME_FORNECEDOR',
                        'PAGAMENTOS': 'round(sum(VALOR), 2) as PAGAMENTOS'}
@@ -107,25 +105,23 @@ def load_fornecedores(page_specs=None, use_pagination=True, filters=None, parent
     groupby_fields = ['IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR']
 
 
-    extra_filter = ''
     if parent is not None:
         if parent.get('NR_CONVENIO') is not None:
-            extra_filter = f"NR_CONVENIO = {parent.get('NR_CONVENIO')}"            
+            table_expression = f"(select * from movimento where TIPO = 'P' " \
+                               f"and NR_CONVENIO = {parent.get('NR_CONVENIO')}) f"           
 
         else:
             raise Exception('load_fornecedores: Unknown parent')
 
-    extra_filter =  f"({extra_filter}) and TIPO = 'P'" if extra_filter else "TIPO = 'P'"
-
     data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
                                   groupby_fields=groupby_fields, filters=filters, sort=sort,
-                                  page_specs=page_specs, use_pagination=use_pagination,
-                                  extra_filter=extra_filter)
+                                  page_specs=page_specs, use_pagination=use_pagination)
 
     return data, pagination
 
 
 def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+    
     table_expression = 'convenios'
     selected_fields = {'NR_CONVENIO': 'NR_CONVENIO',
                        'DIA_ASSIN_CONV': 'DIA_ASSIN_CONV',
@@ -151,7 +147,6 @@ def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=No
 
     groupby_fields = []
 
-    extra_filter = ''
     if parent is not None:
         if parent.get('IDENTIF_FORNECEDOR') is not None:
             identif_fornecedor = parent.get('IDENTIF_FORNECEDOR')
@@ -161,7 +156,7 @@ def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=No
                         f"where (IDENTIF_FORNECEDOR, NOME_FORNECEDOR)={id_fornecedor}"
             convs = db.engine.execute(text(sql_convs))
             conv_list = [conv[0] for conv in convs]
-            extra_filter = f"NR_CONVENIO in ({','.join(conv_list)})"
+            table_expression = f"(select * from convenios where NR_CONVENIO in ({','.join(conv_list)})) c"
 
         elif parent.get('IDENTIF_PROPONENTE') is not None:
             identif_proponente = parent.get('IDENTIF_PROPONENTE')
@@ -169,7 +164,7 @@ def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=No
                         f"where IDENTIF_PROPONENTE='{identif_proponente}'"
             convs = db.engine.execute(text(sql_convs))
             conv_list = [f"'{conv[0]}'" for conv in convs]
-            extra_filter = f"NR_CONVENIO in ({','.join(conv_list)})"
+            table_expression = f"(select * from convenios where NR_CONVENIO in ({','.join(conv_list)})) c"
 
         elif parent.get('NR_EMENDA') is not None:
             nr_emenda = parent.get('NR_EMENDA')
@@ -177,15 +172,14 @@ def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=No
                         f"where NR_EMENDA='{nr_emenda}'"
             convs = db.engine.execute(text(sql_convs))
             conv_list = [f"'{conv[0]}'" for conv in convs]
-            extra_filter = f"NR_CONVENIO in ({','.join(conv_list)})"
+            table_expression = f"(select * from convenios where NR_CONVENIO in ({','.join(conv_list)})) c"
 
         else:
             raise Exception('load_convenios: Unknown parent')
 
     data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
                                   groupby_fields=groupby_fields, filters=filters, sort=sort,
-                                  page_specs=page_specs, use_pagination=use_pagination,
-                                  extra_filter=extra_filter)
+                                  page_specs=page_specs, use_pagination=use_pagination)
     
     return data, pagination
 
@@ -202,10 +196,9 @@ def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=N
 
     groupby_fields = []
 
-    extra_filter = ''
     if parent is not None:
         if parent.get('COD_MUNIC_IBGE') is not None:
-            extra_filter = f"codigo_ibge = {parent.get('COD_MUNIC_IBGE')}"            
+            table_expression = f"(select * from municipios where codigo_ibge = '{parent.get('COD_MUNIC_IBGE')}') m"            
 
         else:
             raise Exception('load_municipios: Unknown parent')
@@ -213,8 +206,7 @@ def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=N
 
     data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
                                   groupby_fields=groupby_fields, filters=filters, sort=sort,
-                                  page_specs=page_specs, use_pagination=use_pagination,
-                                  extra_filter=extra_filter)
+                                  page_specs=page_specs, use_pagination=use_pagination)
     
     return data, pagination
 
@@ -229,21 +221,19 @@ def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=
 
     groupby_fields = []
 
-    extra_filter = ''
     if parent is not None:
         if parent.get('codigo_ibge') is not None:
-            extra_filter = f"COD_MUNIC_IBGE = {parent.get('codigo_ibge')}"            
+            table_expression = f"(select * from proponentes where COD_MUNIC_IBGE = '{parent.get('codigo_ibge')}')"
 
         elif parent.get('IDENTIF_PROPONENTE') is not None:
-            extra_filter = f"IDENTIF_PROPONENTE = {parent.get('IDENTIF_PROPONENTE')}"            
+            table_expression = f"(select * from proponentes where IDENTIF_PROPONENTE = '{parent.get('IDENTIF_PROPONENTE')}') p"
 
         else:
             raise Exception('load_proponentes: Unknown parent')
 
     data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
                                   groupby_fields=groupby_fields, filters=filters, sort=sort,
-                                  page_specs=page_specs, use_pagination=use_pagination,
-                                  extra_filter=extra_filter)
+                                  page_specs=page_specs, use_pagination=use_pagination)
     
     return data, pagination
 
@@ -257,7 +247,6 @@ def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None
 
     groupby_fields = []
 
-    extra_filter = ''
     if parent is not None:
         if parent.get('NR_CONVENIO') is not None:
             nr_convenio = parent.get('NR_CONVENIO')
@@ -265,15 +254,14 @@ def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None
                         f"where NR_CONVENIO='{nr_convenio}'"
             emds = db.engine.execute(text(sql_emds))
             emd_list = [f"'{emd[0]}'" for emd in emds]
-            extra_filter = f"NR_EMENDA in ({','.join(emd_list)})"
+            table_expression = f"(select * from emendas where NR_EMENDA in ({','.join(emd_list)})) e"
 
         else:
             raise Exception('load_emendas: Unknown parent')
 
     data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
                                   groupby_fields=groupby_fields, filters=filters, sort=sort,
-                                  page_specs=page_specs, use_pagination=use_pagination,
-                                  extra_filter=extra_filter)
+                                  page_specs=page_specs, use_pagination=use_pagination)
     
     return data, pagination
 
@@ -291,23 +279,21 @@ def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=No
 
     groupby_fields = []
 
-    extra_filter = ''
     if parent is not None:
         if parent.get('NR_CONVENIO') is not None:
-            extra_filter = f"NR_CONVENIO = {parent.get('NR_CONVENIO')}"            
+            table_expression = f"(select * from movimento where NR_CONVENIO = {parent.get('NR_CONVENIO')}) m"            
 
         elif parent.get('IDENTIF_FORNECEDOR') is not None:
             identif_fornecedor = parent.get('IDENTIF_FORNECEDOR')
             nome_fornecedor = parent.get('NOME_FORNECEDOR')
             id_fornecedor = f"('{identif_fornecedor}', '{nome_fornecedor}')"
-            extra_filter = f"(IDENTIF_FORNECEDOR, NOME_FORNECEDOR) = {id_fornecedor}"
+            table_expression = f"(select * from movimento where (IDENTIF_FORNECEDOR, NOME_FORNECEDOR) = {id_fornecedor}) m"
 
         else:
             raise Exception('load_movimento: Unknown parent')
 
     data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
                                   groupby_fields=groupby_fields, filters=filters, sort=sort,
-                                  page_specs=page_specs, use_pagination=use_pagination,
-                                  extra_filter=extra_filter)
+                                  page_specs=page_specs, use_pagination=use_pagination)
     
     return data, pagination
