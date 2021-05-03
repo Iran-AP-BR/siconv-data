@@ -13,3 +13,13 @@ def resolve_forn_convenios(obj, info, **kwargs):
 
 def resolve_forn_movimento(obj, info, **kwargs):
     return resolve(load_movimento, obj=obj, info=info, **kwargs)
+
+def resolve_forn_estados(obj, info, **kwargs):
+    return resolve(load_estados, obj=obj, info=info, **kwargs)
+
+def resolve_forn_municipios(obj, info, **kwargs):
+    return resolve(load_municipios, obj=obj, info=info, **kwargs)
+
+def resolve_forn_emendas(obj, info, **kwargs):
+    return resolve(load_emendas, obj=obj, info=info, **kwargs)
+

@@ -47,6 +47,7 @@ query.set_field("buscarMovimento", resolve_movimento)
 query.set_field("buscarMunicipios", resolve_municipios)
 query.set_field("buscarAtributos", resolve_atributos)
 query.set_field("buscarFornecedores", resolve_fornecedores)
+query.set_field("buscarEstados", resolve_estados)
 
 convenio = ObjectType("Convenio")
 convenio.set_field("PROPONENTE", resolve_conv_proponente)
@@ -57,25 +58,37 @@ convenio.set_field("FORNECEDORES", resolve_conv_fornecedores)
 proponente = ObjectType("Proponente")
 proponente.set_field("CONVENIOS", resolve_prop_convenios)
 proponente.set_field("MUNICIPIO", resolve_prop_municipios)
+proponente.set_field("FORNECEDORES", resolve_prop_fornecedores)
 
 emenda = ObjectType("Emenda")
 emenda.set_field("CONVENIOS", resolve_emd_convenios)
+emenda.set_field("FORNECEDORES", resolve_emd_fornecedores)
 
 movimento = ObjectType("Movimento")
 movimento.set_field("CONVENIO", resolve_mov_convenio)
 
+estado = ObjectType("Estado")
+estado.set_field("CONVENIOS", resolve_est_convenios)
+estado.set_field("PROPONENTES", resolve_est_proponentes)
+estado.set_field("FORNECEDORES", resolve_est_fornecedores)
+
 municipio = ObjectType("Municipio")
+municipio.set_field("CONVENIOS", resolve_mun_convenios)
 municipio.set_field("PROPONENTES", resolve_mun_proponentes)
+municipio.set_field("FORNECEDORES", resolve_mun_fornecedores)
 
 fornecedor = ObjectType("Fornecedor")
 fornecedor.set_field("CONVENIOS", resolve_forn_convenios)
 fornecedor.set_field("MOVIMENTO", resolve_forn_movimento)
+fornecedor.set_field("MUNICIPIOS", resolve_forn_municipios)
+fornecedor.set_field("ESTADOS", resolve_forn_estados)
+fornecedor.set_field("EMENDAS", resolve_forn_emendas)
 
 type_defs = load_schema_from_path(os.path.join(
     os.path.realpath(os.path.dirname(__file__)), 'schemas'))
 
 
 schema = make_executable_schema(
-    type_defs, query, convenio, proponente, emenda, movimento, municipio, fornecedor, datetime_scalar)
+    type_defs, query, convenio, proponente, emenda, movimento, municipio, fornecedor, estado, datetime_scalar)
 
 from app.graphql.routes import init_routes

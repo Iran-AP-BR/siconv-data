@@ -1,4 +1,13 @@
 """
+List o field names for Estado type.
+"""
+enum FieldsEstados {
+    codigo_uf
+    uf
+    estado
+}
+
+"""
 List o field names for Municipios table.
 """
 enum FieldsMunicipios {
@@ -39,6 +48,8 @@ enum FieldsFornecedores {
     IDENTIF_FORNECEDOR
     NOME_FORNECEDOR
     PAGAMENTOS
+    DATA_ULTIMO_PAGAMENTO
+    MAIOR_PAGAMENTO
 }
 
 """

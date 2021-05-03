@@ -10,3 +10,6 @@ def resolve_emendas(obj, info, **kwargs):
 
 def resolve_emd_convenios(obj, info, **kwargs):
     return resolve(load_convenios, obj=obj, info=info, **kwargs)
+
+def resolve_emd_fornecedores(obj, info, **kwargs):
+    return resolve(load_fornecedores, obj=obj, info=info, **kwargs)

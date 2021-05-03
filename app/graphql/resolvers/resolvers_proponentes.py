@@ -13,3 +13,6 @@ def resolve_prop_convenios(obj, info, **kwargs):
 
 def resolve_prop_municipios(obj, info, **kwargs):
     return resolve(load_municipios, single=True, obj=obj, info=info, **kwargs)
+
+def resolve_prop_fornecedores(obj, info, **kwargs):
+    return resolve(load_fornecedores, obj=obj, info=info, **kwargs)

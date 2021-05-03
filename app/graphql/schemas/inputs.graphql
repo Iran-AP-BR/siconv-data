@@ -168,6 +168,8 @@ input FilterFornecedores {
     IDENTIF_FORNECEDOR: StringFilters
     NOME_FORNECEDOR: StringFilters
     PAGAMENTOS: FloatFilters
+    DATA_ULTIMO_PAGAMENTO: DateFilters
+    MAIOR_PAGAMENTO: FloatFilters
 
     OR: [FilterFornecedores!]
     AND: [FilterFornecedores!]
@@ -190,6 +192,20 @@ input FilterMunicipios {
     OR: [FilterMunicipios!]
     AND: [FilterMunicipios!]
     NOT: FilterMunicipios
+}
+
+"""
+Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
+whose can be used to connect, aggregate or negate filter parts:
+"""
+input FilterEstados {
+    codigo_uf: StringFilters
+    uf: StringFilters
+    estado: StringFilters
+
+    OR: [FilterEstados!]
+    AND: [FilterEstados!]
+    NOT: FilterEstados
 }
 
 """
@@ -290,6 +306,16 @@ for ascending, or "DESC", for descending, or a list of that values. The length o
 """
 input SortMunicipios {
     fields: [FieldsMunicipios]
+    order: [SortOrder!] = []
+}
+
+"""
+Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
+The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
+for ascending, or "DESC", for descending, or a list of that values. The length of both fields and order must be the same.
+"""
+input SortEstados {
+    fields: [FieldsEstados]
     order: [SortOrder!] = []
 }
 

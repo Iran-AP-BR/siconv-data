@@ -18,6 +18,24 @@ type Pagination {
 }
 
 """
+Defines a type "Estado".
+"""
+type Estado {
+    codigo_uf: ID!
+    uf: String
+    estado: String
+    CONVENIOS(page_specs: PageSpecs,
+              filters: FilterConvenios,
+              sort: SortConvenios): ConveniosResult
+    PROPONENTES(page_specs: PageSpecs,
+                filters: FilterProponentes,
+                sort: SortProponentes): ProponentesResult
+    FORNECEDORES(page_specs: PageSpecs,
+              filters: FilterFornecedores,
+              sort: SortFornecedores): FornecedoresResult
+}
+
+"""
 Defines a type "Municipio" associated to Municipios table.
 """
 type Municipio {
@@ -28,9 +46,15 @@ type Municipio {
     estado: String
     latitude: Float
     longitude: Float
+    CONVENIOS(page_specs: PageSpecs,
+              filters: FilterConvenios,
+              sort: SortConvenios): ConveniosResult
     PROPONENTES(page_specs: PageSpecs,
                 filters: FilterProponentes,
                 sort: SortProponentes): ProponentesResult
+    FORNECEDORES(page_specs: PageSpecs,
+              filters: FilterFornecedores,
+              sort: SortFornecedores): FornecedoresResult
 }
 
 """
@@ -40,9 +64,20 @@ type Fornecedor {
     IDENTIF_FORNECEDOR: String
     NOME_FORNECEDOR: String
     PAGAMENTOS: Float
+    DATA_ULTIMO_PAGAMENTO: Datetime
+    MAIOR_PAGAMENTO: Float
+    MUNICIPIOS(page_specs: PageSpecs,
+              filters: FilterMunicipios,
+              sort: SortMunicipios): MunicipiosResult
+    ESTADOS(page_specs: PageSpecs,
+              filters: FilterEstados,
+              sort: SortEstados): EstadosResult
     CONVENIOS(page_specs: PageSpecs,
               filters: FilterConvenios,
               sort: SortConvenios): ConveniosResult
+    EMENDAS(page_specs: PageSpecs,
+            filters: FilterEmendas,
+            sort: SortEmendas): EmendasResult
     MOVIMENTO(page_specs: PageSpecs,
               filters: FilterMovimento,
               sort: SortMovimento): MovimentoResult
@@ -75,6 +110,9 @@ type Proponente {
     CONVENIOS(page_specs: PageSpecs,
               filters: FilterConvenios,
               sort: SortConvenios): ConveniosResult
+    FORNECEDORES(page_specs: PageSpecs,
+              filters: FilterFornecedores,
+              sort: SortFornecedores): FornecedoresResult
 }
 
 """
@@ -125,6 +163,9 @@ type Emenda {
     CONVENIOS(page_specs: PageSpecs, 
               filters: FilterConvenios,
               sort: SortConvenios): ConveniosResult
+    FORNECEDORES(page_specs: PageSpecs,
+              filters: FilterFornecedores,
+              sort: SortFornecedores): FornecedoresResult
 }
 
 """
@@ -137,6 +178,7 @@ type Atributos {
     SIT_CONVENIO: [String]
     NATUREZA_JURIDICA: [String]
     MODALIDADE: [String]
+    TIPO_PARLAMENTAR: [String]
 }
 
 """
@@ -157,6 +199,16 @@ type MunicipiosResult {
     pagination: Pagination
     errors: [String]
     items: [Municipio]
+}
+
+"""
+Defines a type intended to represent the result of Query for "Estados", along with pagination. 
+If errors occur, it'll be informed in "errors" field.
+"""
+type EstadosResult {
+    pagination: Pagination
+    errors: [String]
+    items: [Estado]
 }
 
 """
@@ -203,6 +255,12 @@ type MovimentoResult {
 Difines the queries.
 """
 type Query {
+    buscarEstados(
+        page_specs: PageSpecs,
+        filters: FilterEstados,
+        sort: SortEstados
+        ): EstadosResult!
+
     buscarFornecedores(
         page_specs: PageSpecs,
         filters: FilterFornecedores,
