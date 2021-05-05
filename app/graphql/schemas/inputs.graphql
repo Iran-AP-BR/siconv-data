@@ -163,13 +163,16 @@ Defines a set of fields to be used in filtering. It includes special words (OR, 
 whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterFornecedores {
-    NR_CONVENIO: StringFilters
-    DATA: DateFilters
     IDENTIF_FORNECEDOR: StringFilters
     NOME_FORNECEDOR: StringFilters
-    PAGAMENTOS: FloatFilters
+    DATA_PRIMEIRO_PAGAMENTO: DateFilters
     DATA_ULTIMO_PAGAMENTO: DateFilters
+    PAGAMENTOS: FloatFilters
+    MENOR_PAGAMENTO: FloatFilters
     MAIOR_PAGAMENTO: FloatFilters
+    MEDIA_PAGAMENTO: FloatFilters
+    DESVPAD_PAGAMENTO: FloatFilters
+    QUANTIDADE_PAGAMENTOS: FloatFilters
 
     OR: [FilterFornecedores!]
     AND: [FilterFornecedores!]

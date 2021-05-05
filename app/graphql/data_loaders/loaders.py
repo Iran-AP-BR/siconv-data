@@ -11,7 +11,8 @@ from sqlalchemy import text, desc, func
 
 def sort_constructor(sort):
     if sort is not None:
-        return 'order by ' + ','.join([f"{field} {sort.get('order')[p]}" for p, field in enumerate(sort.get('fields'))])
+        return 'order by ' + ','.join([f"{field} {sort.get('order')[p]}" 
+                                       for p, field in enumerate(sort.get('fields'))])
 
     return ''
 
@@ -103,7 +104,7 @@ def load_atributos(page_specs=None, use_pagination=True, filters=None, parent=No
                                 tipo[0]
                                 for tipo in
                                 db.engine.execute(text("select distinct TIPO_PARLAMENTAR " \
-                                                       "from emendas where TIPO_PARLAMENTAR notnull " \
+                                                       "from emendas where not TIPO_PARLAMENTAR is null " \
                                                        "order by TIPO_PARLAMENTAR"))
                                 ]
                  }
@@ -116,10 +117,16 @@ def load_fornecedores(page_specs=None, use_pagination=True, filters=None, parent
     table_expression = f"(select * from movimento where TIPO = 'P') f"
     selected_fields = {'IDENTIF_FORNECEDOR': 'IDENTIF_FORNECEDOR', 
                        'NOME_FORNECEDOR': 'NOME_FORNECEDOR',
-                       'PAGAMENTOS': 'round(sum(VALOR), 2) as PAGAMENTOS',
+                       'DATA_PRIMEIRO_PAGAMENTO': 'min(DATA) as DATA_PRIMEIRO_PAGAMENTO',
                        'DATA_ULTIMO_PAGAMENTO': 'max(DATA) as DATA_ULTIMO_PAGAMENTO',
-                       'MAIOR_PAGAMENTO': 'max(VALOR) as MAIOR_PAGAMENTO'}
+                       'PAGAMENTOS': 'round(sum(VALOR), 2) as PAGAMENTOS',
+                       'MENOR_PAGAMENTO': 'min(VALOR) as MENOR_PAGAMENTO',
+                       'MAIOR_PAGAMENTO': 'max(VALOR) as MAIOR_PAGAMENTO',
+                       'MEDIA_PAGAMENTO': 'round(avg(VALOR), 2) as MEDIA_PAGAMENTO',
+                       'DESVPAD_PAGAMENTO': 'round(std(VALOR), 2) as DESVPAD_PAGAMENTO',
+                       'QUANTIDADE_PAGAMENTOS': 'count(*) as QUANTIDADE_PAGAMENTOS'}
     
+
     groupby_fields = ['IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR']
 
 

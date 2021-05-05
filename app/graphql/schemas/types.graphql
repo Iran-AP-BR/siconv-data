@@ -63,9 +63,14 @@ Defines a type "Fornecedor".
 type Fornecedor {
     IDENTIF_FORNECEDOR: String
     NOME_FORNECEDOR: String
-    PAGAMENTOS: Float
+    DATA_PRIMEIRO_PAGAMENTO: Datetime
     DATA_ULTIMO_PAGAMENTO: Datetime
+    PAGAMENTOS: Float
+    MENOR_PAGAMENTO: Float
     MAIOR_PAGAMENTO: Float
+    MEDIA_PAGAMENTO: Float
+    DESVPAD_PAGAMENTO: Float
+    QUANTIDADE_PAGAMENTOS: Float    
     MUNICIPIOS(page_specs: PageSpecs,
               filters: FilterMunicipios,
               sort: SortMunicipios): MunicipiosResult
