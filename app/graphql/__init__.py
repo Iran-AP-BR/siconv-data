@@ -83,6 +83,7 @@ fornecedor.set_field("MOVIMENTO", resolve_forn_movimento)
 fornecedor.set_field("MUNICIPIOS", resolve_forn_municipios)
 fornecedor.set_field("ESTADOS", resolve_forn_estados)
 fornecedor.set_field("EMENDAS", resolve_forn_emendas)
+fornecedor.set_field("RESUMO", resolve_forn_summary)
 
 type_defs = load_schema_from_path(os.path.join(
     os.path.realpath(os.path.dirname(__file__)), 'schemas'))

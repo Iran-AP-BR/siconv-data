@@ -58,11 +58,9 @@ type Municipio {
 }
 
 """
-Defines a type "Fornecedor".
+Defines a type "FornecedorSummary".
 """
-type Fornecedor {
-    IDENTIF_FORNECEDOR: String
-    NOME_FORNECEDOR: String
+type FornecedorSummary {
     DATA_PRIMEIRO_PAGAMENTO: Datetime
     DATA_ULTIMO_PAGAMENTO: Datetime
     PAGAMENTOS: Float
@@ -70,7 +68,16 @@ type Fornecedor {
     MAIOR_PAGAMENTO: Float
     MEDIA_PAGAMENTO: Float
     DESVPAD_PAGAMENTO: Float
-    QUANTIDADE_PAGAMENTOS: Float    
+    QUANTIDADE_PAGAMENTOS: Int    
+}
+
+"""
+Defines a type "Fornecedor".
+"""
+type Fornecedor {
+    IDENTIF_FORNECEDOR: String
+    NOME_FORNECEDOR: String
+    RESUMO: FornecedorSummary
     MUNICIPIOS(page_specs: PageSpecs,
               filters: FilterMunicipios,
               sort: SortMunicipios): MunicipiosResult

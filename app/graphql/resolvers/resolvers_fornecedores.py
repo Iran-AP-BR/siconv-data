@@ -23,3 +23,5 @@ def resolve_forn_municipios(obj, info, **kwargs):
 def resolve_forn_emendas(obj, info, **kwargs):
     return resolve(load_emendas, obj=obj, info=info, **kwargs)
 
+def resolve_forn_summary(obj, info, **kwargs):
+    return resolve(load_fornecedores_summary, single=True, obj=obj, info=info, **kwargs)

@@ -380,7 +380,7 @@ def update_database(last_date, force_update=False):
         
         return tbl
 
-    def write_db(data_frame, table_name, chunked=False):
+    def write_db(data_frame, table_name, dtype=None, chunked=False):
         if chunked:
             if_exists = 'replace'
             for df in data_frame:
@@ -454,6 +454,63 @@ def update_database(last_date, force_update=False):
         write_db(data_atual, 'data_atual')
         feedback(label='-> data atual', value='Success!')
 
+
+        app_log.info('[Converting dates]')
+
+        feedback(label='-> convenios', value='converting...')
+        engine.execute("update convenios set DIA_ASSIN_CONV=date(DIA_ASSIN_CONV)")
+        engine.execute("update convenios set DIA_INIC_VIGENC_CONV=date(DIA_INIC_VIGENC_CONV)")
+        engine.execute("update convenios set DIA_FIM_VIGENC_CONV=date(DIA_FIM_VIGENC_CONV)")
+        engine.execute("update convenios set DIA_LIMITE_PREST_CONTAS=date(DIA_LIMITE_PREST_CONTAS)")
+        feedback(label='-> convenios', value='Success!')
+        
+        feedback(label='-> movimento', value='converting...')
+        engine.execute("update movimento set DATA=date(DATA)")
+        feedback(label='-> movimento', value='Success!')
+
+        app_log.info('[Creating indexes]')
+
+        feedback(label='-> convenios', value='Indexing...')
+        engine.execute("create index if not exists idx_convenios_nr_convenio \
+                        on convenios (NR_CONVENIO);")
+        engine.execute("create index if not exists idx_convenios_identif_proponente \
+                        on convenios (IDENTIF_PROPONENTE);")
+        feedback(label='-> convenios', value='Success!')
+        
+        feedback(label='-> proponentes', value='Indexing...')
+        engine.execute("create index if not exists idx_proponentes_identif_proponente \
+                        on proponentes (IDENTIF_PROPONENTE);")
+        engine.execute("create index if not exists idx_proponentes_cod_munic_ibge \
+                        on proponentes (COD_MUNIC_IBGE);")
+        feedback(label='-> proponentes', value='Success!')
+        
+        feedback(label='-> emendas', value='Indexing...')
+        engine.execute("create index if not exists idx_emendas_nr_emenda \
+                        on emendas (NR_EMENDA);")
+        engine.execute("create index if not exists idx_emendas_convenios_nr_emenda \
+                        on emendas_convenios (NR_EMENDA);")
+        engine.execute("create index if not exists idx_emendas_convenios_nr_convenios \
+                        on emendas_convenios (NR_CONVENIO);")
+        feedback(label='-> emendas', value='Success!')
+
+        feedback(label='-> movimento', value='converting...')
+        engine.execute("create index if not exists idx_movimento_fornecedor \
+                        on movimento (IDENTIF_FORNECEDOR, NOME_FORNECEDOR);")
+        engine.execute("create index if not exists idx_movimento_nr_convenio \
+                        on movimento (NR_CONVENIO);")
+        engine.execute("create index if not exists idx_movimento_data \
+                        on movimento (DATA);")
+        feedback(label='-> movimento', value='Success!')
+
+        feedback(label='-> movimento', value='converting...')
+        engine.execute("create index if not exists idx_municipios_codigo_uf \
+                        on municipios (codigo_uf);")
+        engine.execute("create index if not exists idx_municipios_codigo_ibge \
+                        on municipios (codigo_ibge);")
+        engine.execute("create index if not exists idx_municipios_uf \
+                        on municipios (uf);")
+        feedback(label='-> movimento', value='Success!')
+
         app_log.info('Processo finalizado com sucesso!')
 
     except UpToDateException:
@@ -525,4 +582,5 @@ if __name__ == '__main__':
             app_log.info('Processo falhou!')
             return False
 
-    sched.start()
+    #sched.start()
+    update_job()
