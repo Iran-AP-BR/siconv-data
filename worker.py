@@ -471,44 +471,44 @@ def update_database(last_date, force_update=False):
         app_log.info('[Creating indexes]')
 
         feedback(label='-> convenios', value='Indexing...')
-        engine.execute("create index if not exists idx_convenios_nr_convenio \
-                        on convenios (NR_CONVENIO);")
-        engine.execute("create index if not exists idx_convenios_identif_proponente \
-                        on convenios (IDENTIF_PROPONENTE);")
+        engine.execute("create index idx_convenios_nr_convenio \
+                        on convenios (NR_CONVENIO(6));")
+        engine.execute("create index idx_convenios_identif_proponente \
+                        on convenios (IDENTIF_PROPONENTE(60));")
         feedback(label='-> convenios', value='Success!')
         
         feedback(label='-> proponentes', value='Indexing...')
-        engine.execute("create index if not exists idx_proponentes_identif_proponente \
-                        on proponentes (IDENTIF_PROPONENTE);")
-        engine.execute("create index if not exists idx_proponentes_cod_munic_ibge \
-                        on proponentes (COD_MUNIC_IBGE);")
+        engine.execute("create index idx_proponentes_identif_proponente \
+                        on proponentes (IDENTIF_PROPONENTE(60));")
+        engine.execute("create index idx_proponentes_cod_munic_ibge \
+                        on proponentes (COD_MUNIC_IBGE(7));")
         feedback(label='-> proponentes', value='Success!')
         
         feedback(label='-> emendas', value='Indexing...')
-        engine.execute("create index if not exists idx_emendas_nr_emenda \
-                        on emendas (NR_EMENDA);")
-        engine.execute("create index if not exists idx_emendas_convenios_nr_emenda \
-                        on emendas_convenios (NR_EMENDA);")
-        engine.execute("create index if not exists idx_emendas_convenios_nr_convenios \
-                        on emendas_convenios (NR_CONVENIO);")
+        engine.execute("create index idx_emendas_nr_emenda \
+                        on emendas (NR_EMENDA(8));")
+        engine.execute("create index idx_emendas_convenios_nr_emenda \
+                        on emendas_convenios (NR_EMENDA(8));")
+        engine.execute("create index idx_emendas_convenios_nr_convenios \
+                        on emendas_convenios (NR_CONVENIO(6));")
         feedback(label='-> emendas', value='Success!')
 
-        feedback(label='-> movimento', value='converting...')
-        engine.execute("create index if not exists idx_movimento_fornecedor \
-                        on movimento (IDENTIF_FORNECEDOR, NOME_FORNECEDOR);")
-        engine.execute("create index if not exists idx_movimento_nr_convenio \
-                        on movimento (NR_CONVENIO);")
-        engine.execute("create index if not exists idx_movimento_data \
+        feedback(label='-> movimento', value='Indexing...')
+        engine.execute("create index idx_movimento_fornecedor \
+                        on movimento (IDENTIF_FORNECEDOR(40), NOME_FORNECEDOR(60));")
+        engine.execute("create index idx_movimento_nr_convenio \
+                        on movimento (NR_CONVENIO(6));")
+        engine.execute("create index idx_movimento_data \
                         on movimento (DATA);")
         feedback(label='-> movimento', value='Success!')
 
-        feedback(label='-> movimento', value='converting...')
-        engine.execute("create index if not exists idx_municipios_codigo_uf \
-                        on municipios (codigo_uf);")
-        engine.execute("create index if not exists idx_municipios_codigo_ibge \
-                        on municipios (codigo_ibge);")
-        engine.execute("create index if not exists idx_municipios_uf \
-                        on municipios (uf);")
+        feedback(label='-> movimento', value='Indexing...')
+        engine.execute("create index idx_municipios_codigo_uf \
+                        on municipios (codigo_uf(2));")
+        engine.execute("create index idx_municipios_codigo_ibge \
+                        on municipios (codigo_ibge(7));")
+        engine.execute("create index idx_municipios_uf \
+                        on municipios (uf(2));")
         feedback(label='-> movimento', value='Success!')
 
         app_log.info('Processo finalizado com sucesso!')
@@ -582,5 +582,4 @@ if __name__ == '__main__':
             app_log.info('Processo falhou!')
             return False
 
-    #sched.start()
-    update_job()
+    sched.start()
