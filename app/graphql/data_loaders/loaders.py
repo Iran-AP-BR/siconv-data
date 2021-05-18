@@ -175,7 +175,7 @@ def load_fornecedores_summary(page_specs=None, use_pagination=True, filters=None
     
     filters = parent.get('filters')
     where = f"where (IDENTIF_FORNECEDOR, NOME_FORNECEDOR)={id_fornecedor}"
-    if filter:
+    if filters:
         where = f"{where} and {filter_constructor(filters=filters)}"
 
     result = db.engine.execute(text(f"select {', '.join(summary_fields.values())} \
