@@ -2,5 +2,6 @@
 **/.vscode
 /logs
 **/csv_files
-/venv
+venv/
 **/.pyc
+.env
