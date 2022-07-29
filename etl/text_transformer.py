@@ -11,6 +11,7 @@ class TextTransformer(BaseEstimator, TransformerMixin):
     
     def __init__(self, n_clusters=5, stop_words=[], accented=[]):
         
+        #nltk.download('rslp', quiet=True)
         self.__n_clusters__ = n_clusters
         self.__stop_words__ = stop_words
         self.__accented__ = accented

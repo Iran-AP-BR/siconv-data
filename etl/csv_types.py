@@ -83,7 +83,6 @@ csv_proponentes_type = {
 csv_licitacoes_type = {    
     'ID_LICITACAO': 'int64', 
     'NR_CONVENIO': 'int64', 
-    'NR_LICITACAO': 'object', 
     'MODALIDADE_COMPRA': 'object', 
     'TIPO_LICITACAO': 'object', 
     'FORMA_LICITACAO': 'object', 

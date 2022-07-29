@@ -2,12 +2,16 @@
 
 import pandas as pd
 import os
+from pathlib import Path
 from .utils import datetime_validation
 
 
 class CSVTools(object):
     def __init__(self, config) -> None:
         self.config = config
+        Path(os.path.join(self.config.STAGE_FOLDER)).mkdir(parents=True, exist_ok=True)
+        Path(os.path.join(self.config.DATA_FOLDER)).mkdir(parents=True, exist_ok=True)
+
 
     def get_csv_date(self, with_exception=False):
         try:

@@ -5,3 +5,6 @@
 venv/
 **/.pyc
 .env
+csv_files/*
+stage_files/*
+!stage_files/municipios.csv.gz

@@ -204,13 +204,15 @@ class Transformation(object):
         licitacoes.loc[~licitacoes['TIPO_LICITACAO'].astype(str).str.lower().isin(['técnica e preço', 'menor preço', 'melhor técnica']), 
                                                                                  'TIPO_LICITACAO'] = '#(NÃO APLICÁVEL)'
 
-        licitacoes = licitacoes.filter(['ID_LICITACAO', 'NR_CONVENIO', 'NR_LICITACAO', 'MODALIDADE_COMPRA',
+        licitacoes.loc[licitacoes['STATUS_LICITACAO'].isna(), 'STATUS_LICITACAO'] = '#(INDEFINIDO)'
+        
+        licitacoes = licitacoes.filter(['ID_LICITACAO', 'NR_CONVENIO', 'MODALIDADE_COMPRA',
                                         'FORMA_LICITACAO', 'REGISTRO_PRECOS', 'LICITACAO_INTERNACIONAL', 'TIPO_LICITACAO', 
                                         'STATUS_LICITACAO', 'VALOR_LICITACAO']).drop_duplicates()
 
-        licitacoes['NR_LICITACAO'] = licitacoes['NR_LICITACAO'].str.upper()
         licitacoes['MODALIDADE_COMPRA'] = licitacoes['MODALIDADE_COMPRA'].str.upper()
         licitacoes['STATUS_LICITACAO'] = licitacoes['STATUS_LICITACAO'].str.upper()
+        licitacoes['VALOR_LICITACAO'] = licitacoes['VALOR_LICITACAO'].fillna(0)
 
         licitacoes = set_types(licitacoes, csv_licitacoes_type)
         feedback(self.logger, label='-> licitações', value=f'{len(licitacoes)} linhas')
@@ -346,8 +348,7 @@ class Transformation(object):
 
             return tributos
         
-        
-        
+
         feedback(self.logger, label='-> movimento', value='transforming...')
 
         convenios_list = convenios['NR_CONVENIO'].unique()
@@ -466,7 +467,6 @@ class Transformation(object):
         calendario['DIA_DA_SEMANA'] = calendario['DATA'].dt.weekday.replace(0, 'segunda-feira').replace(1, 'terça-feira').\
                                                                     replace(2, 'quarta-feira').replace(3, 'quinta-feira').\
                                                                     replace(4, 'sexta-feira').replace(5, 'sabado').replace(6, 'domingo')
-        #calendario = calendario.astype(csv_calendario_type)
         calendario = set_types(calendario, csv_calendario_type)
 
         feedback(self.logger, label='-> calendário', value=f'{len(calendario)} linhas')
@@ -476,7 +476,6 @@ class Transformation(object):
     def __transform_data_atual__(self, current_date):
         feedback(self.logger, label='-> data atual', value='transforming...')
         data_atual = pd.DataFrame(data={'DATA_ATUAL': [current_date.strftime("%d/%m/%Y")]})
-        #data_atual = data_atual.astype(csv_data_atual_type)
         data_atual = set_types(data_atual, csv_data_atual_type)
         feedback(self.logger, label='-> data atual', value='Success!')
         
@@ -486,12 +485,14 @@ class Transformation(object):
         ra = RiskAnalyzer()
 
         feedback(self.logger, label='-> risk analyzer', value='analyzing...')
+        convenios['INSUCESSO'] = 0
         convenios.loc[convenios['SIT_CONVENIO'].isin(['Prestação de Contas Rejeitada', 'Inadimplente', 'Convênio Rescindido']), 'INSUCESSO'] = 1
         
-        convenios_em_execucao_ = convenios.loc[convenios['SIT_CONVENIO'].str.upper()=='EM EXECUÇÃO']
-        convenios.loc[convenios['NR_CONVENIO'].isin(convenios_em_execucao_['NR_CONVENIO'].to_list()), 
-            ['INSUCESSO']] = ra.run(convenios_em_execucao_, proponentes, emendas, emendas_convenios, 
+        convenios_em_execucao_ = convenios.loc[convenios['SIT_CONVENIO'].str.lower()=='em execução']
+        risks = ra.run(convenios_em_execucao_, proponentes, emendas, emendas_convenios, 
                                     fornecedores, movimento, append=False)
+        convenios.loc[convenios['NR_CONVENIO'].isin(convenios_em_execucao_['NR_CONVENIO'].to_list()), 
+            ['INSUCESSO']] = risks.to_list()
         feedback(self.logger, label='-> risk analyzer', value=f'{len(convenios_em_execucao_)} linhas')
         
         return convenios

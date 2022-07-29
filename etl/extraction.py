@@ -49,7 +49,7 @@ class Extraction(object):
 
         obtv_extract_cols = ["NR_MOV_FIN", "IDENTIF_FAVORECIDO_OBTV_CONV", "NM_FAVORECIDO_OBTV_CONV", "TP_AQUISICAO", "VL_PAGO_OBTV_CONV"]
 
-        licitacoes_extract_cols=['ID_LICITACAO', 'NR_CONVENIO', 'NR_LICITACAO', 'MODALIDADE_LICITACAO', 'TP_PROCESSO_COMPRA', 
+        licitacoes_extract_cols=['ID_LICITACAO', 'NR_CONVENIO', 'MODALIDADE_LICITACAO', 'TP_PROCESSO_COMPRA', 
                                  'TIPO_LICITACAO', 'STATUS_LICITACAO', 'VALOR_LICITACAO']
 
         url = self.config.DOWNLOAD_URI
@@ -84,7 +84,7 @@ class Extraction(object):
         feedback(self.logger, label='-> convenios', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='convenios', current_date=current_date):
             convenios = pd.read_csv(f'{url}/siconv_convenio.csv.zip', compression='zip', sep=';', dtype=str, usecols=convenios_extract_cols)
-            convenios = convenios[convenios['DIA_ASSIN_CONV'].notna()]
+            convenios = convenios[(convenios['DIA_ASSIN_CONV'].notna()) & (convenios['DIA_PUBL_CONV'].notna())]
             convenios.loc[convenios['INSTRUMENTO_ATIVO'].str.upper()=='NÃO', ['INSTRUMENTO_ATIVO']] = 'NAO'
             convenios = convenios.drop_duplicates()
             self.csv_tools.write_to_stage(table=convenios, table_name='convenios')
