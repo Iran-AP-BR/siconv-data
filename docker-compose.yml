@@ -1,0 +1,61 @@
+version: "3.3"
+
+services:
+  db:
+    build: "./db"
+    container_name: siconv-data-container-db
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    volumes:
+      - ./data/database:/var/lib/mysql
+      - ./db/scripts/create_database.sql:/docker-entrypoint-initdb.d/initdb.sql
+    expose:
+      - 3306
+    ports:
+      - "3306:3306"
+    restart: always
+    networks:
+      - backend
+    
+  api:
+    build: "./api"
+    container_name: siconv-data-container-api
+    links:
+      - "db:siconvdata"
+    volumes:
+      - ./api:/home/api_user/app
+      - ./data/data_files:/home/api_user/data_files
+      - ./municipios:/home/api_user/municipios
+    expose:
+      - 5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - backend
+
+  notebooks:
+    build: "./notebooks"
+    container_name: siconv-data-container-notebooks
+    links:
+      - "db:siconvdata"
+    volumes:
+      - ./notebooks:/home/jovyan/notebooks
+      - ./data/data_files:/home/jovyan/data_files:ro
+      - ./municipios:/home/jovyan/municipios:ro
+    expose:
+      - 8888
+    ports:
+      - "8888:8888"
+    
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - backend
+
+networks:
+  backend: 
+    driver: "bridge"

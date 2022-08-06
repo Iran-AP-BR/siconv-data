@@ -2,6 +2,8 @@
 
 import requests
 from datetime import datetime, timezone, timedelta
+import sqlalchemy as sa
+from sqlalchemy_utils import database_exists
 from .extraction import Extraction
 from .transformation import Transformation
 from .loader import CSVLoader, DBLoader
@@ -17,25 +19,27 @@ print(exc_type, fname, exc_tb.tb_lineno)
 '''
 
 class ETL(object):
-    def __init__(self, config, engine, logger) -> None:
+    def __init__(self, config, logger) -> None:
         self.config = config
-        self.engine = engine
+        self.engine = None
         self.logger = logger
         self.csv_tools = CSVTools(config=config)
-        self.extractor = Extraction(config=config, logger=logger)
-        self.transformer = Transformation(logger=logger)
-        self.csv_loader = CSVLoader(config=config, logger=logger)
-        self.db_loader = DBLoader(config=config, engine=engine, logger=logger)
 
-
-    def pipeline(self, force_download=False, force_csv_update=False, force_database_update=False):
+    def pipeline(self, force_download=True, force_csv_update=False, force_database_update=False):
         csv_ok = False
         db_ok = False
         try:
             current_date = self.check_update(target='csv', force_update=force_csv_update or force_download)
+            
+            self.extractor = Extraction(config=self.config, logger=self.logger)
             extracted = self.extractor.extract(current_date=current_date, force_download=force_download)
+            
+            self.transformer = Transformation(logger=self.logger)
             transformed = self.transformer.transform(*extracted, current_date)
+
+            self.csv_loader = CSVLoader(config=self.config, logger=self.logger)
             self.csv_loader.load(*transformed)
+
             csv_ok = True
         except CSVUpToDateException:
             self.logger.info('CSV: Dados já estão atualizados.')
@@ -46,9 +50,13 @@ class ETL(object):
             raise Exception(f'CSV files: {str(e)}')
 
         try:
+            self.engine = self.connect_database()
             if self.engine is not None:
                 self.check_update(target='db', force_update=force_database_update)
+                
+                self.db_loader = DBLoader(config=self.config, engine=self.engine, logger=self.logger)
                 self.db_loader.load()
+
             db_ok = True
         except DBUpToDateException:
             self.logger.info('Database: Dados já estão atualizados.')
@@ -60,10 +68,22 @@ class ETL(object):
 
         return csv_ok and db_ok
 
+    def connect_database(self):
+        engine = None
+        feedback(self.logger, label='-> database', value='connecting...')
+        if database_exists(self.config.SQLALCHEMY_DATABASE_URI):
+            engine = sa.create_engine(self.config.SQLALCHEMY_DATABASE_URI)
+            feedback(self.logger, label='-> database', value='Success!')
+        elif self.config.DATABASE_REQUIRED:
+            raise DBNotFoundException(message='database not found!')
+        else:
+            feedback(self.logger, label='-> database', value='DATABASE NOT CONNECTED!')
+        
+        return engine
 
     def check_update(self, target, force_update=False):
         assert target in ['csv', 'db']
-
+        
         def getCurrentDate():
             url = self.config.CURRENT_DATE_URI
             response = requests.get(url, stream=True)
@@ -82,21 +102,20 @@ class ETL(object):
             
             current_date = getCurrentDate()
 
-            feedback(self.logger, label='-> data atual', value=current_date.strftime("%d/%m/%Y"))
+            feedback(self.logger, label='-> data atual', value=current_date.strftime("%Y-%m-%d"))
             
             last_date = self.csv_tools.get_csv_date()
+            feedback(self.logger, label='-> (CSV) última data', value=last_date.strftime("%Y-%m-%d"))
             
         else:
             current_date = self.csv_tools.get_csv_date(with_exception=True)
             last_date = None
             current_date_table = 'data_atual'
-            if self.engine.has_table(self.engine, current_date_table):
-                last_date = self.engine.execute(f'select data_atual from {current_date_table}').scalar()
-                if type(last_date) == str:
-                    last_date = datetime_validation(last_date)
+            if sa.inspect(self.engine).has_table(current_date_table):
+                last_date = self.engine.execute(f'select DATA_ATUAL from {current_date_table}').scalar()
+            feedback(self.logger, label='-> (database) última data', value=last_date.strftime("%Y-%m-%d"))
 
         today = datetime.now(timezone(timedelta(hours=-3))).date() 
-        
         if not force_update and last_date:
             if  last_date >= today:
                 raise CSVUpToDateException() if target == 'csv' else DBUpToDateException()

@@ -1,10 +1,6 @@
+**/.git
 **/__pycache__
 **/.vscode
-/logs
-**/csv_files
-venv/
+**/venv/
 **/.pyc
-.env
-csv_files/*
-stage_files/*
-!stage_files/municipios.csv.gz
+data/*

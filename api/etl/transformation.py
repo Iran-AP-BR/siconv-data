@@ -10,12 +10,12 @@ class Transformation(object):
     def __init__(self, logger) -> None:
         self.logger = logger
 
-    def transform(self, municipios, proponentes, propostas, convenios, emendas, desembolsos, 
+    def transform(self, estados, municipios, proponentes, propostas, convenios, emendas, desembolsos, 
                         contrapartidas, tributos, pagamentos, obtv, licitacoes, current_date):
 
         self.logger.info('[Transforming data]')
 
-        municipios = self.__transform_municipios__(municipios, propostas)
+        municipios = self.__transform_municipios__(municipios, estados, propostas)
         proponentes, convenios = self.__transform_proponentes__(proponentes, propostas, convenios)
         emendas_convenios, emendas = self.__tranform_emendas_convenios__(emendas, convenios, propostas)
         emendas = self.__tansform_emendas__(emendas)
@@ -32,25 +32,29 @@ class Transformation(object):
                fornecedores, calendario, licitacoes, data_atual
         
 
-    def __transform_municipios__(self, municipios, propostas):
+    def __transform_municipios__(self, municipios, estados, propostas):
         feedback(self.logger, label='-> municipios', value='transforming...')
+        
+        estados.rename(str.upper, axis='columns', inplace=True)
+        municipios.rename(str.upper, axis='columns', inplace=True)
+        
+        municipios = pd.merge(municipios, estados, how='inner', on='CODIGO_UF', left_index=False, right_index=False)
+        municipios.rename(columns={'NOME_x': 'NOME_MUNICIPIO',
+                                   'NOME_y': 'NOME_ESTADO'}, inplace=True)
+        municipios = municipios.drop(['CODIGO_UF'], axis=1)
+        municipios = municipios.apply(lambda x: x.astype(str).str.upper())
+
         municipios_list = municipios['CODIGO_IBGE'].unique()
         municipios_extra = propostas.loc[~propostas['COD_MUNIC_IBGE'].isin(municipios_list), :].copy()
         municipios_extra.rename(columns={'COD_MUNIC_IBGE': 'CODIGO_IBGE', 
                                         'MUNIC_PROPONENTE': 'NOME_MUNICIPIO', 
                                         'UF_PROPONENTE': 'UF'}, inplace=True)
 
-        municipios_extra.loc[municipios_extra['UF'].isin(['AP', 'PA', 'RR', 'AM', 'RO', 'TO', 'AC']), 'REGIAO_ABREVIADA'] = 'NO'
-        municipios_extra.loc[municipios_extra['UF'].isin(['MA', 'SE', 'PI', 'PE', 'RN', 'PB', 'BA', 'CE', 'AL']), 'REGIAO_ABREVIADA'] = 'NE'
-        municipios_extra.loc[municipios_extra['UF'].isin(['GO', 'MT', 'MS', 'DF']), 'REGIAO_ABREVIADA'] = 'CO'
-        municipios_extra.loc[municipios_extra['UF'].isin(['SP', 'RJ', 'ES', 'MG']), 'REGIAO_ABREVIADA'] = 'SE'
-        municipios_extra.loc[municipios_extra['UF'].isin(['RS', 'PR', 'SC']), 'REGIAO_ABREVIADA'] = 'SL'
-
-        municipios_extra.loc[municipios_extra['REGIAO_ABREVIADA'] == 'NO', 'REGIAO'] = 'NORTE'
-        municipios_extra.loc[municipios_extra['REGIAO_ABREVIADA'] == 'NE', 'REGIAO'] = 'NORDESTE'
-        municipios_extra.loc[municipios_extra['REGIAO_ABREVIADA'] == 'CO', 'REGIAO'] = 'CENTRO-OESTE'
-        municipios_extra.loc[municipios_extra['REGIAO_ABREVIADA'] == 'SE', 'REGIAO'] = 'SUDESTE'
-        municipios_extra.loc[municipios_extra['REGIAO_ABREVIADA'] == 'SL', 'REGIAO'] = 'SUL'
+        municipios_extra.loc[municipios_extra['UF'].isin(['AP', 'PA', 'RR', 'AM', 'RO', 'TO', 'AC']), 'REGIAO'] = 'NORTE'
+        municipios_extra.loc[municipios_extra['UF'].isin(['MA', 'SE', 'PI', 'PE', 'RN', 'PB', 'BA', 'CE', 'AL']), 'REGIAO'] = 'NORDESTE'
+        municipios_extra.loc[municipios_extra['UF'].isin(['GO', 'MT', 'MS', 'DF']), 'REGIAO'] = 'CENTRO-OESTE'
+        municipios_extra.loc[municipios_extra['UF'].isin(['SP', 'RJ', 'ES', 'MG']), 'REGIAO'] = 'SUDESTE'
+        municipios_extra.loc[municipios_extra['UF'].isin(['RS', 'PR', 'SC']), 'REGIAO'] = 'SUL'
     
         municipios_extra['CAPITAL'] = False
 
@@ -61,13 +65,18 @@ class Transformation(object):
         municipios.loc[municipios['CAPITAL']=='1', 'CAPITAL'] = True
         municipios.loc[municipios['CAPITAL']=='0', 'CAPITAL'] = False
         municipios = pd.concat([municipios, municipios_extra], ignore_index=True, sort=False)
+        municipios = municipios.drop_duplicates()
         municipios.loc[municipios['NOME_ESTADO'].isna(), 'NOME_ESTADO'] = '#(NÃO ESPECIFICADO)'
-        municipios['NOME_MUNICIPIO'] = municipios['NOME_MUNICIPIO'].str.upper()
-        municipios['NOME_ESTADO'] = municipios['NOME_ESTADO'].str.upper()
-        municipios['UF'] = municipios['UF'].str.upper()
+        
         municipios['LATITUDE'] = municipios['LATITUDE'].str.replace(',', '.', regex=False)
         municipios['LONGITUDE'] = municipios['LONGITUDE'].str.replace(',', '.', regex=False)
-        municipios = municipios.drop_duplicates()
+
+        municipios.loc[municipios['REGIAO'] == 'NORTE', 'REGIAO_ABREVIADA'] = 'NO'
+        municipios.loc[municipios['REGIAO'] == 'NORDESTE', 'REGIAO_ABREVIADA'] = 'NE'
+        municipios.loc[municipios['REGIAO'] == 'CENTRO-OESTE', 'REGIAO_ABREVIADA'] = 'CO'
+        municipios.loc[municipios['REGIAO'] == 'SUDESTE', 'REGIAO_ABREVIADA'] = 'SE'
+        municipios.loc[municipios['REGIAO'] == 'SUL', 'REGIAO_ABREVIADA'] = 'SL'
+
         municipios = set_types(municipios, csv_municipios_type)
         
         feedback(self.logger, label='-> municipios', value=f'{len(municipios)} linhas')

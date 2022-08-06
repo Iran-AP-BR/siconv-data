@@ -30,6 +30,9 @@ class Extraction(object):
         
         self.logger.info('[Extracting data]')
 
+        estados_extract_cols = ["codigo_uf", "uf", "nome", "regiao"]
+        municipios_extract_cols = ["codigo_ibge", "nome", "latitude", "longitude", "capital", "codigo_uf"]
+        
         proponentes_extract_cols = ["IDENTIF_PROPONENTE", "NM_PROPONENTE"]
         propostas_extract_cols = ["ID_PROPOSTA", "COD_MUNIC_IBGE", "COD_ORGAO_SUP", "DESC_ORGAO_SUP",
                                 "NATUREZA_JURIDICA", "COD_ORGAO", "DESC_ORGAO", "MODALIDADE", 
@@ -53,12 +56,28 @@ class Extraction(object):
                                  'TIPO_LICITACAO', 'STATUS_LICITACAO', 'VALOR_LICITACAO']
 
         url = self.config.DOWNLOAD_URI
+        
+        feedback(self.logger, label='-> estados', value='connecting...')
+        if force_download or not self.__already_extracted__(table_name='estados', current_date=current_date, date_verification=False):
+            estados = pd.read_csv(f'{self.config.MUNICIPIOS_BACKUP_FOLDER}/estados.csv.gz', 
+                                  compression='gzip', sep=',', dtype=str,
+                                  usecols=estados_extract_cols).drop_duplicates()
+            self.csv_tools.write_to_stage(table=estados, table_name='estados')
+        else:
+            estados = self.csv_tools.read_from_stage(tbl_name='estados')
+        feedback(self.logger, label='-> estados', value=f'{len(estados)}')
+
 
         feedback(self.logger, label='-> municipios', value='connecting...')
-        if not self.__already_extracted__(table_name='municipios', current_date=current_date, date_verification=False):
-            raise Exception(f'Extractor: dados dos municípios não localizados.')
-        municipios = self.csv_tools.read_from_stage(tbl_name='municipios')
-        feedback(self.logger, label='-> municipios', value=f'{len(municipios)} ')
+        if force_download or not self.__already_extracted__(table_name='municipios', current_date=current_date, date_verification=False):
+            municipios = pd.read_csv(f'{self.config.MUNICIPIOS_BACKUP_FOLDER}/municipios.csv.gz', 
+                                     compression='gzip', sep=',', dtype=str,
+                                     usecols=municipios_extract_cols).drop_duplicates()
+            self.csv_tools.write_to_stage(table=municipios, table_name='municipios')
+        else:
+            municipios = self.csv_tools.read_from_stage(tbl_name='municipios')
+        feedback(self.logger, label='-> municipios', value=f'{len(municipios)}')
+        
 
         feedback(self.logger, label='-> proponentes', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='proponentes', current_date=current_date):
@@ -70,6 +89,7 @@ class Extraction(object):
             proponentes = self.csv_tools.read_from_stage(tbl_name='proponentes')
         feedback(self.logger, label='-> Proponentes', value=f'{len(proponentes)}')
 
+
         feedback(self.logger, label='-> propostas', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='propostas', current_date=current_date):
             propostas = pd.read_csv(f'{url}/siconv_proposta.csv.zip', 
@@ -78,8 +98,8 @@ class Extraction(object):
             self.csv_tools.write_to_stage(table=propostas, table_name='propostas')
         else:
             propostas = self.csv_tools.read_from_stage(tbl_name='propostas')
-
         feedback(self.logger, label='-> propostas', value=f'{len(propostas)}')
+
 
         feedback(self.logger, label='-> convenios', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='convenios', current_date=current_date):
@@ -90,8 +110,8 @@ class Extraction(object):
             self.csv_tools.write_to_stage(table=convenios, table_name='convenios')
         else:
             convenios = self.csv_tools.read_from_stage(tbl_name='convenios')
-
         feedback(self.logger, label='-> convenios', value=f'{len(convenios)}')
+
 
         feedback(self.logger, label='-> emendas', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='emendas', current_date=current_date):
@@ -103,6 +123,7 @@ class Extraction(object):
             emendas = self.csv_tools.read_from_stage(tbl_name='emendas')
         feedback(self.logger, label='-> emendas', value=f'{len(emendas)}')
 
+
         feedback(self.logger, label='-> desembolsos', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='desembolsos', current_date=current_date):
             desembolsos = pd.read_csv(f'{url}/siconv_desembolso.csv.zip', 
@@ -112,6 +133,7 @@ class Extraction(object):
         else:
             desembolsos = self.csv_tools.read_from_stage(tbl_name='desembolsos')
         feedback(self.logger, label='-> desembolsos', value=f'{len(desembolsos)}')
+
 
         feedback(self.logger, label='-> contrapartidas', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='contrapartidas', current_date=current_date):
@@ -123,6 +145,7 @@ class Extraction(object):
             contrapartidas = self.csv_tools.read_from_stage(tbl_name='contrapartidas')
         feedback(self.logger, label='-> contrapartidas', value=f'{len(contrapartidas)}')
 
+
         feedback(self.logger, label='-> tributos', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='tributos', current_date=current_date):
             tributos = pd.read_csv(f'{url}/siconv_pagamento_tributo.csv.zip', 
@@ -132,6 +155,7 @@ class Extraction(object):
         else:
             tributos = self.csv_tools.read_from_stage(tbl_name='tributos')
         feedback(self.logger, label='-> tributos', value=f'{len(tributos)}')
+
 
         feedback(self.logger, label='-> pagamentos', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='pagamentos', current_date=current_date):
@@ -143,6 +167,7 @@ class Extraction(object):
             pagamentos = self.csv_tools.read_from_stage(tbl_name='pagamentos')
         feedback(self.logger, label='-> pagamentos', value=f'{len(pagamentos)}')
 
+
         feedback(self.logger, label='-> OBTV', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='obtv', current_date=current_date):
             obtv = pd.read_csv(f'{url}/siconv_obtv_convenente.csv.zip', compression='zip', sep=';', dtype=str, usecols=obtv_extract_cols)
@@ -152,7 +177,8 @@ class Extraction(object):
         else:
             obtv = self.csv_tools.read_from_stage(tbl_name='obtv')
         feedback(self.logger, label='-> OBTV', value=f'{len(pagamentos)}')
-        
+
+
         feedback(self.logger, label='-> Licitações', value='connecting...')
         if force_download or not self.__already_extracted__(table_name='licitacoes', current_date=current_date):
             licitacoes = pd.read_csv(f'{url}/siconv_licitacao.csv.zip', compression='zip', sep=';', dtype=str, usecols=licitacoes_extract_cols)
@@ -160,7 +186,8 @@ class Extraction(object):
         else:
             licitacoes = self.csv_tools.read_from_stage(tbl_name='licitacoes')
         feedback(self.logger, label='-> Licitações', value=f'{len(licitacoes)}')
-        
-        return municipios, proponentes, propostas, convenios, emendas, desembolsos, \
+
+
+        return estados, municipios, proponentes, propostas, convenios, emendas, desembolsos, \
                contrapartidas, tributos, pagamentos, obtv, licitacoes
             

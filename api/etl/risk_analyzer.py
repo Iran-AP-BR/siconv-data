@@ -11,6 +11,13 @@ import pickle
 import numpy as np
 from .text_transformer import TextTransformer
 
+class Unpickler_(pickle.Unpickler):
+    def find_class(self, module, name):
+        if module == "__main__":
+            module = __name__
+        return super().find_class(module, name)
+
+
 class MLModel(object):
     
     def __init__(self, transformers, principal_components_analysis, classifier, dimensionality_reduction_metrics, cross_validation_metrics, validation_metrics):
@@ -343,10 +350,16 @@ class RiskAnalyzer(object):
     
     def __load_model__(self):
         
+        '''
         with open(self.__model_filename_path__, 'rb') as fd:
             model_object = pickle.load(fd)
-        return model_object
+        '''
+
+        with open(self.__model_filename_path__, 'rb') as fd:
+            model_object = Unpickler_(fd).load()
     
+        return model_object
+
     def __transform_dataset__(self, convenios, proponentes, emendas, emendas_convenios, fornecedores, movimento, ylabel=False):
 
         self.__ibge__ = proponentes[['IDENTIF_PROPONENTE', 'CODIGO_IBGE']].copy()

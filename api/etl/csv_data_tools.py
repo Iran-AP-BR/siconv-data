@@ -15,8 +15,8 @@ class CSVTools(object):
 
     def get_csv_date(self, with_exception=False):
         try:
-            data_atual = self.read_data(tbl_name='data_atual', chunked=False)['DATA_ATUAL'][0]
-            return datetime_validation(data_atual)
+            data_atual = self.read_data(tbl_name='data_atual', chunked=False, dayfirst=False)['DATA_ATUAL'][0]
+            return datetime_validation(data_atual, dayfirst=False)
         except:
             if with_exception:
                 raise Exception(f'Não foi possível obter a data atual.')
@@ -33,11 +33,11 @@ class CSVTools(object):
                             compression=self.config.COMPRESSION_METHOD, sep=';', decimal=',',
                             encoding='utf-8', index=False)    
 
-    def read_data(self, tbl_name, dtypes=str, parse_dates=False, chunked=True):
+    def read_data(self, tbl_name, dtypes=str, parse_dates=False, chunked=True, dayfirst=True):
         return pd.read_csv(os.path.join(self.config.DATA_FOLDER, f'{tbl_name}{self.config.FILE_EXTENTION}'),
                         compression=self.config.COMPRESSION_METHOD, sep=';', decimal=',', 
                         encoding='utf-8', dtype=dtypes, chunksize=self.config.CHUNK_SIZE if chunked else None, 
-                        parse_dates=parse_dates, dayfirst=True)
+                        parse_dates=parse_dates, dayfirst=dayfirst)
 
     def read_from_stage(self, tbl_name):
         return pd.read_csv(os.path.join(self.config.STAGE_FOLDER, f'{tbl_name}{self.config.FILE_EXTENTION}'),

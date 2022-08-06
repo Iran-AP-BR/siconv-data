@@ -3,9 +3,9 @@
 from dateutil.parser import parse as date_parse
 
 
-def datetime_validation(txt, logger=None):
+def datetime_validation(txt, logger=None, dayfirst=True):
     try:
-        dtime = date_parse(txt, dayfirst=True).date()
+        dtime = date_parse(txt, dayfirst=dayfirst).date()
     
     except Exception as e:
         if logger:
