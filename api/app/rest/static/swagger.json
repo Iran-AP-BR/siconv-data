@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "description": "API para disponibilização de alguns dados coletados do Siconv e reaorganizados em um novo modelo de dados mais simples.",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "title": "Dados do Siconv",
     "license": {
       "name": "MIT",
@@ -58,9 +58,12 @@
             "items": {
               "type": "string",
               "enum": [
+                       "calendario",
                        "convenios",
                        "emendas",
                        "emendas_convenios",
+                       "fornecedores",
+                       "licitacoes",
                        "movimento",
                        "municipios",
                        "proponentes"

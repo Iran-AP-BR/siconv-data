@@ -11,8 +11,9 @@ class Config(object):
     COMPRESSION_METHOD = os.getenv('COMPRESSION_METHOD', default='gzip')
     FILE_EXTENTION = os.getenv('FILE_EXTENTION', default='.csv.gz')
 
-    TABLE_LIST = ['emendas', 'emendas_convenios', 'convenios', 'proponentes', 'movimento', 'municipios']
+    TABLE_LIST = list(map(str.strip, os.getenv('TABLE_LIST', default='').split(',')))
 
+    CURRENT_DATE_FILENAME= os.getenv('CURRENT_DATE_FILENAME')
     DATA_FOLDER = os.getenv('DATA_FOLDER')
     STAGE_FOLDER = os.getenv('STAGE_FOLDER')
     MUNICIPIOS_BACKUP_FOLDER = os.getenv('MUNICIPIOS_BACKUP_FOLDER')
