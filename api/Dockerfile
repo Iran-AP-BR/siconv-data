@@ -1,21 +1,18 @@
 FROM python:3.8
 
-ARG API_USER=api_user
+RUN apt-get update -y && \
+    apt-get install tini -y
 
-USER root
 RUN  echo "PS1='\u @ \e[33msiconv-data-api\e[m \e[36m\w \$\e[m '" >> /etc/bash.bashrc
-RUN adduser ${API_USER}
 
-USER ${API_USER}
-ENV VIRTUAL_ENV=/home/${API_USER}/venv
-RUN python -m venv ${VIRTUAL_ENV}
-ENV PATH=${VIRTUAL_ENV}/bin:${PATH}
+WORKDIR /home/api/app
 
-WORKDIR /home/${API_USER}/app
 COPY ./requirements.txt .
 RUN python -m pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install -r requirements.txt
 
 COPY . .
+
+ENTRYPOINT ["tini", "--"]
 
 CMD [ "python", "run.py" ]

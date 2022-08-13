@@ -23,9 +23,9 @@ services:
     links:
       - "db:siconvdata"
     volumes:
-      - ./api:/home/api_user/app
-      - ./data/data_files:/home/api_user/data_files
-      - ./municipios:/home/api_user/municipios
+      - ./api:/home/api/app
+      - ./data/data_files:/home/api/data_files
+      - ./municipios:/home/api/municipios
     expose:
       - 5000
     ports:
@@ -37,14 +37,15 @@ services:
       - backend
 
   notebooks:
-    build: "./notebooks"
+    build: "./jupyter"
     container_name: siconv-data-container-notebooks
     links:
       - "db:siconvdata"
     volumes:
-      - ./notebooks:/home/jovyan/notebooks
-      - ./data/data_files:/home/jovyan/data_files:ro
-      - ./municipios:/home/jovyan/municipios:ro
+      - ./jupyter/notebooks:/home/jupyter/notebooks
+      - ./data/data_files:/home/jupyter/data_files:ro
+      - ./municipios:/home/jupyter/municipios:ro
+      - ./jupyter/user-settings:/root/.jupyter/lab/user-settings
     expose:
       - 8888
     ports:
