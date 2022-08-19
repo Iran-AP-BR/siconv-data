@@ -138,6 +138,35 @@ input StringFilters {
     swx: String
 } 
 
+
+"""
+Defines a set of filtering commands to be applied to field of Regiao type.
+The commands may be:
+
+1. __eq__: _equal to_
+2. __diff__: _different_
+3. __in__: _in list_.
+"""
+input RegiaoFilters {
+    eq: Regiao
+    diff: Regiao
+    in: [Regiao!]
+} 
+
+"""
+Defines a set of filtering commands to be applied to field of RegiaoAbreviada type.
+The commands may be:
+
+1. __eq__: _equal to_
+2. __diff__: _different_
+3. __in__: _in list_.
+"""
+input RegiaoAbreviadaFilters {
+    eq: RegiaoAbreviada
+    diff: RegiaoAbreviada
+    in: [RegiaoAbreviada!]
+} 
+
 """
 Defines a set of filtering commands to be applied to field of YesNo type.
 The commands may be:
@@ -163,8 +192,6 @@ Defines a set of fields to be used in filtering. It includes special words (OR, 
 whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterFornecedores {
-    NR_CONVENIO: StringFilters
-    DATA: DateFilters
     IDENTIF_FORNECEDOR: StringFilters
     NOME_FORNECEDOR: StringFilters
 
@@ -178,13 +205,14 @@ Defines a set of fields to be used in filtering. It includes special words (OR, 
 whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterMunicipios {
-    codigo_ibge: StringFilters
-    nome_municipio: StringFilters
-    codigo_uf: StringFilters
-    uf: StringFilters
-    estado: StringFilters
-    latitude: FloatFilters
-    longitude: FloatFilters
+    CODIGO_IBGE: StringFilters
+    NOME_MUNICIPIO: StringFilters
+    UF: StringFilters
+    REGIAO: RegiaoFilters
+    REGIAO_ABREVIADA: RegiaoAbreviadaFilters
+    LATITUDE: FloatFilters
+    LONGITUDE: FloatFilters
+    CAPITAL: StringFilters
 
     OR: [FilterMunicipios!]
     AND: [FilterMunicipios!]
@@ -196,9 +224,8 @@ Defines a set of fields to be used in filtering. It includes special words (OR, 
 whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterEstados {
-    codigo_uf: StringFilters
-    uf: StringFilters
-    estado: StringFilters
+    SIGLA: StringFilters
+    NOME: StringFilters
 
     OR: [FilterEstados!]
     AND: [FilterEstados!]
@@ -213,7 +240,7 @@ input FilterEmendas {
     NR_EMENDA: StringFilters,
     NOME_PARLAMENTAR: StringFilters
     TIPO_PARLAMENTAR: StringFilters
-    VALOR_REPASSE_EMENDA: FloatFilters
+    VALOR_EMENDA: FloatFilters
 
     OR: [FilterEmendas!]
     AND: [FilterEmendas!]
@@ -225,11 +252,9 @@ Defines a set of fields to be used in filtering. It includes special words (OR, 
 whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterProponentes {
-    IDENTIF_PROPONENTE: StringFilters
-    NM_PROPONENTE: StringFilters
-    UF_PROPONENTE: StringFilters
-    MUNIC_PROPONENTE: StringFilters
-    COD_MUNIC_IBGE: StringFilters
+    IDENTIFICACAO: StringFilters
+    NOME_PROPONENTE: StringFilters
+    CODIGO_IBGE: StringFilters
 
     OR: [FilterProponentes!]
     AND: [FilterProponentes!]
@@ -246,8 +271,6 @@ input FilterMovimento {
     DATA: DateFilters
     VALOR: FloatFilters
     TIPO: StringFilters
-    IDENTIF_FORNECEDOR: StringFilters
-    NOME_FORNECEDOR: StringFilters
 
     OR: [FilterMovimento!]
     AND: [FilterMovimento!]
@@ -259,7 +282,7 @@ Defines a set of fields to be used in filtering. It includes special words (OR, 
 whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterConvenios {
-    NR_CONVENIO: StringFilters
+    NR_CONVENIO: IntFilters
     DIA_ASSIN_CONV: DateFilters
     SIT_CONVENIO: StringFilters
     INSTRUMENTO_ATIVO: YesNoFilters
@@ -280,10 +303,30 @@ input FilterConvenios {
     OBJETO_PROPOSTA: StringFilters
     VALOR_REPASSE_EMENDA: FloatFilters
     COM_EMENDAS: YesNoFilters
+    INSUCESSO: FloatFilters
 
     OR: [FilterConvenios!]
     AND: [FilterConvenios!]
     NOT: FilterConvenios
+}
+
+"""
+Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
+whose can be used to connect, aggregate or negate filter parts:
+"""
+input FilterLicitacoes {
+    NR_CONVENIO: IntFilters
+    MODALIDADE_COMPRA: StringFilters
+    TIPO_LICITACAO: StringFilters
+    FORMA_LICITACAO: StringFilters
+    REGISTRO_PRECOS: YesNoFilters
+    LICITACAO_INTERNACIONAL: YesNoFilters
+    STATUS_LICITACAO: StringFilters
+    VALOR_LICITACAO: FloatFilters
+
+    OR: [FilterLicitacoes!]
+    AND: [FilterLicitacoes!]
+    NOT: FilterLicitacoes
 }
 
 """
@@ -353,5 +396,15 @@ for ascending, or "DESC", for descending, or a list of that values. The length o
 """
 input SortConvenios {
     fields: [FieldsConvenios]
+    order: [SortOrder!] = []
+}
+
+"""
+Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
+The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
+for ascending, or "DESC", for descending, or a list of that values. The length of both fields and order must be the same.
+"""
+input SortLicitacoes {
+    fields: [FieldsLicitacoes]
     order: [SortOrder!] = []
 }

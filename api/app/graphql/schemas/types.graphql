@@ -21,9 +21,11 @@ type Pagination {
 Defines a type "Estado".
 """
 type Estado {
-    codigo_uf: ID!
-    uf: String
-    estado: String
+    SIGLA: ID!
+    NOME: String
+    MUNICIPIOS(page_specs: PageSpecs,
+              filters: FilterMunicipios,
+              sort: SortMunicipios): MunicipiosResult
     CONVENIOS(page_specs: PageSpecs,
               filters: FilterConvenios,
               sort: SortConvenios): ConveniosResult
@@ -39,13 +41,15 @@ type Estado {
 Defines a type "Municipio" associated to Municipios table.
 """
 type Municipio {
-    codigo_ibge: ID!
-    nome_municipio: String
-    codigo_uf: String
-    uf: String
-    estado: String
-    latitude: Float
-    longitude: Float
+    CODIGO_IBGE: ID!
+    NOME_MUNICIPIO: String
+    UF: String
+    REGIAO: Regiao
+    REGIAO_ABREVIADA: RegiaoAbreviada
+    LATITUDE: Float
+    LONGITUDE: Float
+    CAPITAL: YesNo
+    ESTADO: Estado
     CONVENIOS(page_specs: PageSpecs,
               filters: FilterConvenios,
               sort: SortConvenios): ConveniosResult
@@ -76,6 +80,7 @@ type FornecedorResumo {
 Defines a type "Fornecedor".
 """
 type Fornecedor {
+    FORNECEDOR_ID: Int
     IDENTIF_FORNECEDOR: String
     NOME_FORNECEDOR: String
     RESUMO: FornecedorResumo
@@ -101,12 +106,11 @@ Defines a type "Movimento" associated to Movimento table.
 """
 type Movimento {
     MOV_ID: ID!
-    NR_CONVENIO: String!
+    NR_CONVENIO: Int!
     DATA: Datetime
     VALOR: Float
     TIPO: String
-    IDENTIF_FORNECEDOR: String
-    NOME_FORNECEDOR: String
+    FORNECEDOR: Fornecedor
     CONVENIO: Convenio
 }
 
@@ -114,11 +118,10 @@ type Movimento {
 Defines a type "Proponente" associated to Proponentes table.
 """
 type Proponente {
-    IDENTIF_PROPONENTE: ID!
-    NM_PROPONENTE: String
-    UF_PROPONENTE: String
-    MUNIC_PROPONENTE: String
-    COD_MUNIC_IBGE: String
+    IDENTIFICACAO: ID!
+    NOME_PROPONENTE: String
+    CODIGO_IBGE: String
+    ESTADO: Estado
     MUNICIPIO: Municipio
     CONVENIOS(page_specs: PageSpecs,
               filters: FilterConvenios,
@@ -132,7 +135,7 @@ type Proponente {
 Defines a type "Convenio" associated to Convenios table.
 """
 type Convenio {
-    NR_CONVENIO: ID!
+    NR_CONVENIO: Int!
     DIA_ASSIN_CONV: Datetime
     SIT_CONVENIO: String
     INSTRUMENTO_ATIVO: String
@@ -151,9 +154,15 @@ type Convenio {
     MODALIDADE: String
     IDENTIF_PROPONENTE: String
     OBJETO_PROPOSTA: String
-    VALOR_REPASSE_EMENDA: Float
+    VALOR_EMENDA_CONVENIO: Float
     COM_EMENDAS: String
+    INSUCESSO: Float
     PROPONENTE: Proponente
+    MUNICIPIO: Municipio
+    ESTADO: Estado
+    LICITACOES(page_specs: PageSpecs,
+            filters: FilterLicitacoes,
+            sort: SortLicitacoes): LicitacoesResult
     EMENDAS(page_specs: PageSpecs,
             filters: FilterEmendas,
             sort: SortEmendas): EmendasResult
@@ -172,7 +181,7 @@ type Emenda {
     NR_EMENDA: ID!
     NOME_PARLAMENTAR: String
     TIPO_PARLAMENTAR: String
-    VALOR_REPASSE_EMENDA: Float
+    VALOR_EMENDA: Float
     CONVENIOS(page_specs: PageSpecs, 
               filters: FilterConvenios,
               sort: SortConvenios): ConveniosResult
@@ -180,6 +189,22 @@ type Emenda {
               filters: FilterFornecedores,
               sort: SortFornecedores): FornecedoresResult
 }
+
+"""
+Defines a type "Licitacao" associated to Licitacoes table.
+"""
+type Licitacao {
+    NR_CONVENIO: Int!
+    MODALIDADE_COMPRA: String
+    TIPO_LICITACAO: String
+    FORMA_LICITACAO: String
+    REGISTRO_PRECOS: String
+    LICITACAO_INTERNACIONAL: String
+    STATUS_LICITACAO: String
+    VALOR_LICITACAO: Float
+    CONVENIO: Convenio
+}
+
 
 """
 Defines a type "Atributos" which represents some standard attributes related to the dataset, 
@@ -190,8 +215,12 @@ type Atributos {
     DATA_ATUAL: Datetime
     SIT_CONVENIO: [String]
     NATUREZA_JURIDICA: [String]
-    MODALIDADE: [String]
+    MODALIDADE_TRANSFERENCIA: [String]
     TIPO_PARLAMENTAR: [String]
+    MODALIDADE_COMPRA: [String]
+    TIPO_LICITACAO: [String]
+    FORMA_LICITACAO: [String]
+    STATUS_LICITACAO: [String]
 }
 
 """
@@ -265,6 +294,16 @@ type MovimentoResult {
 }
 
 """
+Defines a type intended to represent the result of Query for "Licitacoes", along with pagination. 
+If errors occur, it'll be informed in "errors" field.
+"""
+type LicitacoesResult {
+    pagination: Pagination
+    errors: [String]
+    items: [Licitacao]
+}
+
+"""
 Difines the queries.
 """
 type Query {
@@ -309,6 +348,12 @@ type Query {
         filters: FilterConvenios,
         sort: SortConvenios
         ): ConveniosResult!
+
+    buscarLicitacoes(
+        page_specs: PageSpecs,
+        filters: FilterLicitacoes,
+        sort: SortLicitacoes
+        ): LicitacoesResult!
 
     buscarAtributos: Atributos!
 }

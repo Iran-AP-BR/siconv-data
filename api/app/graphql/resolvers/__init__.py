@@ -34,3 +34,4 @@ from .resolvers_municipios import *
 from .resolvers_atributos import *
 from .resolvers_fornecedores import *
 from .resolvers_estados import *
+from .resolvers_licitacoes import *

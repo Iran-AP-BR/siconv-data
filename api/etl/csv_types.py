@@ -30,7 +30,7 @@ csv_convenios_type = {
     'IDENTIF_PROPONENTE': 'object',
     'OBJETO_PROPOSTA': 'object',
     'VALOR_EMENDA_CONVENIO': 'float64',
-    'COM_EMENDAS': 'bool',
+    'COM_EMENDAS': 'object',
     'INSUCESSO': 'float64'
 }
 

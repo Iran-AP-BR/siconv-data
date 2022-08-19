@@ -52,18 +52,18 @@ class Transformation(object):
 
         municipios_extra.loc[municipios_extra['UF'].isin(['AP', 'PA', 'RR', 'AM', 'RO', 'TO', 'AC']), 'REGIAO'] = 'NORTE'
         municipios_extra.loc[municipios_extra['UF'].isin(['MA', 'SE', 'PI', 'PE', 'RN', 'PB', 'BA', 'CE', 'AL']), 'REGIAO'] = 'NORDESTE'
-        municipios_extra.loc[municipios_extra['UF'].isin(['GO', 'MT', 'MS', 'DF']), 'REGIAO'] = 'CENTRO-OESTE'
+        municipios_extra.loc[municipios_extra['UF'].isin(['GO', 'MT', 'MS', 'DF']), 'REGIAO'] = 'CENTRO_OESTE'
         municipios_extra.loc[municipios_extra['UF'].isin(['SP', 'RJ', 'ES', 'MG']), 'REGIAO'] = 'SUDESTE'
         municipios_extra.loc[municipios_extra['UF'].isin(['RS', 'PR', 'SC']), 'REGIAO'] = 'SUL'
     
-        municipios_extra['CAPITAL'] = False
+        municipios_extra['CAPITAL'] = 'NAO'
 
         uf_nome_estado = municipios[['UF', 'NOME_ESTADO']].drop_duplicates()
         municipios_extra = pd.merge(municipios_extra, uf_nome_estado, how='left', on='UF', left_index=False, right_index=False)
         municipios_extra = municipios_extra.filter(['CODIGO_IBGE', 'NOME_MUNICIPIO', 'UF', 'NOME_ESTADO', 'REGIAO', 'REGIAO_ABREVIADA', 'CAPITAL'])
         
-        municipios.loc[municipios['CAPITAL']=='1', 'CAPITAL'] = True
-        municipios.loc[municipios['CAPITAL']=='0', 'CAPITAL'] = False
+        municipios.loc[municipios['CAPITAL']=='1', 'CAPITAL'] = 'SIM'
+        municipios.loc[municipios['CAPITAL']=='0', 'CAPITAL'] = 'NAO'
         municipios = pd.concat([municipios, municipios_extra], ignore_index=True, sort=False)
         municipios = municipios.drop_duplicates()
         municipios.loc[municipios['NOME_ESTADO'].isna(), 'NOME_ESTADO'] = '#(NÃO ESPECIFICADO)'
@@ -73,7 +73,7 @@ class Transformation(object):
 
         municipios.loc[municipios['REGIAO'] == 'NORTE', 'REGIAO_ABREVIADA'] = 'NO'
         municipios.loc[municipios['REGIAO'] == 'NORDESTE', 'REGIAO_ABREVIADA'] = 'NE'
-        municipios.loc[municipios['REGIAO'] == 'CENTRO-OESTE', 'REGIAO_ABREVIADA'] = 'CO'
+        municipios.loc[municipios['REGIAO'] == 'CENTRO_OESTE', 'REGIAO_ABREVIADA'] = 'CO'
         municipios.loc[municipios['REGIAO'] == 'SUDESTE', 'REGIAO_ABREVIADA'] = 'SE'
         municipios.loc[municipios['REGIAO'] == 'SUL', 'REGIAO_ABREVIADA'] = 'SL'
 
@@ -133,8 +133,8 @@ class Transformation(object):
         convenios_emendas_list = emendas_convenios['NR_CONVENIO'].unique()
         convenios['NR_CONVENIO'] = convenios['NR_CONVENIO'].astype('int64')
 
-        convenios['COM_EMENDAS'] = False
-        convenios.loc[convenios['NR_CONVENIO'].isin(convenios_emendas_list), 'COM_EMENDAS'] = True
+        convenios['COM_EMENDAS'] = 'NAO'
+        convenios.loc[convenios['NR_CONVENIO'].isin(convenios_emendas_list), 'COM_EMENDAS'] = 'SIM'
 
         convenios['VL_GLOBAL_CONV'] = convenios['VL_GLOBAL_CONV'].str.replace(',', '.', regex=False)
         convenios['VL_REPASSE_CONV'] = convenios['VL_REPASSE_CONV'].str.replace(',', '.', regex=False)
@@ -146,8 +146,9 @@ class Transformation(object):
         convenios = pd.merge(convenios, conv_repasse_emenda, how='left', on='NR_CONVENIO', left_index=False, right_index=False)
         convenios['VALOR_EMENDA_CONVENIO'] = convenios['VALOR_EMENDA_CONVENIO'].fillna(0)
 
-        convenios.loc[convenios['INSTRUMENTO_ATIVO'].str.upper()=='SIM', 'INSTRUMENTO_ATIVO'] = True
-        convenios.loc[convenios['INSTRUMENTO_ATIVO'].str.upper()=='NAO', 'INSTRUMENTO_ATIVO'] = False
+        convenios['INSTRUMENTO_ATIVO'] = convenios['INSTRUMENTO_ATIVO'].str.upper()
+        #convenios.loc[convenios['INSTRUMENTO_ATIVO'].str.upper()=='SIM', 'INSTRUMENTO_ATIVO'] = True
+        #convenios.loc[convenios['INSTRUMENTO_ATIVO'].str.upper()=='NAO', 'INSTRUMENTO_ATIVO'] = False
 
         convenios_columns = ['NR_CONVENIO', 'DIA_ASSIN_CONV', 'SIT_CONVENIO', 'INSTRUMENTO_ATIVO', 'DIA_PUBL_CONV',
                             'DIA_INIC_VIGENC_CONV', 'DIA_FIM_VIGENC_CONV', 'DIA_LIMITE_PREST_CONTAS',
@@ -191,12 +192,12 @@ class Transformation(object):
         licitacoes.loc[licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.startswith('eletrônico') |
                        licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.startswith('eletronico'), 'FORMA_LICITACAO'] = 'ELETRÔNICO'
 
-        licitacoes['REGISTRO_PRECOS'] = False
+        licitacoes['REGISTRO_PRECOS'] = 'NAO'
         licitacoes.loc[licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.contains('registro de preço') |
-                       licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.contains('registro de preco'), 'REGISTRO_PRECOS'] = True
+                       licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.contains('registro de preco'), 'REGISTRO_PRECOS'] = 'SIM'
 
-        licitacoes['LICITACAO_INTERNACIONAL'] = False
-        licitacoes.loc[licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.startswith('LICITACAO_INTERNACIONAL'), 'LICITACAO_INTERNACIONAL'] = True
+        licitacoes['LICITACAO_INTERNACIONAL'] = 'NAO'
+        licitacoes.loc[licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.startswith('LICITACAO_INTERNACIONAL'), 'LICITACAO_INTERNACIONAL'] = 'SIM'
 
         licitacoes.loc[licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.contains('menor preço') |
                        licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.contains('menor preco') |

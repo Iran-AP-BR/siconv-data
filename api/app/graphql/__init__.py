@@ -54,10 +54,14 @@ convenio.set_field("PROPONENTE", resolve_conv_proponente)
 convenio.set_field("EMENDAS", resolve_conv_emendas)
 convenio.set_field("MOVIMENTO", resolve_conv_movimento)
 convenio.set_field("FORNECEDORES", resolve_conv_fornecedores)
+convenio.set_field("LICITACOES", resolve_conv_licitacoes)
+convenio.set_field("MUNICIPIO", resolve_conv_municipio)
+convenio.set_field("ESTADO", resolve_conv_estado)
 
 proponente = ObjectType("Proponente")
 proponente.set_field("CONVENIOS", resolve_prop_convenios)
-proponente.set_field("MUNICIPIO", resolve_prop_municipios)
+proponente.set_field("MUNICIPIO", resolve_prop_municipio)
+proponente.set_field("ESTADO", resolve_prop_estado)
 proponente.set_field("FORNECEDORES", resolve_prop_fornecedores)
 
 emenda = ObjectType("Emenda")
@@ -68,11 +72,13 @@ movimento = ObjectType("Movimento")
 movimento.set_field("CONVENIO", resolve_mov_convenio)
 
 estado = ObjectType("Estado")
+proponente.set_field("MUNICIPIO", resolve_est_municipios)
 estado.set_field("CONVENIOS", resolve_est_convenios)
 estado.set_field("PROPONENTES", resolve_est_proponentes)
 estado.set_field("FORNECEDORES", resolve_est_fornecedores)
 
 municipio = ObjectType("Municipio")
+municipio.set_field("ESTADO", resolve_mun_estado)
 municipio.set_field("CONVENIOS", resolve_mun_convenios)
 municipio.set_field("PROPONENTES", resolve_mun_proponentes)
 municipio.set_field("FORNECEDORES", resolve_mun_fornecedores)
@@ -85,11 +91,15 @@ fornecedor.set_field("ESTADOS", resolve_forn_estados)
 fornecedor.set_field("EMENDAS", resolve_forn_emendas)
 fornecedor.set_field("RESUMO", resolve_forn_summary)
 
+licitacao = ObjectType("Licitacao")
+licitacao.set_field("CONVENIO", resolve_lic_convenio)
+
+
 type_defs = load_schema_from_path(os.path.join(
     os.path.realpath(os.path.dirname(__file__)), 'schemas'))
 
 
 schema = make_executable_schema(
-    type_defs, query, convenio, proponente, emenda, movimento, municipio, fornecedor, estado, datetime_scalar)
+    type_defs, query, convenio, proponente, emenda, movimento, municipio, fornecedor, estado, licitacao, datetime_scalar)
 
 from app.graphql.routes import init_routes

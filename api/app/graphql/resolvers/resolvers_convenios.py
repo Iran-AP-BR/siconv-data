@@ -19,3 +19,12 @@ def resolve_conv_movimento(obj, info, **kwargs):
 
 def resolve_conv_fornecedores(obj, info, **kwargs):
     return resolve(load_fornecedores, obj=obj, info=info, **kwargs)
+
+def resolve_conv_municipio(obj, info, **kwargs):
+    return resolve(load_municipios, single=True, obj=obj, info=info, **kwargs)
+
+def resolve_conv_estado(obj, info, **kwargs):
+    return resolve(load_estados, single=True, obj=obj, info=info, **kwargs)
+
+def resolve_conv_licitacoes(obj, info, **kwargs):
+    return resolve(load_licitacoes, obj=obj, info=info, **kwargs)

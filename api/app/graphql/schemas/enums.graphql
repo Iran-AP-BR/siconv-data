@@ -1,48 +1,46 @@
 """
-List o field names for Estado type.
+List of field names for Estado type.
 """
 enum FieldsEstados {
-    codigo_uf
-    uf
-    estado
+    SIGLA
+    NOME
 }
 
 """
-List o field names for Municipios table.
+List of field names for Municipios table.
 """
 enum FieldsMunicipios {
-    codigo_ibge
-    nome_municipio
-    codigo_uf
-    uf
-    estado
-    latitude
-    longitude
+    CODIGO_IBGE
+    NOME_MUNICIPIO
+    UF
+    REGIAO
+    REGIAO_ABREVIADA
+    LATITUDE
+    LONGITUDE
+    CAPITAL
 }
 
 """
-List o field names for Emendas table.
+List of field names for Emendas table.
 """
 enum FieldsEmendas {
     NR_EMENDA
     NOME_PARLAMENTAR
     TIPO_PARLAMENTAR
-    VALOR_REPASSE_EMENDA
+    VALOR_EMENDA
 }
 
 """
-List o field names for Proponentes table.
+List of field names for Proponentes table.
 """
 enum FieldsProponentes {
-    IDENTIF_PROPONENTE
-    NM_PROPONENTE
-    UF_PROPONENTE
-    MUNIC_PROPONENTE
-    COD_MUNIC_IBGE
+    IDENTIFICACAO
+    NOME_PROPONENTE
+    COD_IBGE
 }
 
 """
-List o field names for Fornecedores.
+List of field names for Fornecedores.
 """
 enum FieldsFornecedores {
     IDENTIF_FORNECEDOR
@@ -50,7 +48,7 @@ enum FieldsFornecedores {
 }
 
 """
-List o field names for Movimento table.
+List of field names for Movimento table.
 """
 enum FieldsMovimento {
     MOV_ID
@@ -58,12 +56,10 @@ enum FieldsMovimento {
     DATA
     VALOR
     TIPO
-    IDENTIF_FORNECEDOR
-    NOME_FORNECEDOR
 }
 
 """
-List o field names for Convenios table.
+List of field names for Convenios table.
 """
 enum FieldsConvenios {
     NR_CONVENIO 
@@ -85,8 +81,23 @@ enum FieldsConvenios {
     MODALIDADE
     IDENTIF_PROPONENTE
     OBJETO_PROPOSTA
-    VALOR_REPASSE_EMENDA
+    VALOR_EMENDA_CONVENIO
     COM_EMENDAS
+    INSUCESSO
+}
+
+"""
+List of field names for Licitacoes table.
+"""
+enum FieldsLicitacoes {
+    NR_CONVENIO
+    MODALIDADE_COMPRA
+    TIPO_LICITACAO
+    FORMA_LICITACAO
+    REGISTRO_PRECOS
+    LICITACAO_INTERNACIONAL
+    STATUS_LICITACAO
+    VALOR_LICITACAO
 }
 
 """
@@ -103,4 +114,26 @@ Yes/No options.
 enum YesNo {
     SIM
     NAO
+}
+
+"""
+List of Regioes.
+"""
+enum Regiao {
+    CENTRO_OESTE
+    NORDESTE
+    NORTE
+    SUDESTE
+    SUL
+}
+
+"""
+List of abbreviation for Regioes.
+"""
+enum RegiaoAbreviada {
+    CO
+    NE
+    NO
+    SE
+    SL
 }
