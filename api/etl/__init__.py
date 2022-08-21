@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import requests
+import gc
 from datetime import datetime, timezone, timedelta
 import sqlalchemy as sa
 from sqlalchemy_utils import database_exists
@@ -36,9 +37,15 @@ class ETL(object):
             
             self.transformer = Transformation(logger=self.logger)
             transformed = self.transformer.transform(*extracted, current_date)
+            
+            del extracted
+            gc.collect()
 
             self.csv_loader = CSVLoader(config=self.config, logger=self.logger)
             self.csv_loader.load(*transformed)
+
+            del transformed
+            gc.collect()
 
             csv_ok = True
         except CSVUpToDateException:
@@ -113,7 +120,10 @@ class ETL(object):
             current_date_table = 'data_atual'
             if sa.inspect(self.engine).has_table(current_date_table):
                 last_date = self.engine.execute(f'select DATA_ATUAL from {current_date_table}').scalar()
-            feedback(self.logger, label='-> (database) última data', value=last_date.strftime("%Y-%m-%d"))
+            
+            last_date_str = 'sem data!' if last_date is None else last_date.strftime("%Y-%m-%d")
+            
+            feedback(self.logger, label='-> (database) última data', value=last_date_str)
 
         today = datetime.now(timezone(timedelta(hours=-3))).date() 
         if not force_update and last_date:

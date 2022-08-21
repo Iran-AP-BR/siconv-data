@@ -12,5 +12,8 @@ class DBTools(object):
             df.to_sql(table_name, con=self.engine, if_exists='append', index=False)
             rows += len(df)
         return rows
+
+    def execute_sql(self, sql_statement):
+        self.engine.execute(sql_statement)
   
 

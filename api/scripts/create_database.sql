@@ -146,3 +146,8 @@ CREATE TABLE `licitacoes` (
   PRIMARY KEY (`ID_LICITACAO`),
   KEY `idx_licitacoes_nr_convenio` (`NR_CONVENIO`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `atributos` (
+  `ATRIBUTO` varchar(30) not null, 
+  `VALOR` varchar(100) not null
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

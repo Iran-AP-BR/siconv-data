@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
+import gc
 from .csv_types import *
 from .utils import *
 from .risk_analyzer import RiskAnalyzer
@@ -18,13 +19,25 @@ class Transformation(object):
         municipios = self.__transform_municipios__(municipios, estados, propostas)
         proponentes, convenios = self.__transform_proponentes__(proponentes, propostas, convenios)
         emendas_convenios, emendas = self.__tranform_emendas_convenios__(emendas, convenios, propostas)
+        del propostas
+        del estados
+        gc.collect()
+
         emendas = self.__tansform_emendas__(emendas)
         convenios = self.__transform_convenios__(convenios, emendas_convenios)
         licitacoes = self.__transform_licitacoes__(licitacoes, convenios)
         fornecedores, pagamentos = self.__transform_fornecedores__(pagamentos, convenios, obtv)
         movimento = self.__transform_movimento__(pagamentos, desembolsos, contrapartidas,
                                                  convenios, fornecedores, tributos)
-        convenios = self.__risk_analyzer__(convenios, proponentes, emendas, emendas_convenios, fornecedores, movimento)
+        del pagamentos
+        del desembolsos
+        del contrapartidas
+        del tributos
+        gc.collect()
+        
+        convenios = self.__risk_analyzer__(convenios, proponentes, emendas, emendas_convenios, 
+                                           fornecedores, movimento)
+        
         calendario = self.__transform_calendario__(movimento, current_date)
         data_atual = self.__transform_data_atual__(current_date)
 
@@ -47,8 +60,8 @@ class Transformation(object):
         municipios_list = municipios['CODIGO_IBGE'].unique()
         municipios_extra = propostas.loc[~propostas['COD_MUNIC_IBGE'].isin(municipios_list), :].copy()
         municipios_extra.rename(columns={'COD_MUNIC_IBGE': 'CODIGO_IBGE', 
-                                        'MUNIC_PROPONENTE': 'NOME_MUNICIPIO', 
-                                        'UF_PROPONENTE': 'UF'}, inplace=True)
+                                         'MUNIC_PROPONENTE': 'NOME_MUNICIPIO', 
+                                         'UF_PROPONENTE': 'UF'}, inplace=True)
 
         municipios_extra.loc[municipios_extra['UF'].isin(['AP', 'PA', 'RR', 'AM', 'RO', 'TO', 'AC']), 'REGIAO'] = 'NORTE'
         municipios_extra.loc[municipios_extra['UF'].isin(['MA', 'SE', 'PI', 'PE', 'RN', 'PB', 'BA', 'CE', 'AL']), 'REGIAO'] = 'NORDESTE'
@@ -147,8 +160,8 @@ class Transformation(object):
         convenios['VALOR_EMENDA_CONVENIO'] = convenios['VALOR_EMENDA_CONVENIO'].fillna(0)
 
         convenios['INSTRUMENTO_ATIVO'] = convenios['INSTRUMENTO_ATIVO'].str.upper()
-        #convenios.loc[convenios['INSTRUMENTO_ATIVO'].str.upper()=='SIM', 'INSTRUMENTO_ATIVO'] = True
-        #convenios.loc[convenios['INSTRUMENTO_ATIVO'].str.upper()=='NAO', 'INSTRUMENTO_ATIVO'] = False
+        convenios['SIT_CONVENIO'] = convenios['SIT_CONVENIO'].str.upper()
+        convenios['NATUREZA_JURIDICA'] = convenios['NATUREZA_JURIDICA'].str.upper()
 
         convenios_columns = ['NR_CONVENIO', 'DIA_ASSIN_CONV', 'SIT_CONVENIO', 'INSTRUMENTO_ATIVO', 'DIA_PUBL_CONV',
                             'DIA_INIC_VIGENC_CONV', 'DIA_FIM_VIGENC_CONV', 'DIA_LIMITE_PREST_CONTAS',
@@ -277,32 +290,32 @@ class Transformation(object):
         
         def __fix_pagamentos__(pagamentos):
             fix_list = [
-                {'convenio': '774717', 'ref': '24/06/1900', 'valor': '24/06/2014'},
-                {'convenio': '756498', 'ref': '03/09/1985', 'valor': '03/09/2012'},
-                {'convenio': '704101', 'ref': '30/12/2000', 'valor': '30/12/2009'},
-                {'convenio': '703184', 'ref': '13/01/2001', 'valor': '13/01/2010'},
-                {'convenio': '731964', 'ref': '19/01/2001', 'valor': '19/01/2011'},
-                {'convenio': '702011', 'ref': '14/02/2001', 'valor': '14/02/2011'},
-                {'convenio': '726717', 'ref': '21/02/2001', 'valor': '21/02/2011'},
-                {'convenio': '720576', 'ref': '07/04/2001', 'valor': '07/04/2010'},
-                {'convenio': '721720', 'ref': '01/06/2001', 'valor': '01/06/2011'},
-                {'convenio': '752802', 'ref': '19/08/2001', 'valor': '19/08/2011'},
-                {'convenio': '702821', 'ref': '01/09/2001', 'valor': '01/09/2011'},
-                {'convenio': '751725', 'ref': '18/11/2001', 'valor': '18/11/2011'},
-                {'convenio': '733707', 'ref': '31/12/2004', 'valor': '31/12/2010'},
-                {'convenio': '716075', 'ref': '13/02/2002', 'valor': '13/02/2012'},
-                {'convenio': '703060', 'ref': '14/09/2002', 'valor': '14/09/2012'},
-                {'convenio': '723528', 'ref': '16/10/2002', 'valor': '16/10/2012'},
-                {'convenio': '719808', 'ref': '05/02/2003', 'valor': '05/02/2013'},
-                {'convenio': '702387', 'ref': '31/12/2004', 'valor': '31/12/2010'},
-                {'convenio': '772002', 'ref': '30/12/2005', 'valor': '30/12/2014'},
-                {'convenio': '717464', 'ref': '22/06/2006', 'valor': '22/06/2010'},
-                {'convenio': '704192', 'ref': '24/12/2006', 'valor': '22/06/2010'},
-                {'convenio': '732451', 'ref': '17/05/2007', 'valor': '17/05/2010'},
-                {'convenio': '701723', 'ref': '31/05/2007', 'valor': '31/05/2011'},
-                {'convenio': '715596', 'ref': '16/06/2007', 'valor': '16/06/2010'},
-                {'convenio': '705156', 'ref': '06/11/2007', 'valor': '06/11/2009'},
-                {'convenio': '769286', 'ref': '03/06/2031', 'valor': '03/06/2013'},
+                {'convenio': 774717, 'ref': '24/06/1900', 'valor': '24/06/2014'},
+                {'convenio': 756498, 'ref': '03/09/1985', 'valor': '03/09/2012'},
+                {'convenio': 704101, 'ref': '30/12/2000', 'valor': '30/12/2009'},
+                {'convenio': 703184, 'ref': '13/01/2001', 'valor': '13/01/2010'},
+                {'convenio': 731964, 'ref': '19/01/2001', 'valor': '19/01/2011'},
+                {'convenio': 702011, 'ref': '14/02/2001', 'valor': '14/02/2011'},
+                {'convenio': 726717, 'ref': '21/02/2001', 'valor': '21/02/2011'},
+                {'convenio': 720576, 'ref': '07/04/2001', 'valor': '07/04/2010'},
+                {'convenio': 721720, 'ref': '01/06/2001', 'valor': '01/06/2011'},
+                {'convenio': 752802, 'ref': '19/08/2001', 'valor': '19/08/2011'},
+                {'convenio': 702821, 'ref': '01/09/2001', 'valor': '01/09/2011'},
+                {'convenio': 751725, 'ref': '18/11/2001', 'valor': '18/11/2011'},
+                {'convenio': 733707, 'ref': '31/12/2004', 'valor': '31/12/2010'},
+                {'convenio': 716075, 'ref': '13/02/2002', 'valor': '13/02/2012'},
+                {'convenio': 703060, 'ref': '14/09/2002', 'valor': '14/09/2012'},
+                {'convenio': 723528, 'ref': '16/10/2002', 'valor': '16/10/2012'},
+                {'convenio': 719808, 'ref': '05/02/2003', 'valor': '05/02/2013'},
+                {'convenio': 702387, 'ref': '31/12/2004', 'valor': '31/12/2010'},
+                {'convenio': 772002, 'ref': '30/12/2005', 'valor': '30/12/2014'},
+                {'convenio': 717464, 'ref': '22/06/2006', 'valor': '22/06/2010'},
+                {'convenio': 704192, 'ref': '24/12/2006', 'valor': '22/06/2010'},
+                {'convenio': 732451, 'ref': '17/05/2007', 'valor': '17/05/2010'},
+                {'convenio': 701723, 'ref': '31/05/2007', 'valor': '31/05/2011'},
+                {'convenio': 715596, 'ref': '16/06/2007', 'valor': '16/06/2010'},
+                {'convenio': 705156, 'ref': '06/11/2007', 'valor': '06/11/2009'},
+                {'convenio': 769286, 'ref': '03/06/2031', 'valor': '03/06/2013'},
                 ]
 
             for fix in fix_list:

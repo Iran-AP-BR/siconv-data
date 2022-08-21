@@ -1,17 +1,18 @@
 # coding: utf-8
 
-
-from apscheduler.schedulers.blocking import BlockingScheduler
-from apscheduler.events import EVENT_JOB_ERROR
 from dotenv import load_dotenv
-
 from datetime import datetime
 from pathlib import Path
 from app.logger import app_log
 from etl import ETL
 
+
+from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.events import EVENT_JOB_ERROR
+
 USE_SCHEDULER = False
-TIMEOUT_HOUR = 21
+SCHEDULER_TIMEOUT_HOUR = 21
+
 
 def get_env(env_path):
     path = Path(env_path)
@@ -26,16 +27,13 @@ def get_env(env_path):
 def etl_pipeline_error_listener(event):
     app_log.info('Processo falhou!')
 
-def etl_pipeline_max_instances(event):
-    app_log.info('max instances!')
-
 def etl_pipeline(config):
 
     etl = ETL(config=config, logger=app_log)
     done = etl.pipeline(force_download=False, force_csv_update=False, force_database_update=False)
     
     if USE_SCHEDULER:
-        timeout = datetime.utcnow().hour >= TIMEOUT_HOUR
+        timeout = datetime.utcnow().hour >= SCHEDULER_TIMEOUT_HOUR
         if done:
             app_log.info('Done!')
             sched.shutdown(wait=False)
@@ -46,7 +44,7 @@ def etl_pipeline(config):
 
 if __name__ == '__main__':
 
-    config = get_env(env_path = '/home/siconvdata/.env')
+    config = get_env(env_path = '~/.env')
 
     if USE_SCHEDULER:
 

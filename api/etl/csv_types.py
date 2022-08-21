@@ -71,7 +71,7 @@ csv_municipios_type = {
     'NOME_ESTADO': 'object',
     'LATITUDE': 'float64',
     'LONGITUDE': 'float64',
-    'CAPITAL': 'bool'
+    'CAPITAL': 'object'
 }
 
 csv_proponentes_type = {
@@ -86,8 +86,8 @@ csv_licitacoes_type = {
     'MODALIDADE_COMPRA': 'object', 
     'TIPO_LICITACAO': 'object', 
     'FORMA_LICITACAO': 'object', 
-    'REGISTRO_PRECOS': 'bool', 
-    'LICITACAO_INTERNACIONAL': 'bool',
+    'REGISTRO_PRECOS': 'object', 
+    'LICITACAO_INTERNACIONAL': 'object',
     'STATUS_LICITACAO': 'object', 
     'VALOR_LICITACAO': 'float64'
 }
