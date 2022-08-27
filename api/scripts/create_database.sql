@@ -103,6 +103,7 @@ CREATE TABLE `movimento` (
   `MOV_ID` bigint not null,
   `TIPO_MOV` char(1) not null, 
   `FORNECEDOR_ID` int not null,
+  KEY `idx_movimento_mov_id` (`MOV_ID`),
   KEY `idx_movimento_convenio` (`NR_CONVENIO`),
   KEY `idx_movimento_fornecedor_id` (`FORNECEDOR_ID`),
   KEY `idx_movimento_data` (`DATA_MOV`),

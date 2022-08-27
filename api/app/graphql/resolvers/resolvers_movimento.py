@@ -10,3 +10,6 @@ def resolve_movimento(obj, info, **kwargs):
 
 def resolve_mov_convenio(obj, info, **kwargs):
     return resolve(load_convenios, single=True, obj=obj, info=info, **kwargs)
+
+def resolve_mov_fornecedor(obj, info, **kwargs):
+    return resolve(load_fornecedores, single=True, obj=obj, info=info, **kwargs)

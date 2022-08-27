@@ -48,6 +48,7 @@ query.set_field("buscarMunicipios", resolve_municipios)
 query.set_field("buscarAtributos", resolve_atributos)
 query.set_field("buscarFornecedores", resolve_fornecedores)
 query.set_field("buscarEstados", resolve_estados)
+query.set_field("buscarLicitacoes", resolve_licitacoes)
 
 convenio = ObjectType("Convenio")
 convenio.set_field("PROPONENTE", resolve_conv_proponente)
@@ -59,10 +60,11 @@ convenio.set_field("MUNICIPIO", resolve_conv_municipio)
 convenio.set_field("ESTADO", resolve_conv_estado)
 
 proponente = ObjectType("Proponente")
-proponente.set_field("CONVENIOS", resolve_prop_convenios)
 proponente.set_field("MUNICIPIO", resolve_prop_municipio)
+proponente.set_field("CONVENIOS", resolve_prop_convenios)
 proponente.set_field("ESTADO", resolve_prop_estado)
 proponente.set_field("FORNECEDORES", resolve_prop_fornecedores)
+proponente.set_field("LICITACOES", resolve_prop_licitacoes)
 
 emenda = ObjectType("Emenda")
 emenda.set_field("CONVENIOS", resolve_emd_convenios)
@@ -70,9 +72,10 @@ emenda.set_field("FORNECEDORES", resolve_emd_fornecedores)
 
 movimento = ObjectType("Movimento")
 movimento.set_field("CONVENIO", resolve_mov_convenio)
+movimento.set_field("FORNECEDOR", resolve_mov_fornecedor)
 
 estado = ObjectType("Estado")
-proponente.set_field("MUNICIPIO", resolve_est_municipios)
+estado.set_field("MUNICIPIOS", resolve_est_municipios)
 estado.set_field("CONVENIOS", resolve_est_convenios)
 estado.set_field("PROPONENTES", resolve_est_proponentes)
 estado.set_field("FORNECEDORES", resolve_est_fornecedores)
@@ -85,6 +88,7 @@ municipio.set_field("FORNECEDORES", resolve_mun_fornecedores)
 
 fornecedor = ObjectType("Fornecedor")
 fornecedor.set_field("CONVENIOS", resolve_forn_convenios)
+fornecedor.set_field("LICITACOES", resolve_forn_licitacoes)
 fornecedor.set_field("MOVIMENTO", resolve_forn_movimento)
 fornecedor.set_field("MUNICIPIOS", resolve_forn_municipios)
 fornecedor.set_field("ESTADOS", resolve_forn_estados)
@@ -93,6 +97,7 @@ fornecedor.set_field("RESUMO", resolve_forn_summary)
 
 licitacao = ObjectType("Licitacao")
 licitacao.set_field("CONVENIO", resolve_lic_convenio)
+licitacao.set_field("PROPONENTE", resolve_lic_proponente)
 
 
 type_defs = load_schema_from_path(os.path.join(
@@ -100,6 +105,7 @@ type_defs = load_schema_from_path(os.path.join(
 
 
 schema = make_executable_schema(
-    type_defs, query, convenio, proponente, emenda, movimento, municipio, fornecedor, estado, licitacao, datetime_scalar)
+    type_defs, query, convenio, proponente, emenda, movimento, municipio, 
+    fornecedor, estado, licitacao, datetime_scalar)
 
 from app.graphql.routes import init_routes

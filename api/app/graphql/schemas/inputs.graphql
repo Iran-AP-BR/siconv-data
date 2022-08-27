@@ -205,7 +205,7 @@ Defines a set of fields to be used in filtering. It includes special words (OR, 
 whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterMunicipios {
-    CODIGO_IBGE: StringFilters
+    CODIGO_IBGE: IntFilters
     NOME_MUNICIPIO: StringFilters
     UF: StringFilters
     REGIAO: RegiaoFilters
@@ -237,7 +237,7 @@ Defines a set of fields to be used in filtering. It includes special words (OR, 
 whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterEmendas {
-    NR_EMENDA: StringFilters,
+    NR_EMENDA: FloatFilters,
     NOME_PARLAMENTAR: StringFilters
     TIPO_PARLAMENTAR: StringFilters
     VALOR_EMENDA: FloatFilters
@@ -254,7 +254,7 @@ whose can be used to connect, aggregate or negate filter parts:
 input FilterProponentes {
     IDENTIFICACAO: StringFilters
     NOME_PROPONENTE: StringFilters
-    CODIGO_IBGE: StringFilters
+    CODIGO_IBGE: IntFilters
 
     OR: [FilterProponentes!]
     AND: [FilterProponentes!]
@@ -267,7 +267,7 @@ whose can be used to connect, aggregate or negate filter parts:
 """
 input FilterMovimento {
     MOV_ID: IntFilters
-    NR_CONVENIO: StringFilters
+    NR_CONVENIO: IntFilters
     DATA: DateFilters
     VALOR: FloatFilters
     TIPO: StringFilters

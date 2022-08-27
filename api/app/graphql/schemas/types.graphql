@@ -41,7 +41,7 @@ type Estado {
 Defines a type "Municipio" associated to Municipios table.
 """
 type Municipio {
-    CODIGO_IBGE: ID!
+    CODIGO_IBGE: Int!
     NOME_MUNICIPIO: String
     UF: String
     REGIAO: Regiao
@@ -84,6 +84,9 @@ type Fornecedor {
     IDENTIF_FORNECEDOR: String
     NOME_FORNECEDOR: String
     RESUMO: FornecedorResumo
+    LICITACOES(page_specs: PageSpecs,
+            filters: FilterLicitacoes,
+            sort: SortLicitacoes): LicitacoesResult
     MUNICIPIOS(page_specs: PageSpecs,
               filters: FilterMunicipios,
               sort: SortMunicipios): MunicipiosResult
@@ -105,7 +108,7 @@ type Fornecedor {
 Defines a type "Movimento" associated to Movimento table.
 """
 type Movimento {
-    MOV_ID: ID!
+    MOV_ID: Int!
     NR_CONVENIO: Int!
     DATA: Datetime
     VALOR: Float
@@ -123,6 +126,9 @@ type Proponente {
     CODIGO_IBGE: String
     ESTADO: Estado
     MUNICIPIO: Municipio
+    LICITACOES(page_specs: PageSpecs,
+            filters: FilterLicitacoes,
+            sort: SortLicitacoes): LicitacoesResult
     CONVENIOS(page_specs: PageSpecs,
               filters: FilterConvenios,
               sort: SortConvenios): ConveniosResult
@@ -178,7 +184,7 @@ type Convenio {
 Defines a type "Emenda" associated to Emendas table.
 """
 type Emenda {
-    NR_EMENDA: ID!
+    NR_EMENDA: Float!
     NOME_PARLAMENTAR: String
     TIPO_PARLAMENTAR: String
     VALOR_EMENDA: Float
@@ -203,6 +209,7 @@ type Licitacao {
     STATUS_LICITACAO: String
     VALOR_LICITACAO: Float
     CONVENIO: Convenio
+    PROPONENTE: Proponente
 }
 
 

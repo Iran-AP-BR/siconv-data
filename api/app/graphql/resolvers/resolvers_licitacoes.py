@@ -10,3 +10,6 @@ def resolve_licitacoes(obj, info, **kwargs):
 
 def resolve_lic_convenio(obj, info, **kwargs):
     return resolve(load_convenios, single=True, obj=obj, info=info, **kwargs)
+
+def resolve_lic_proponente(obj, info, **kwargs):
+    return resolve(load_proponentes, single=True, obj=obj, info=info, **kwargs)

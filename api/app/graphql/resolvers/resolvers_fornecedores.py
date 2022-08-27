@@ -8,6 +8,9 @@ from app.graphql.resolvers import resolve
 def resolve_fornecedores(obj, info, **kwargs):
     return resolve(load_fornecedores, obj=obj, info=info,  **kwargs)
 
+def resolve_forn_licitacoes(obj, info, **kwargs):
+    return resolve(load_licitacoes, obj=obj, info=info, **kwargs)
+
 def resolve_forn_convenios(obj, info, **kwargs):
     return resolve(load_convenios, obj=obj, info=info, **kwargs)
 
