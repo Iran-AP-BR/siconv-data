@@ -28,3 +28,6 @@ def resolve_conv_estado(obj, info, **kwargs):
 
 def resolve_conv_licitacoes(obj, info, **kwargs):
     return resolve(load_licitacoes, obj=obj, info=info, **kwargs)
+
+def resolve_conv_parlamentares(obj, info, **kwargs):
+    return resolve(load_parlamentares, obj=obj, info=info, **kwargs)

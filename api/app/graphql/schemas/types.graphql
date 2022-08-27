@@ -84,9 +84,6 @@ type Fornecedor {
     IDENTIF_FORNECEDOR: String
     NOME_FORNECEDOR: String
     RESUMO: FornecedorResumo
-    LICITACOES(page_specs: PageSpecs,
-            filters: FilterLicitacoes,
-            sort: SortLicitacoes): LicitacoesResult
     MUNICIPIOS(page_specs: PageSpecs,
               filters: FilterMunicipios,
               sort: SortMunicipios): MunicipiosResult
@@ -102,6 +99,9 @@ type Fornecedor {
     MOVIMENTO(page_specs: PageSpecs,
               filters: FilterMovimento,
               sort: SortMovimento): MovimentoResult
+    PARLAMENTARES(page_specs: PageSpecs,
+              filters: FilterParlamentares,
+              sort: SortParlamentares): ParlamentaresResult
 }
 
 """
@@ -135,6 +135,9 @@ type Proponente {
     FORNECEDORES(page_specs: PageSpecs,
               filters: FilterFornecedores,
               sort: SortFornecedores): FornecedoresResult
+    PARLAMENTARES(page_specs: PageSpecs,
+              filters: FilterParlamentares,
+              sort: SortParlamentares): ParlamentaresResult
 }
 
 """
@@ -178,6 +181,9 @@ type Convenio {
     FORNECEDORES(page_specs: PageSpecs,
               filters: FilterFornecedores,
               sort: SortFornecedores): FornecedoresResult
+    PARLAMENTARES(page_specs: PageSpecs,
+              filters: FilterParlamentares,
+              sort: SortParlamentares): ParlamentaresResult
 }
 
 """
@@ -194,6 +200,33 @@ type Emenda {
     FORNECEDORES(page_specs: PageSpecs,
               filters: FilterFornecedores,
               sort: SortFornecedores): FornecedoresResult
+}
+
+
+"""
+Defines a type "Parlamentar" associated to Parlamentares from Emendas table.
+"""
+type Parlamentar {
+    NOME_PARLAMENTAR: String!
+    TIPO_PARLAMENTAR: String!
+    CONVENIOS(page_specs: PageSpecs, 
+              filters: FilterConvenios,
+              sort: SortConvenios): ConveniosResult
+    FORNECEDORES(page_specs: PageSpecs,
+              filters: FilterFornecedores,
+              sort: SortFornecedores): FornecedoresResult
+    LICITACOES(page_specs: PageSpecs,
+            filters: FilterLicitacoes,
+            sort: SortLicitacoes): LicitacoesResult
+    EMENDAS(page_specs: PageSpecs,
+            filters: FilterEmendas,
+            sort: SortEmendas): EmendasResult
+    PROPONENTES(page_specs: PageSpecs,
+              filters: FilterProponentes,
+              sort: SortProponentes): ProponentesResult
+    MOVIMENTO(page_specs: PageSpecs,
+              filters: FilterMovimento,
+              sort: SortMovimento): MovimentoResult
 }
 
 """
@@ -281,6 +314,16 @@ type EmendasResult {
 }
 
 """
+Defines a type intended to represent the result of Query for "Parlamentares", along with pagination. 
+If errors occur, it'll be informed in "errors" field.
+"""
+type ParlamentaresResult {
+    pagination: Pagination
+    errors: [String]
+    items: [Parlamentar]
+}
+
+"""
 Defines a type intended to represent the result of Query for "Proponentes", along with pagination. 
 If errors occur, it'll be informed in "errors" field.
 """
@@ -361,6 +404,12 @@ type Query {
         filters: FilterLicitacoes,
         sort: SortLicitacoes
         ): LicitacoesResult!
+
+    buscarParlamentares(
+        page_specs: PageSpecs,
+        filters: FilterParlamentares,
+        sort: SortParlamentares
+        ): ParlamentaresResult!
 
     buscarAtributos: Atributos!
 }

@@ -205,6 +205,18 @@ def load_fornecedores(page_specs=None, use_pagination=True, filters=None, parent
                     where FORNECEDOR_ID<>-1"
             table_expression = f"(select g.* from {table_expression} g \
                                   inner join ({sql}) h on g.FORNECEDOR_ID = h.FORNECEDOR_ID)"
+
+        elif parent.get('query') == 'parlamentares':
+            sql = f"select distinct NR_EMENDA from emendas where \
+                   (NOME_PARLAMENTAR, TIPO_PARLAMENTAR) = \
+                   ('{parent.get('NOME_PARLAMENTAR')}', '{parent.get('TIPO_PARLAMENTAR')}')"
+            sql = f"select a.NR_CONVENIO from emendas_convenios a \
+                    inner join ({sql}) b on a.NR_EMENDA = b.NR_EMENDA"
+            sql = f"select c.FORNECEDOR_ID from movimento c \
+                    inner join ({sql}) d on c.NR_CONVENIO = d.NR_CONVENIO"
+            table_expression = f"(select e.* from {table_expression} e \
+                    inner join ({sql}) f on e.FORNECEDOR_ID = f.FORNECEDOR_ID)"
+
         else:
             raise Exception('load_fornecedores: Unknown parent')
 
@@ -369,6 +381,15 @@ def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=No
             table_expression = f"(select * from {table_expression} \
                     where NR_CONVENIO = {parent.get('NR_CONVENIO')})"
 
+        elif parent.get('query') == 'parlamentares':
+            sql = f"select distinct NR_EMENDA from emendas where \
+                   (NOME_PARLAMENTAR, TIPO_PARLAMENTAR) = \
+                   ('{parent.get('NOME_PARLAMENTAR')}', '{parent.get('TIPO_PARLAMENTAR')}')"
+            sql = f"select a.NR_CONVENIO from emendas_convenios a \
+                    inner join ({sql}) b on a.NR_EMENDA = b.NR_EMENDA"
+            table_expression = f"(select c.* from {table_expression} c \
+                    inner join ({sql}) d on c.NR_CONVENIO = d.NR_CONVENIO)"
+
         else:
             raise Exception('load_convenios: Unknown parent')
 
@@ -470,6 +491,17 @@ def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=
             table_expression = f"(select a.* from {table_expression} a inner join ({sql}) b \
                                   on a.IDENTIF_PROPONENTE = b.IDENTIF_PROPONENTE)"
 
+        elif parent.get('query') == 'parlamentares':
+            sql = f"select distinct NR_EMENDA from emendas where \
+                   (NOME_PARLAMENTAR, TIPO_PARLAMENTAR) = \
+                   ('{parent.get('NOME_PARLAMENTAR')}', '{parent.get('TIPO_PARLAMENTAR')}')"
+            sql = f"select a.NR_CONVENIO from emendas_convenios a \
+                    inner join ({sql}) b on a.NR_EMENDA = b.NR_EMENDA"
+            sql = f"select c.IDENTIF_PROPONENTE from convenios c \
+                    inner join ({sql}) d on c.NR_CONVENIO = d.NR_CONVENIO"
+            table_expression = f"(select e.* from {table_expression} e \
+                    inner join ({sql}) f on e.IDENTIF_PROPONENTE = f.IDENTIF_PROPONENTE)"
+
         else:
             raise Exception('load_proponentes: Unknown parent')
 
@@ -512,6 +544,11 @@ def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None
             table_expression = f"(select c.* from {table_expression} c inner join ({sql}) d \
                                   on c.NR_EMENDA = d.NR_EMENDA)"
 
+        elif parent.get('query') == 'parlamentares':
+            table_expression = f"(select * from {table_expression} where \
+                                (NOME_PARLAMENTAR, TIPO_PARLAMENTAR) = \
+                                ('{parent.get('NOME_PARLAMENTAR')}', '{parent.get('TIPO_PARLAMENTAR')}'))"
+
         else:
             raise Exception('load_emendas: Unknown parent')
 
@@ -548,6 +585,15 @@ def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=No
                   where (IDENTIF_FORNECEDOR, NOME_FORNECEDOR)={id_fornecedor}"
             table_expression = f"(select distinct a.NR_CONVENIO from {table_expression} \
                                 a inner join ({sql}) b on a.FORNECEDOR_ID = b.FORNECEDOR_ID)"
+
+        elif parent.get('query') == 'parlamentares':
+            sql = f"select distinct NR_EMENDA from emendas where \
+                   (NOME_PARLAMENTAR, TIPO_PARLAMENTAR) = \
+                   ('{parent.get('NOME_PARLAMENTAR')}', '{parent.get('TIPO_PARLAMENTAR')}')"
+            sql = f"select a.NR_CONVENIO from emendas_convenios a \
+                    inner join ({sql}) b on a.NR_EMENDA = b.NR_EMENDA"
+            table_expression = f"(select c.* from {table_expression} c \
+                    inner join ({sql}) d on c.NR_CONVENIO = d.NR_CONVENIO)"
 
         else:
             raise Exception('load_movimento: Unknown parent')
@@ -588,11 +634,14 @@ def load_licitacoes(page_specs=None, use_pagination=True, filters=None, parent=N
             table_expression = f"(select a.* from {table_expression} a inner join ({sql}) b \
                                   on a.NR_CONVENIO = b.NR_CONVENIO)"
 
-        elif parent.get('query') == 'fornecedores':
-            sql = f"select distinct NR_CONVENIO from movimento \
-                    where FORNECEDOR_ID = {parent.get('FORNECEDOR_ID')}"
-            table_expression = f"(select a.* from {table_expression} a inner join ({sql}) b \
-                                  on a.NR_CONVENIO = b.NR_CONVENIO)"
+        elif parent.get('query') == 'parlamentares':
+            sql = f"select distinct NR_EMENDA from emendas where \
+                   (NOME_PARLAMENTAR, TIPO_PARLAMENTAR) = \
+                   ('{parent.get('NOME_PARLAMENTAR')}', '{parent.get('TIPO_PARLAMENTAR')}')"
+            sql = f"select a.NR_CONVENIO from emendas_convenios a \
+                    inner join ({sql}) b on a.NR_EMENDA = b.NR_EMENDA"
+            table_expression = f"(select c.* from {table_expression} c \
+                    inner join ({sql}) d on c.NR_CONVENIO = d.NR_CONVENIO)"
 
         else:
             raise Exception('load_movimento: Unknown parent')
@@ -606,5 +655,49 @@ def load_licitacoes(page_specs=None, use_pagination=True, filters=None, parent=N
 
     for d, _ in enumerate(data):
         data[d]['query'] = 'licitacoes'
+
+    return data, pagination
+
+def load_parlamentares(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+
+    table_expression = '(select distinct NOME_PARLAMENTAR, TIPO_PARLAMENTAR from emendas)'
+    selected_fields = {'NOME_PARLAMENTAR': 'NOME_PARLAMENTAR',
+                       'TIPO_PARLAMENTAR': 'TIPO_PARLAMENTAR'
+                       }
+
+    if parent is not None:
+        if parent.get('query') == 'fornecedores':
+            sql = f"select NR_CONVENIO from movimento  \
+                  where FORNECEDOR_ID = {parent.get('FORNECEDOR_ID')}"
+            sql = f"select a.NR_EMENDA from emendas_convenios a inner join ({sql}) b  \
+                  on a.NR_CONVENIO = b.NR_CONVENIO"
+            table_expression = f"(select distinct c.NOME_PARLAMENTAR, c.TIPO_PARLAMENTAR from emendas c \
+                    inner join ({sql}) d on c.NR_EMENDA = d.NR_EMENDA)"
+        
+        elif parent.get('query') == 'proponentes':
+            sql = f"select NR_CONVENIO from convenios  \
+                  where IDENTIF_PROPONENTE = '{parent.get('IDENTIFICACAO')}'"
+            sql = f"select a.NR_EMENDA from emendas_convenios a inner join ({sql}) b  \
+                  on a.NR_CONVENIO = b.NR_CONVENIO"
+            table_expression = f"(select distinct c.NOME_PARLAMENTAR, c.TIPO_PARLAMENTAR from emendas c \
+                    inner join ({sql}) d on c.NR_EMENDA = d.NR_EMENDA)"
+        
+        elif parent.get('query') == 'convenios':
+            sql = f"select NR_EMENDA from emendas_convenios  \
+                  where NR_CONVENIO = {parent.get('NR_CONVENIO')}"
+            table_expression = f"(select distinct c.NOME_PARLAMENTAR, c.TIPO_PARLAMENTAR from emendas c \
+                    inner join ({sql}) d on c.NR_EMENDA = d.NR_EMENDA)"
+
+        else:
+            raise Exception('load_emendas: Unknown parent')
+
+    table_expression = f"{table_expression} table_expression"
+
+    data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
+                                  filters=filters, sort=sort,
+                                  page_specs=page_specs, use_pagination=use_pagination)
+
+    for d, _ in enumerate(data):
+        data[d]['query'] = 'parlamentares'
 
     return data, pagination

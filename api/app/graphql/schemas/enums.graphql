@@ -31,6 +31,14 @@ enum FieldsEmendas {
 }
 
 """
+List of field names for Parlamentares table.
+"""
+enum FieldsParlamentares {
+    NOME_PARLAMENTAR
+    TIPO_PARLAMENTAR
+}
+
+"""
 List of field names for Proponentes table.
 """
 enum FieldsProponentes {

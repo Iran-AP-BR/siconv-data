@@ -77,7 +77,8 @@ CREATE TABLE `emendas` (
   `NOME_PARLAMENTAR` varchar(60) not null,
   `TIPO_PARLAMENTAR` varchar(20) not null,
   `VALOR_EMENDA` decimal(18,2) not null,
-  PRIMARY KEY (`NR_EMENDA`)
+  PRIMARY KEY (`NR_EMENDA`),
+  KEY `idx_parlamentar` (`NOME_PARLAMENTAR`(60),`TIPO_PARLAMENTAR`(20))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `emendas_convenios` (
@@ -137,6 +138,13 @@ CREATE TABLE `proponentes` (
 CREATE TABLE `licitacoes` (
   `ID_LICITACAO` integer not null, 
   `NR_CONVENIO` integer not null, 
+  
+  -- `NR_PROCESSO_LICITACAO` varchar(100) not null, 
+  -- `DATA_PUBLICACAO_LICITACAO` date not null, 
+  -- `DATA_ABERTURA_LICITACAO` date not null, 
+  -- `DATA_ENCERRAMENTO_LICITACAO` date not null, 
+  -- `DATA_HOMOLOGACAO_LICITACAO` date not null, 
+
   `MODALIDADE_COMPRA` varchar(50) not null, 
   `TIPO_LICITACAO` varchar(20) not null, 
   `FORMA_LICITACAO` varchar(20) not null, 

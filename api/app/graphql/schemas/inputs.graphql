@@ -251,6 +251,19 @@ input FilterEmendas {
 Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
 whose can be used to connect, aggregate or negate filter parts:
 """
+input FilterParlamentares {
+    NOME_PARLAMENTAR: StringFilters
+    TIPO_PARLAMENTAR: StringFilters
+
+    OR: [FilterParlamentares!]
+    AND: [FilterParlamentares!]
+    NOT: FilterParlamentares
+}
+
+"""
+Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
+whose can be used to connect, aggregate or negate filter parts:
+"""
 input FilterProponentes {
     IDENTIFICACAO: StringFilters
     NOME_PROPONENTE: StringFilters
@@ -366,6 +379,16 @@ for ascending, or "DESC", for descending, or a list of that values. The length o
 """
 input SortEmendas {
     fields: [FieldsEmendas]
+    order: [SortOrder!] = []
+}
+
+"""
+Sort parameters. Use to set the fields by which the records will be sorted and if the order will be ascending or descending.
+The "fields" parameter must be a single name, or a list of names, of existing fields. The "order" parameter must be "ASC", 
+for ascending, or "DESC", for descending, or a list of that values. The length of both fields and order must be the same.
+"""
+input SortParlamentares {
+    fields: [FieldsParlamentares]
     order: [SortOrder!] = []
 }
 
