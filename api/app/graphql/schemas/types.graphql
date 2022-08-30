@@ -84,6 +84,9 @@ type Fornecedor {
     IDENTIF_FORNECEDOR: String
     NOME_FORNECEDOR: String
     RESUMO: FornecedorResumo
+    PROPONENTES(page_specs: PageSpecs,
+              filters: FilterProponentes,
+              sort: SortProponentes): ProponentesResult
     MUNICIPIOS(page_specs: PageSpecs,
               filters: FilterMunicipios,
               sort: SortMunicipios): MunicipiosResult

@@ -270,31 +270,27 @@ def load_estados(page_specs=None, use_pagination=True, filters=None, parent=None
 
     if parent is not None:            
         if parent.get('query') == 'fornecedores':
-            id_fornecedor = f"('{parent.get('IDENTIF_FORNECEDOR')}', \
-                               '{parent.get('NOME_FORNECEDOR')}')"
-            sql = f"select distinct FORNECEDOR_ID from fornecedores  \
-                  where (IDENTIF_FORNECEDOR, NOME_FORNECEDOR)={id_fornecedor}"
-            sql = f"select distinct a.NR_CONVENIO from movimento a inner join ({sql}) b  \
-                  on a.FORNECEDOR_ID = b.FORNECEDOR_ID"
-            sql = f"select c.IDENTIF_PROPONENTE from convenios c inner join ({sql}) d  \
-                  on c.NR_CONVENIO = d.NR_CONVENIO"
-            sql = f"select e.CODIGO_IBGE from proponentes e inner join ({sql}) f \
-                  on e.IDENTIF_PROPONENTE = f.IDENTIF_PROPONENTE"
-            table_expression = f"(select * from {table_expression} g inner join ({sql}) h \
-                                  on g.CODIGO_IBGE = h.CODIGO_IBGE)"
+            sql = f"select NR_CONVENIO from movimento  \
+                  where FORNECEDOR_ID = {parent.get('FORNECEDOR_ID')}"
+            sql = f"select a.IDENTIF_PROPONENTE from convenios a inner join ({sql}) b  \
+                  on a.NR_CONVENIO = b.NR_CONVENIO"
+            sql = f"select c.CODIGO_IBGE from proponentes c inner join ({sql}) d \
+                  on c.IDENTIF_PROPONENTE = d.IDENTIF_PROPONENTE"
+            table_expression = f"(select distinct e.UF, e.NOME_ESTADO from {table_expression} e \
+                    inner join ({sql}) f on e.CODIGO_IBGE = f.CODIGO_IBGE)"
 
         elif parent.get('query') == 'convenios':
             sql = f"select IDENTIF_PROPONENTE from convenios where \
                     NR_CONVENIO = {parent.get('NR_CONVENIO')}"
             sql = f"select a.CODIGO_IBGE from proponentes a inner join ({sql}) b \
                   on a.IDENTIF_PROPONENTE = b.IDENTIF_PROPONENTE"
-            table_expression = f"(select c.UF, c.NOME_ESTADO from {table_expression} c \
-                                inner join ({sql}) d on c.CODIGO_IBGE=d.CODIGO_IBGE)"
+            table_expression = f"(select distinct c.UF, c.NOME_ESTADO from {table_expression} c \
+                                inner join ({sql}) d on c.CODIGO_IBGE = d.CODIGO_IBGE)"
 
         elif parent.get('query') == 'proponentes':
             sql = f"select CODIGO_IBGE from proponentes \
                     where IDENTIF_PROPONENTE='{parent.get('IDENTIFICACAO')}'"
-            table_expression = f"(select a.UF, a.NOME_ESTADO from {table_expression} a \
+            table_expression = f"(select distinct a.UF, a.NOME_ESTADO from {table_expression} a \
                                  inner join ({sql}) b on a.CODIGO_IBGE = b.CODIGO_IBGE)"
 
         else:
@@ -340,14 +336,10 @@ def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=No
 
     if parent is not None:
         if parent.get('query') == 'fornecedores':
-            id_fornecedor = f"('{parent.get('IDENTIF_FORNECEDOR')}', \
-                               '{parent.get('NOME_FORNECEDOR')}')"
-            sql = f"select distinct FORNECEDOR_ID from fornecedores  \
-                  where (IDENTIF_FORNECEDOR, NOME_FORNECEDOR)={id_fornecedor}"
-            sql = f"select distinct a.NR_CONVENIO from movimento a inner join ({sql}) b  \
-                  on a.FORNECEDOR_ID = b.FORNECEDOR_ID"
-            table_expression = f"(select c.* from {table_expression} c inner join ({sql}) d  \
-                  on c.NR_CONVENIO = d.NR_CONVENIO)"
+            sql = f"select NR_CONVENIO from movimento  \
+                  where FORNECEDOR_ID = {parent.get('FORNECEDOR_ID')}"
+            table_expression = f"(select a.* from {table_expression} a inner join ({sql}) b  \
+                  on a.NR_CONVENIO = b.NR_CONVENIO)"
 
         elif parent.get('query') == 'proponentes':
             table_expression = f"(select * from {table_expression} \
@@ -427,18 +419,14 @@ def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=N
             table_expression = f"(select * from {table_expression} where UF = '{parent.get('SIGLA')}')"     
 
         elif parent.get('query') == 'fornecedores':
-            id_fornecedor = f"('{parent.get('IDENTIF_FORNECEDOR')}', \
-                               '{parent.get('NOME_FORNECEDOR')}')"
-            sql = f"select distinct FORNECEDOR_ID from fornecedores  \
-                  where (IDENTIF_FORNECEDOR, NOME_FORNECEDOR)={id_fornecedor}"
-            sql = f"select distinct a.NR_CONVENIO from movimento a inner join ({sql}) b  \
-                  on a.FORNECEDOR_ID = b.FORNECEDOR_ID"
-            sql = f"select c.IDENTIF_PROPONENTE from convenios c inner join ({sql}) d  \
-                  on c.NR_CONVENIO = d.NR_CONVENIO"
-            sql = f"select e.CODIGO_IBGE from proponentes e inner join ({sql}) f \
-                  on e.IDENTIF_PROPONENTE = f.IDENTIF_PROPONENTE"
-            table_expression = f"(select g.* from {table_expression} g \
-                                inner join ({sql}) h on g.CODIGO_IBGE = h.CODIGO_IBGE)"
+            sql = f"select NR_CONVENIO from movimento  \
+                  where FORNECEDOR_ID={parent.get('FORNECEDOR_ID')}"
+            sql = f"select a.IDENTIF_PROPONENTE from convenios a inner join ({sql}) b  \
+                  on a.NR_CONVENIO = b.NR_CONVENIO"
+            sql = f"select distinct c.CODIGO_IBGE from proponentes c inner join ({sql}) d \
+                  on c.IDENTIF_PROPONENTE = d.IDENTIF_PROPONENTE"
+            table_expression = f"(select e.* from {table_expression} e \
+                                inner join ({sql}) f on e.CODIGO_IBGE = f.CODIGO_IBGE)"
 
         elif parent.get('query') == 'convenios':
             sql = f"select distinct NR_CONVENIO, IDENTIF_PROPONENTE from convenios  \
@@ -490,6 +478,14 @@ def load_proponentes(page_specs=None, use_pagination=True, filters=None, parent=
                     where NR_CONVENIO = {parent.get('NR_CONVENIO')}"
             table_expression = f"(select a.* from {table_expression} a inner join ({sql}) b \
                                   on a.IDENTIF_PROPONENTE = b.IDENTIF_PROPONENTE)"
+        
+        elif parent.get('query') == 'fornecedores':
+            sql = f"select NR_CONVENIO from movimento  \
+                  where FORNECEDOR_ID={parent.get('FORNECEDOR_ID')}"
+            sql = f"select distinct a.IDENTIF_PROPONENTE from convenios a inner join ({sql}) b \
+                    on a.NR_CONVENIO = b.NR_CONVENIO"
+            table_expression = f"(select c.* from {table_expression} c inner join ({sql}) d \
+                                  on c.IDENTIF_PROPONENTE = d.IDENTIF_PROPONENTE)"
 
         elif parent.get('query') == 'parlamentares':
             sql = f"select distinct NR_EMENDA from emendas where \
@@ -533,13 +529,9 @@ def load_emendas(page_specs=None, use_pagination=True, filters=None, parent=None
                                   on a.NR_EMENDA = b.NR_EMENDA)"
 
         elif parent.get('query') == 'fornecedores':
-            id_fornecedor = f"('{parent.get('IDENTIF_FORNECEDOR')}', \
-                               '{parent.get('NOME_FORNECEDOR')}')"
-            sql = f"select distinct FORNECEDOR_ID from fornecedores  \
-                  where (IDENTIF_FORNECEDOR, NOME_FORNECEDOR)={id_fornecedor}"
-            sql = f"select distinct a.NR_CONVENIO from movimento a inner join ({sql}) b  \
-                  on a.FORNECEDOR_ID = b.FORNECEDOR_ID"
-            sql = f"select a.NR_EMENDA from emendas_convenios a inner join ({sql}) b \
+            sql = f"select NR_CONVENIO from movimento  \
+                  where FORNECEDOR_ID = {parent.get('FORNECEDOR_ID')}"
+            sql = f"select distinct a.NR_EMENDA from emendas_convenios a inner join ({sql}) b \
                     on a.NR_CONVENIO = b.NR_CONVENIO"
             table_expression = f"(select c.* from {table_expression} c inner join ({sql}) d \
                                   on c.NR_EMENDA = d.NR_EMENDA)"
@@ -579,12 +571,8 @@ def load_movimento(page_specs=None, use_pagination=True, filters=None, parent=No
                                   where NR_CONVENIO = {parent.get('NR_CONVENIO')})"            
 
         elif parent.get('query') == 'fornecedores':
-            id_fornecedor = f"('{parent.get('IDENTIF_FORNECEDOR')}', \
-                               '{parent.get('NOME_FORNECEDOR')}')"
-            sql = f"select distinct FORNECEDOR_ID from fornecedores  \
-                  where (IDENTIF_FORNECEDOR, NOME_FORNECEDOR)={id_fornecedor}"
-            table_expression = f"(select distinct a.NR_CONVENIO from {table_expression} \
-                                a inner join ({sql}) b on a.FORNECEDOR_ID = b.FORNECEDOR_ID)"
+            table_expression = f"(select a.* from {table_expression} a  \
+                  where FORNECEDOR_ID = {parent.get('FORNECEDOR_ID')})"
 
         elif parent.get('query') == 'parlamentares':
             sql = f"select distinct NR_EMENDA from emendas where \
