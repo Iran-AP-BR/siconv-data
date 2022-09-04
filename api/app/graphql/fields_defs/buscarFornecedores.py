@@ -2,7 +2,7 @@
 """buscarFornecedores.
    """
 
-from app.graphql.data_loaders.loaders import *
+from app.graphql.data_loaders import *
 
 
 query = {
@@ -42,14 +42,14 @@ query = {
                                 "single": False
                                 },
                             {
-                                "field": "RESUMO",
-                                "loader": load_fornecedores_summary,
-                                "single": True
-                                },
-                            {
                                 "field": "PARLAMENTARES",
                                 "loader": load_parlamentares,
                                 "single": False
+                                },
+                            {
+                                "field": "ANALYTICS",
+                                "loader": load_analytics,
+                                "single": True
                                 },
                         ]      
         }

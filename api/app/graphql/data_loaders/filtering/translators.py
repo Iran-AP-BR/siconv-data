@@ -31,7 +31,7 @@ def __prepare__(field, argument):
             pass
         elif type(argument) is dict:
             argument = { arg[0].lower(): arg[1] for arg in list(map(lambda x: (x, argument[x]), argument))} 
-
+    
     return field, argument, dtype
 
 def translator_eq(field, argument):
@@ -103,7 +103,7 @@ def translator_ewx(field, argument):
 def translator_in(field, argument):
     field, argument, dtype = __prepare__(field, argument)
     quotes = "'" if dtype in [str, datetime.datetime] else ""
-    argument = f"({quotes}" + f"{quotes},{quotes}".join(argument) + f"{quotes})"
+    argument = f"({quotes}" + f"{quotes},{quotes}".join(map(lambda x: str(x), argument)) + f"{quotes})"
     return f"{field} in {argument}"
 
 def translator_bt(field, argument):

@@ -191,6 +191,58 @@ input PageSpecs {
 Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
 whose can be used to connect, aggregate or negate filter parts:
 """
+input FilterAnalytics {
+    CODIGO_IBGE: IntFilters
+    NOME_MUNICIPIO: StringFilters
+    UF: StringFilters
+    REGIAO: RegiaoFilters
+    REGIAO_ABREVIADA: RegiaoAbreviadaFilters
+    LATITUDE: FloatFilters
+    LONGITUDE: FloatFilters
+    CAPITAL: StringFilters
+
+    NR_EMENDA: FloatFilters,
+    NOME_PARLAMENTAR: StringFilters
+    TIPO_PARLAMENTAR: StringFilters
+
+    NOME_PROPONENTE: StringFilters
+
+    NR_CONVENIO: IntFilters
+    DIA_ASSIN_CONV: DateFilters
+    SIT_CONVENIO: StringFilters
+    INSTRUMENTO_ATIVO: YesNoFilters
+    DIA_PUBL_CONV: DateFilters
+    DIA_INIC_VIGENC_CONV: DateFilters
+    DIA_FIM_VIGENC_CONV: DateFilters
+    DIA_LIMITE_PREST_CONTAS: DateFilters
+    VL_GLOBAL_CONV: FloatFilters
+    VL_REPASSE_CONV: FloatFilters
+    VL_CONTRAPARTIDA_CONV: FloatFilters
+    COD_ORGAO_SUP: StringFilters
+    DESC_ORGAO_SUP: StringFilters
+    NATUREZA_JURIDICA: StringFilters
+    COD_ORGAO: StringFilters
+    DESC_ORGAO: StringFilters
+    MODALIDADE: StringFilters
+    IDENTIF_PROPONENTE: StringFilters
+    OBJETO_PROPOSTA: StringFilters
+    VALOR_REPASSE_EMENDA: FloatFilters
+    COM_EMENDAS: YesNoFilters
+    INSUCESSO: FloatFilters
+
+    IDENTIF_FORNECEDOR: StringFilters
+    NOME_FORNECEDOR: StringFilters
+
+
+    OR: [FilterAnalytics!]
+    AND: [FilterAnalytics!]
+    NOT: FilterAnalytics
+}
+
+"""
+Defines a set of fields to be used in filtering. It includes special words (OR, AND, NOT) 
+whose can be used to connect, aggregate or negate filter parts:
+"""
 input FilterFornecedores {
     IDENTIF_FORNECEDOR: StringFilters
     NOME_FORNECEDOR: StringFilters

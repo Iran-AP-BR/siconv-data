@@ -2,7 +2,7 @@
 """buscarLicitacoes.
    """
 
-from app.graphql.data_loaders.loaders import *
+from app.graphql.data_loaders import *
 
 query = {
             "field": "buscarLicitacoes",

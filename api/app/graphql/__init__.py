@@ -40,11 +40,10 @@ def parse_datetime_value(value):
         raise ValueError(f'"{value}" is not a valid date string')
 
 
-def resolve(load_function, single=False, obj=None, info=None, page_specs=None, filters=None, sort=None):
+def resolve(load_function, single=False, obj=None, info=None, **kwargs):
     try:
 
-        data, pagination = load_function(parent=obj, page_specs=page_specs, filters=filters, 
-                                         sort=sort, use_pagination=False if single else True)
+        data, pagination = load_function(parent=obj, use_pagination=False if single else True, **kwargs)
         
         if not single:
              payload = {
@@ -89,7 +88,6 @@ def setup_schema(fields_defs):
     bindables = [query] + types + [datetime_scalar]
 
     return make_executable_schema(type_defs, bindables)
-
 
 
 

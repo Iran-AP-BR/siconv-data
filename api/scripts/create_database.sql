@@ -13,6 +13,7 @@ drop table if exists movimento;
 drop table if exists municipios;
 drop table if exists proponentes;
 drop table if exists licitacoes;
+drop table if exists atributos;
 
 CREATE TABLE `calendario` (
   `DATA` date not null,
@@ -138,13 +139,6 @@ CREATE TABLE `proponentes` (
 CREATE TABLE `licitacoes` (
   `ID_LICITACAO` integer not null, 
   `NR_CONVENIO` integer not null, 
-  
-  -- `NR_PROCESSO_LICITACAO` varchar(100) not null, 
-  -- `DATA_PUBLICACAO_LICITACAO` date not null, 
-  -- `DATA_ABERTURA_LICITACAO` date not null, 
-  -- `DATA_ENCERRAMENTO_LICITACAO` date not null, 
-  -- `DATA_HOMOLOGACAO_LICITACAO` date not null, 
-
   `MODALIDADE_COMPRA` varchar(50) not null, 
   `TIPO_LICITACAO` varchar(20) not null, 
   `FORMA_LICITACAO` varchar(20) not null, 

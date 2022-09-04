@@ -2,7 +2,7 @@
 """buscarEstados.
    """
 
-from app.graphql.data_loaders.loaders import *
+from app.graphql.data_loaders import *
 
 query = {
             "field": "buscarEstados",
@@ -29,6 +29,11 @@ query = {
                                 "field": "CONVENIOS",
                                 "loader": load_convenios,
                                 "single": False
+                                },
+                            {
+                                "field": "ANALYTICS",
+                                "loader": load_analytics,
+                                "single": True
                                 },
                         ]      
         }

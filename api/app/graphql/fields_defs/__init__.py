@@ -13,4 +13,6 @@ from .buscarParlamentares import query as q8
 from .buscarProponentes import query as q9
 from .buscarAtributos import query as q10
 
-fields_defs = [q1, q2, q3, q4, q5, q6, q7, q8, q9, q10]
+from .analytics import query as analytics
+
+fields_defs = [q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, analytics]

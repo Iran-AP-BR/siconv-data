@@ -2,7 +2,7 @@
 """buscarEmendas.
    """
 
-from app.graphql.data_loaders.loaders import *
+from app.graphql.data_loaders import *
 
 query = {
             "field": "buscarEmendas",
@@ -19,6 +19,11 @@ query = {
                                 "field": "FORNECEDORES",
                                 "loader": load_fornecedores,
                                 "single": False
+                                },
+                            {
+                                "field": "ANALYTICS",
+                                "loader": load_analytics,
+                                "single": True
                                 },
                             ]       
             }

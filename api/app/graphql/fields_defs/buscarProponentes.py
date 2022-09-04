@@ -2,7 +2,7 @@
 """buscarProponentes.
    """
 
-from app.graphql.data_loaders.loaders import *
+from app.graphql.data_loaders import *
 
 
 
@@ -41,6 +41,16 @@ query = {
                                 "field": "PARLAMENTARES",
                                 "loader": load_parlamentares,
                                 "single": False
+                                },
+                            {
+                                "field": "MOVIMENTO",
+                                "loader": load_movimento,
+                                "single": False
+                                },                                
+                            {
+                                "field": "ANALYTICS",
+                                "loader": load_analytics,
+                                "single": True
                                 },
                             ]         
         }

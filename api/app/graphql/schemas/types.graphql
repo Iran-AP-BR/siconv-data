@@ -35,6 +35,8 @@ type Estado {
     FORNECEDORES(page_specs: PageSpecs,
               filters: FilterFornecedores,
               sort: SortFornecedores): FornecedoresResult
+    ANALYTICS(data_inicial: Datetime,
+              data_final: Datetime): Analytics
 }
 
 """
@@ -59,21 +61,8 @@ type Municipio {
     FORNECEDORES(page_specs: PageSpecs,
               filters: FilterFornecedores,
               sort: SortFornecedores): FornecedoresResult
-}
-
-"""
-Defines a type "FornecedorResumo".
-"""
-type FornecedorResumo {
-    errors: [String]
-    DATA_PRIMEIRO_PAGAMENTO: Datetime
-    DATA_ULTIMO_PAGAMENTO: Datetime
-    PAGAMENTOS: Float
-    MENOR_PAGAMENTO: Float
-    MAIOR_PAGAMENTO: Float
-    MEDIA_PAGAMENTO: Float
-    DESVPAD_PAGAMENTO: Float
-    QUANTIDADE_PAGAMENTOS: Int    
+    ANALYTICS(data_inicial: Datetime,
+              data_final: Datetime): Analytics
 }
 
 """
@@ -83,7 +72,6 @@ type Fornecedor {
     FORNECEDOR_ID: Int
     IDENTIF_FORNECEDOR: String
     NOME_FORNECEDOR: String
-    RESUMO: FornecedorResumo
     PROPONENTES(page_specs: PageSpecs,
               filters: FilterProponentes,
               sort: SortProponentes): ProponentesResult
@@ -105,6 +93,8 @@ type Fornecedor {
     PARLAMENTARES(page_specs: PageSpecs,
               filters: FilterParlamentares,
               sort: SortParlamentares): ParlamentaresResult
+    ANALYTICS(data_inicial: Datetime,
+              data_final: Datetime): Analytics
 }
 
 """
@@ -141,6 +131,11 @@ type Proponente {
     PARLAMENTARES(page_specs: PageSpecs,
               filters: FilterParlamentares,
               sort: SortParlamentares): ParlamentaresResult
+    MOVIMENTO(page_specs: PageSpecs,
+              filters: FilterMovimento,
+              sort: SortMovimento): MovimentoResult
+    ANALYTICS(data_inicial: Datetime,
+              data_final: Datetime): Analytics
 }
 
 """
@@ -187,6 +182,8 @@ type Convenio {
     PARLAMENTARES(page_specs: PageSpecs,
               filters: FilterParlamentares,
               sort: SortParlamentares): ParlamentaresResult
+    ANALYTICS(data_inicial: Datetime,
+              data_final: Datetime): Analytics
 }
 
 """
@@ -203,6 +200,8 @@ type Emenda {
     FORNECEDORES(page_specs: PageSpecs,
               filters: FilterFornecedores,
               sort: SortFornecedores): FornecedoresResult
+    ANALYTICS(data_inicial: Datetime,
+              data_final: Datetime): Analytics
 }
 
 
@@ -230,6 +229,8 @@ type Parlamentar {
     MOVIMENTO(page_specs: PageSpecs,
               filters: FilterMovimento,
               sort: SortMovimento): MovimentoResult
+    ANALYTICS(data_inicial: Datetime,
+              data_final: Datetime): Analytics
 }
 
 """
@@ -248,6 +249,34 @@ type Licitacao {
     PROPONENTE: Proponente
 }
 
+"""
+Defines a type "Analytics" which group some indicators.
+"""
+type AnalyticalMetrics {
+    errors: [String]
+    QUANTIDADE_CONVENIO: Int
+    DATA_PRIMEIRO_EVENTO: Datetime
+    DATA_ULTIMO_EVENTO: Datetime
+    TOTAL: Float
+    MENOR_VALOR: Float
+    MAIOR_VALOR: Float
+    MEDIA: Float
+    DESVIO_PADRAO: Float
+    QUANTIDADE_EVENTO: Int
+}
+
+type Analytics {
+    errors: [String]
+    QUANTIDADE_CONVENIO: Int
+    PAGAMENTO: AnalyticalMetrics
+    TRIBUTO: AnalyticalMetrics
+    DESEMBOLSO: AnalyticalMetrics
+    CONTRAPARTIDA: AnalyticalMetrics
+    MAIORES_FORNECEDORES(top_n: Int=10): TopFornecedoresResult
+    FORNECEDORES_FREQUENTES(top_n: Int=10): TopFornecedoresResult
+    MELHORES_MEDIAS_FORNECEDORES(top_n: Int=10): TopFornecedoresResult
+    MENORES_VARIACOES_FORNECEDORES(top_n: Int=10): TopFornecedoresResult
+}
 
 """
 Defines a type "Atributos" which represents some standard attributes related to the dataset, 
@@ -264,6 +293,28 @@ type Atributos {
     TIPO_LICITACAO: [String]
     FORMA_LICITACAO: [String]
     STATUS_LICITACAO: [String]
+}
+
+"""
+Defines a type "TopFornecedores" which represents the N greatest Fornecedores.
+"""
+type TopFornecedores {
+    FORNECEDOR_ID: Int!
+    IDENTIF_FORNECEDOR: String!
+    NOME_FORNECEDOR: String!
+    QUANTIDADE_CONVENIOS: Int!
+    DESVIO_PADRAO_PAGAMENTO: Float!
+    MEDIA_PAGAMENTO: Float!
+    TOTAL_PAGAMENTO: Float!
+}
+
+"""
+Defines a type intended to represent the result of Query for "TopFornecedores", along with pagination. 
+If errors occur, it'll be informed in "errors" field.
+"""
+type TopFornecedoresResult {
+    errors: [String]
+    items: [TopFornecedores]
 }
 
 """
@@ -413,6 +464,12 @@ type Query {
         filters: FilterParlamentares,
         sort: SortParlamentares
         ): ParlamentaresResult!
+
+    analytics(
+        filters: FilterAnalytics,
+        data_inicial: Datetime,
+        data_final: Datetime
+        ): Analytics!
 
     buscarAtributos: Atributos!
 }
