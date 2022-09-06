@@ -177,8 +177,7 @@ class DBLoader(object):
         feedback(self.logger, label='-> atributos', value='updating...')
         sql_insert_atributos = '''
             insert into atributos
-            (ATRIBUTO,
-            VALOR)
+            (ATRIBUTO, VALOR)
             select * from (
                 select distinct "SIT_CONVENIO" as ATRIBUTO, SIT_CONVENIO as VALOR 
                 from convenios where not SIT_CONVENIO is null
