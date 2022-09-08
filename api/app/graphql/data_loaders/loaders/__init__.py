@@ -69,15 +69,14 @@ def load_data(table_expression=None, selected_fields=None, filters=None, sort=No
     limit = ''
 
     where = f"where {filter_constructor(filters=filters)}" if filters else ''
-    
     order_by = sort_constructor(sort)
+    for key in selected_fields:
+        where = where.replace(key, selected_fields[key])
+    
+    sql = f"select {distinct} \
+           {', '.join([f'{selected_fields[key]} as {key}' for key in selected_fields])} \
+            from {table_expression} {where}"
 
-    for k in selected_fields:
-        where = where.replace(k, selected_fields[k])
-        order_by = order_by.replace(k, selected_fields[k])
-
-
-    sql = f"select {distinct} {', '.join(selected_fields.values())} from {table_expression} {where}"
     if use_pagination:
         items_count = db.engine.execute(text(f"select count(*) from ({sql}) aa")).scalar()
         pagination, offset, page_specs = pagination_constructor(page_specs=page_specs, items_count=items_count)
@@ -85,7 +84,7 @@ def load_data(table_expression=None, selected_fields=None, filters=None, sort=No
     
     sql = f"{sql} {order_by} {limit}"
     result = db.engine.execute(text(sql))
-    
-    data = [{list(selected_fields.keys())[p]: r for p, r in enumerate(row)} for row in result]
+
+    data = [dict(row) for row in result]
 
     return data, pagination

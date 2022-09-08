@@ -13,8 +13,8 @@ def load_atributos(**kwargs):
     data = {}
     data['DATA_ATUAL'] = data_atual
     for row in result:
-        if data.get(row[0]) is None:
-            data[row[0]] = []
-        data[row[0]] += [row[1]]
+        if data.get(row['ATRIBUTO']) is None:
+            data[row['ATRIBUTO']] = []
+        data[row['ATRIBUTO']] += [row['VALOR']]
 
     return data, None
