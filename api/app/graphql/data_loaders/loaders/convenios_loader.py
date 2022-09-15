@@ -4,7 +4,7 @@
 
 from app.graphql.data_loaders.loaders import load_data
 
-def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+def load_convenios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None, **kwargs):
     
     table_expression = 'convenios'
     selected_fields = {'NR_CONVENIO': 'NR_CONVENIO',

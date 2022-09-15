@@ -252,7 +252,38 @@ type Licitacao {
 """
 Defines a type "Analytics" which group some indicators.
 """
-type AnalyticalMetrics {
+type Analytics {
+    errors: [String]
+    QUANTIDADE_CONVENIO:Int
+    QUANTIDADE_EM_EXECUCAO: Int
+    QUANTIDADE_COM_EMENDAS: Int
+    QUANTIDADE_COM_EMENDAS_EM_EXECUCAO: Int
+    QUANTIDADE_COM_RISCO: Int
+    VALOR_REPASSE: Float
+    VALOR_CONTRAPARTIDA: Float
+    VALOR_EMENDA: Float
+    VALOR_GLOBAL: Float
+    VALOR_CONVENIO_EM_EXECUCAO: Float
+    VALOR_CONVENIO_COM_EMENDAS: Float
+    VALOR_CONVENIO_COM_EMENDAS_EM_EXECUCAO: Float
+    VALOR_CONVENIO_COM_RISCO: Float
+    VIGENCIA_INICIAL: Datetime
+    VIGENCIA_FINAL: Datetime
+    DATA_ATUAL: Datetime
+    PAGAMENTO: AnalyticsMetricsMovimento
+    TRIBUTO: AnalyticsMetricsMovimento
+    DESEMBOLSO: AnalyticsMetricsMovimento
+    CONTRAPARTIDA: AnalyticsMetricsMovimento
+    LICITACAO: AnalyticsMetricsLicitacao
+    MAIORES_FORNECEDORES(top_n: Int=10): TopFornecedoresResult
+    FORNECEDORES_FREQUENTES(top_n: Int=10): TopFornecedoresResult
+    MELHORES_MEDIAS_FORNECEDORES(top_n: Int=10): TopFornecedoresResult
+}
+
+"""
+Defines a type "AnalyticsMetricsMovimento" which group some indicators for "movimento" table events .
+"""
+type AnalyticsMetricsMovimento {
     errors: [String]
     QUANTIDADE_CONVENIO: Int
     DATA_PRIMEIRO_EVENTO: Datetime
@@ -265,18 +296,22 @@ type AnalyticalMetrics {
     QUANTIDADE_EVENTO: Int
 }
 
-type Analytics {
+"""
+Defines a type "AnalyticsMetricsLicitacao" which group some indicators for "licitacoes" table events .
+"""
+type AnalyticsMetricsLicitacao {
     errors: [String]
     QUANTIDADE_CONVENIO: Int
-    PAGAMENTO: AnalyticalMetrics
-    TRIBUTO: AnalyticalMetrics
-    DESEMBOLSO: AnalyticalMetrics
-    CONTRAPARTIDA: AnalyticalMetrics
-    MAIORES_FORNECEDORES(top_n: Int=10): TopFornecedoresResult
-    FORNECEDORES_FREQUENTES(top_n: Int=10): TopFornecedoresResult
-    MELHORES_MEDIAS_FORNECEDORES(top_n: Int=10): TopFornecedoresResult
-    MENORES_VARIACOES_FORNECEDORES(top_n: Int=10): TopFornecedoresResult
+    QUANTIDADE_LICITACAO: Int
+    QUANTIDADE_REGISTRO_PRECOS: Int
+    QUANTIDADE_INTERNACIONAL: Int
+    TOTAL: Float
+    MENOR_VALOR: Float
+    MAIOR_VALOR: Float
+    MEDIA: Float
+    DESVIO_PADRAO: Float
 }
+
 
 """
 Defines a type "Atributos" which represents some standard attributes related to the dataset, 
@@ -302,7 +337,7 @@ type TopFornecedores {
     FORNECEDOR_ID: Int!
     IDENTIF_FORNECEDOR: String!
     NOME_FORNECEDOR: String!
-    QUANTIDADE_CONVENIOS: Int!
+    QUANTIDADE_CONVENIO: Int!
     DESVIO_PADRAO_PAGAMENTO: Float!
     MEDIA_PAGAMENTO: Float!
     TOTAL_PAGAMENTO: Float!

@@ -4,7 +4,7 @@
 
 from app.graphql.data_loaders.loaders import load_data
 
-def load_parlamentares(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+def load_parlamentares(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None, **kwargs):
 
     table_expression = '(select distinct NOME_PARLAMENTAR, TIPO_PARLAMENTAR from emendas)'
     selected_fields = {'NOME_PARLAMENTAR': 'NOME_PARLAMENTAR',

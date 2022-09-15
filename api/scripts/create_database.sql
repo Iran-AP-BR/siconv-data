@@ -66,7 +66,8 @@ CREATE TABLE `convenios` (
   `INSUCESSO` float not null,
   PRIMARY KEY (`NR_CONVENIO`),
   KEY `idx_convenios_proponente` (`IDENTIF_PROPONENTE`),
-  KEY `idx_convenios_dia_inic_vigenc_conv` (`DIA_INIC_VIGENC_CONV`)
+  KEY `idx_convenios_dia_inic_vigenc_conv` (`DIA_INIC_VIGENC_CONV`),
+  KEY `idx_convenios_dia_fim_vigenc_conv` (`DIA_FIM_VIGENC_CONV`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `data_atual` (
@@ -99,13 +100,13 @@ CREATE TABLE `fornecedores` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `movimento` (
+  `MOV_ID` bigint not null,
   `NR_CONVENIO` int not null, 
   `DATA_MOV` date not null,
   `VALOR_MOV` decimal(18,2) not null,
-  `MOV_ID` bigint not null,
   `TIPO_MOV` char(1) not null, 
   `FORNECEDOR_ID` int not null,
-  KEY `idx_movimento_mov_id` (`MOV_ID`),
+  PRIMARY KEY (`MOV_ID`, `DATA_MOV` ),
   KEY `idx_movimento_convenio` (`NR_CONVENIO`),
   KEY `idx_movimento_fornecedor_id` (`FORNECEDOR_ID`),
   KEY `idx_movimento_data` (`DATA_MOV`),

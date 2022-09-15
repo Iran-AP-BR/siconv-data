@@ -195,22 +195,19 @@ input FilterAnalytics {
     CODIGO_IBGE: IntFilters
     NOME_MUNICIPIO: StringFilters
     UF: StringFilters
-    REGIAO: RegiaoFilters
     REGIAO_ABREVIADA: RegiaoAbreviadaFilters
-    LATITUDE: FloatFilters
-    LONGITUDE: FloatFilters
     CAPITAL: StringFilters
 
     NR_EMENDA: FloatFilters,
     NOME_PARLAMENTAR: StringFilters
     TIPO_PARLAMENTAR: StringFilters
 
+    IDENTIF_PROPONENTE: StringFilters
     NOME_PROPONENTE: StringFilters
 
     NR_CONVENIO: IntFilters
     DIA_ASSIN_CONV: DateFilters
     SIT_CONVENIO: StringFilters
-    INSTRUMENTO_ATIVO: YesNoFilters
     DIA_PUBL_CONV: DateFilters
     DIA_INIC_VIGENC_CONV: DateFilters
     DIA_FIM_VIGENC_CONV: DateFilters
@@ -224,7 +221,6 @@ input FilterAnalytics {
     COD_ORGAO: StringFilters
     DESC_ORGAO: StringFilters
     MODALIDADE: StringFilters
-    IDENTIF_PROPONENTE: StringFilters
     OBJETO_PROPOSTA: StringFilters
     VALOR_REPASSE_EMENDA: FloatFilters
     COM_EMENDAS: YesNoFilters
@@ -232,6 +228,14 @@ input FilterAnalytics {
 
     IDENTIF_FORNECEDOR: StringFilters
     NOME_FORNECEDOR: StringFilters
+
+    MODALIDADE_COMPRA: StringFilters
+    TIPO_LICITACAO: StringFilters
+    FORMA_LICITACAO: StringFilters
+    REGISTRO_PRECOS: YesNoFilters
+    LICITACAO_INTERNACIONAL: YesNoFilters
+    STATUS_LICITACAO: StringFilters
+    VALOR_LICITACAO: FloatFilters
 
 
     OR: [FilterAnalytics!]

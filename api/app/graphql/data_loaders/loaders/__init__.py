@@ -2,16 +2,49 @@
 """loaders.
     """
 
+from tkinter.messagebox import NO
 from flask import current_app as app
 from app.graphql.data_loaders.filtering import filter_constructor
 from math import ceil
 from app import db
 from sqlalchemy import text
 
+ 
+def make_where_clause(conditions='', where_preffix=True):
+    '''Returns a string representing a SQL WHERE clause based on a conditions list. The conditions 
+       list elements are concatenated together into a single string, conncected by "and" operators.
+       The word WHERE may be ommited by passing where_preffix parameter as False.
 
-def set_period_filter(field_name, data_inicial, data_final):
+    '''
+    assert type(conditions) in (list, tuple, str), 'assertion exception: make_where_clause()'
+
+    conditions_str = ' and '.join(conditions) if type(conditions) in (list, tuple) else conditions
+
+    where_clause = f"{'where ' if where_preffix else ''}({conditions_str})" if conditions_str else ''
+    
+    return where_clause
+
+def set_period_filter(field_name=None, data_inicial=None, data_final=None, filter_list=None):
+    '''Returns a string representing a SQL WHERE clause (without the word WHERE) to check whether a 
+       date, or a period, belongs to a date range. A period belongs to a date range if at least 
+       a portion of it is in date range, in other words, if there is an intersection between period 
+       and data range.
+    '''
+
+    assert type(filter_list) in (list, tuple, type(None)), 'assertion exception 1: set_period_filter()'
+    assert type(field_name) in (list, tuple, str), 'assertion exception 2: set_period_filter()'
+
     date_filter = ""
-    if data_inicial is not None or data_final is not None:
+    
+    if type(field_name) in (list, tuple):
+        date_filter_list = set_period_filter(field_name=field_name[0], data_final=data_final, 
+                                        filter_list=[])
+        date_filter_list = set_period_filter(field_name=field_name[1], data_inicial=data_inicial,
+                                        filter_list=date_filter_list)
+        if date_filter_list:
+            date_filter = f"({' and '.join(date_filter_list)})"
+
+    elif data_inicial is not None or data_final is not None:
         date_conditions = []
         if data_inicial is not None:
             date_conditions += [f"{field_name} >= '{data_inicial.strftime('%Y-%m-%d')}'"]
@@ -20,8 +53,16 @@ def set_period_filter(field_name, data_inicial, data_final):
             date_conditions += [f"{field_name} <= '{data_final.strftime('%Y-%m-%d')}'"]
 
         date_filter = f"({' and '.join(date_conditions)})"
-    
-    return date_filter
+        
+    if filter_list is None:
+        result = date_filter
+    elif date_filter:
+        filter_list += [f"{date_filter}"]
+        result = filter_list
+    else:
+        result = filter_list
+
+    return result
     
 def sort_constructor(sort):
     if sort is not None:
@@ -61,8 +102,8 @@ def pagination_constructor(conditions=None, page_specs=None, items_count=None):
 
 def load_data(table_expression=None, selected_fields=None, filters=None, sort=None,
                page_specs=None, use_pagination=True, distinct_clause=False):
-    assert selected_fields is not None
-    assert table_expression is not None
+    assert selected_fields is not None, 'No selected field provided'
+    assert table_expression is not None, 'No table expression provided'
 
     pagination = None
     distinct = 'distinct' if distinct_clause else ''

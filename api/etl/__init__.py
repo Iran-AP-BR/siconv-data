@@ -112,7 +112,8 @@ class ETL(object):
             feedback(self.logger, label='-> data atual', value=current_date.strftime("%Y-%m-%d"))
             
             last_date = self.csv_tools.get_csv_date()
-            feedback(self.logger, label='-> (CSV) última data', value=last_date.strftime("%Y-%m-%d"))
+            last_date_str = last_date.strftime("%Y-%m-%d") if last_date else 'Inexistente'
+            feedback(self.logger, label='-> (CSV) última data', value=last_date_str)
             
         else:
             current_date = self.csv_tools.get_csv_date(with_exception=True)

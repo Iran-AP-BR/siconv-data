@@ -12,22 +12,27 @@ query = {
             "children": [
                             {
                                 "field": "PAGAMENTO",
-                                "loader": lambda **kwargs: load_analytics_metrics(metric='P', **kwargs),
+                                "loader": lambda **kwargs: load_analytics_metrics_movimento(metric='P', **kwargs),
                                 "single": True
                                 },
                             {
                                 "field": "TRIBUTO",
-                                "loader": lambda **kwargs: load_analytics_metrics(metric='T',**kwargs),
+                                "loader": lambda **kwargs: load_analytics_metrics_movimento(metric='T',**kwargs),
                                 "single": True
                                 },
                             {
                                 "field": "DESEMBOLSO",
-                                "loader": lambda **kwargs: load_analytics_metrics(metric='D',**kwargs),
+                                "loader": lambda **kwargs: load_analytics_metrics_movimento(metric='D',**kwargs),
                                 "single": True
                                 },
                             {
                                 "field": "CONTRAPARTIDA",
-                                "loader": lambda **kwargs: load_analytics_metrics(metric='C',**kwargs),
+                                "loader": lambda **kwargs: load_analytics_metrics_movimento(metric='C',**kwargs),
+                                "single": True
+                                },
+                            {
+                                "field": "LICITACAO",
+                                "loader": lambda **kwargs: load_analytics_metrics_licitacao(metric='C',**kwargs),
                                 "single": True
                                 },
                             {
@@ -43,11 +48,6 @@ query = {
                             {
                                 "field": "MELHORES_MEDIAS_FORNECEDORES",
                                 "loader": lambda **kwargs: load_top_fornecedores(top_type='average', **kwargs),
-                                "single": False
-                                },
-                            {
-                                "field": "MENORES_VARIACOES_FORNECEDORES",
-                                "loader": lambda **kwargs: load_top_fornecedores(top_type='deviation', **kwargs),
                                 "single": False
                                 },
                             ]       

@@ -19,7 +19,7 @@ class Extraction(object):
         if file.exists():
             if date_verification:
                 creation_date = datetime.fromtimestamp(file.stat().st_mtime).date()
-                result = True if creation_date == current_date else False
+                result = True if creation_date >= current_date else False
             else:
                 result = True
 

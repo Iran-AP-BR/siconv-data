@@ -4,7 +4,7 @@
 
 from app.graphql.data_loaders.loaders import load_data
 
-def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None):
+def load_municipios(page_specs=None, use_pagination=True, filters=None, parent=None, sort=None, **kwargs):
 
     table_expression = 'municipios'
     selected_fields = {'CODIGO_IBGE': 'CODIGO_IBGE',
