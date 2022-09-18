@@ -101,12 +101,11 @@ def pagination_constructor(conditions=None, page_specs=None, items_count=None):
 
 
 def load_data(table_expression=None, selected_fields=None, filters=None, sort=None,
-               page_specs=None, use_pagination=True, distinct_clause=False):
+               page_specs=None, use_pagination=True):
     assert selected_fields is not None, 'No selected field provided'
     assert table_expression is not None, 'No table expression provided'
 
     pagination = None
-    distinct = 'distinct' if distinct_clause else ''
     limit = ''
 
     where = f"where {filter_constructor(filters=filters)}" if filters else ''
@@ -114,7 +113,7 @@ def load_data(table_expression=None, selected_fields=None, filters=None, sort=No
     for key in selected_fields:
         where = where.replace(key, selected_fields[key])
     
-    sql = f"select {distinct} \
+    sql = f"select distinct \
            {', '.join([f'{selected_fields[key]} as {key}' for key in selected_fields])} \
             from {table_expression} {where}"
 

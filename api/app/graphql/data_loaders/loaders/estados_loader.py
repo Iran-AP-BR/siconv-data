@@ -42,7 +42,7 @@ def load_estados(page_specs=None, use_pagination=True, filters=None, parent=None
 
     data, pagination = load_data(table_expression=table_expression, selected_fields=selected_fields,
                                   filters=filters, sort=sort, page_specs=page_specs,
-                                  use_pagination=use_pagination, distinct_clause=True)
+                                  use_pagination=use_pagination)
 
     for d, _ in enumerate(data):
         data[d]['query'] = 'estados'
