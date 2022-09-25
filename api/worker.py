@@ -30,7 +30,7 @@ def etl_pipeline_error_listener(event):
 def etl_pipeline(config):
 
     etl = ETL(config=config, logger=app_log)
-    done = etl.pipeline(force_download=False, force_csv_update=False, force_database_update=False)
+    done = etl.pipeline(force_download=False, force_files_update=False, force_database_update=False)
     
     if USE_SCHEDULER:
         timeout = datetime.utcnow().hour >= SCHEDULER_TIMEOUT_HOUR

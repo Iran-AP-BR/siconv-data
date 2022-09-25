@@ -13,7 +13,7 @@ csv_convenios_type = {
     'NR_CONVENIO': 'int64',
     'DIA_ASSIN_CONV': 'object',
     'SIT_CONVENIO': 'object',
-    'INSTRUMENTO_ATIVO': 'bool',
+    'INSTRUMENTO_ATIVO': 'object',
     'DIA_PUBL_CONV': 'object',
     'DIA_INIC_VIGENC_CONV': 'object',
     'DIA_FIM_VIGENC_CONV': 'object',

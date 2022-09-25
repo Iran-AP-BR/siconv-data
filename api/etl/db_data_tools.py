@@ -6,12 +6,14 @@ class DBTools(object):
         self.engine = engine
 
     def write_db(self, data_frame, table_name):
-        rows = 0
+        rows_count = 0
+        nrows = len(data_frame)
         self.engine.execute(f'truncate table {table_name};')
-        for df in data_frame:
+        for index in range(0, nrows, self.config.CHUNK_SIZE):
+            df = data_frame[index:index+self.config.CHUNK_SIZE]
             df.to_sql(table_name, con=self.engine, if_exists='append', index=False)
-            rows += len(df)
-        return rows
+            rows_count += len(df)
+        return rows_count
 
     def execute_sql(self, sql_statement):
         self.engine.execute(sql_statement)

@@ -7,9 +7,9 @@ import sqlalchemy as sa
 from sqlalchemy_utils import database_exists
 from .extraction import Extraction
 from .transformation import Transformation
-from .loader import CSVLoader, DBLoader
-from .csv_data_tools import CSVTools
-from .csv_exceptions import *
+from .loader import FileLoader, DBLoader
+from .data_files_tools import FileTools
+from .data_files_exceptions import *
 from .db_exceptions import *
 from .utils import *
 
@@ -24,13 +24,13 @@ class ETL(object):
         self.config = config
         self.engine = None
         self.logger = logger
-        self.csv_tools = CSVTools(config=config)
+        self.file_tools = FileTools(config=config)
 
-    def pipeline(self, force_download=True, force_csv_update=False, force_database_update=False):
-        csv_ok = False
+    def pipeline(self, force_download=True, force_files_update=False, force_database_update=False):
+        files_ok = False
         db_ok = False
         try:
-            current_date = self.check_update(target='csv', force_update=force_csv_update or force_download)
+            current_date = self.check_update(target='files', force_update=force_files_update or force_download)
             
             self.extractor = Extraction(config=self.config, logger=self.logger)
             extracted = self.extractor.extract(current_date=current_date, force_download=force_download)
@@ -41,20 +41,20 @@ class ETL(object):
             del extracted
             gc.collect()
 
-            self.csv_loader = CSVLoader(config=self.config, logger=self.logger)
-            self.csv_loader.load(*transformed)
+            self.file_loader = FileLoader(config=self.config, logger=self.logger)
+            self.file_loader.load(*transformed)
 
             del transformed
             gc.collect()
 
-            csv_ok = True
-        except CSVUpToDateException:
-            self.logger.info('CSV: Dados já estão atualizados.')
-            csv_ok = True
-        except CSVUnchangedException:
-            self.logger.info('CSV: Dados inalterados na origem.')
+            files_ok = True
+        except FILESUpToDateException:
+            self.logger.info('Data Files: Dados já estão atualizados.')
+            files_ok = True
+        except FILESUnchangedException:
+            self.logger.info('Data Files: Dados inalterados na origem.')
         except Exception as e:
-            raise Exception(f'CSV files: {str(e)}')
+            raise Exception(f'Data Files: {str(e)}')
 
         try:
             self.engine = self.connect_database()
@@ -73,7 +73,7 @@ class ETL(object):
         except Exception as e:
             raise Exception(f'Database: {str(e)}')
 
-        return csv_ok and db_ok
+        return files_ok and db_ok
 
     def connect_database(self):
         engine = None
@@ -89,7 +89,7 @@ class ETL(object):
         return engine
 
     def check_update(self, target, force_update=False):
-        assert target in ['csv', 'db']
+        assert target in ['files', 'db']
         
         def getCurrentDate():
             url = self.config.CURRENT_DATE_URI
@@ -102,7 +102,7 @@ class ETL(object):
                 raise Exception(f'Invalid datetime: {dt}')
             return current_date
 
-        if target == 'csv':
+        if target == 'files':
             self.logger.info('[Getting current date]')
 
             feedback(self.logger, label='-> data atual', value='connecting...')    
@@ -111,12 +111,12 @@ class ETL(object):
 
             feedback(self.logger, label='-> data atual', value=current_date.strftime("%Y-%m-%d"))
             
-            last_date = self.csv_tools.get_csv_date()
+            last_date = self.file_tools.get_files_date()
             last_date_str = last_date.strftime("%Y-%m-%d") if last_date else 'Inexistente'
-            feedback(self.logger, label='-> (CSV) última data', value=last_date_str)
+            feedback(self.logger, label='-> (FILES) última data', value=last_date_str)
             
         else:
-            current_date = self.csv_tools.get_csv_date(with_exception=True)
+            current_date = self.file_tools.get_files_date(with_exception=True)
             last_date = None
             current_date_table = 'data_atual'
             if sa.inspect(self.engine).has_table(current_date_table):
@@ -129,9 +129,9 @@ class ETL(object):
         today = datetime.now(timezone(timedelta(hours=-3))).date() 
         if not force_update and last_date:
             if  last_date >= today:
-                raise CSVUpToDateException() if target == 'csv' else DBUpToDateException()
+                raise FILESUpToDateException() if target == 'files' else DBUpToDateException()
 
             if last_date == current_date:
-                raise CSVUnchangedException() if target == 'csv' else DBUnchangedException()
+                raise FILESUnchangedException() if target == 'files' else DBUnchangedException()
         
         return current_date

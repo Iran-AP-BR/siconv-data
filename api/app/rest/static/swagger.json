@@ -38,7 +38,7 @@
         }
       }
     },
-    "/tables/{tableName}": {
+    "/tables/{fileType}/{tableName}": {
       "get": {
         "tags": [
           "Tabelas"
@@ -48,6 +48,21 @@
           "application/gzip"
         ],
         "parameters": [
+          {
+            "name": "fileType",
+            "in": "path",
+            "description": "Tipo de arquivo",
+            "required": true,
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                       "csv",
+                       "parquet"
+                      ]
+            }
+          },
           {
             "name": "tableName",
             "in": "path",
