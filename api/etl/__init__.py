@@ -2,6 +2,7 @@
 
 import requests
 import gc
+import pandas as pd
 from datetime import datetime, timezone, timedelta
 import sqlalchemy as sa
 from sqlalchemy_utils import database_exists
@@ -90,17 +91,12 @@ class ETL(object):
 
     def check_update(self, target, force_update=False):
         assert target in ['files', 'db']
-        
-        def getCurrentDate():
-            url = self.config.CURRENT_DATE_URI
-            response = requests.get(url, stream=True)
 
-            p = response.text.find('dos dados: <strong>﻿')
-            dt = response.text[p+20:p+39].strip()
-            current_date = datetime_validation(dt)
-            if current_date is None:
-                raise Exception(f'Invalid datetime: {dt}')
-            return current_date
+        def getCurrentDate():
+            current_date = pd.read_csv(self.config.CURRENT_DATE_URI, 
+                                       compression=self.config.CURRENT_DATE_URI_COMPRESSION, 
+                                       dtype=str).head(1)
+            return datetime_validation(current_date['data_carga'][0])
 
         if target == 'files':
             self.logger.info('[Getting current date]')

@@ -11,7 +11,6 @@ class Extraction(object):
     def __init__(self, config, logger) -> None:
         self.config = config
         self.logger = logger
-        #self.file_tools = CSVTools(config=config)
         self.file_tools = FileTools(config=config)
 
     def __already_extracted__(self, table_name, current_date, date_verification=True):

@@ -160,6 +160,7 @@ class Transformation(object):
         convenios['VALOR_EMENDA_CONVENIO'] = convenios['VALOR_EMENDA_CONVENIO'].fillna(0)
 
         convenios['INSTRUMENTO_ATIVO'] = convenios['INSTRUMENTO_ATIVO'].str.upper()
+        convenios.loc[convenios['SIT_CONVENIO'].isna(), 'SIT_CONVENIO'] = '#(INDEFINIDA)'
         convenios['SIT_CONVENIO'] = convenios['SIT_CONVENIO'].str.upper()
         convenios['NATUREZA_JURIDICA'] = convenios['NATUREZA_JURIDICA'].str.upper()
 
@@ -290,7 +291,6 @@ class Transformation(object):
         
         def __fix_pagamentos__(pagamentos):
             fix_list = [
-                {'convenio': 774717, 'ref': '24/06/1900', 'valor': '24/06/2014'},
                 {'convenio': 756498, 'ref': '03/09/1985', 'valor': '03/09/2012'},
                 {'convenio': 704101, 'ref': '30/12/2000', 'valor': '30/12/2009'},
                 {'convenio': 703184, 'ref': '13/01/2001', 'valor': '13/01/2010'},
@@ -371,6 +371,17 @@ class Transformation(object):
 
             return tributos
         
+        def __fix_desembolsos__(desembolsos):
+            fix_list = [
+                {'convenio': 774717, 'ref': '24/06/1900', 'valor': '24/06/2014'},
+                ]
+
+            for fix in fix_list:
+                desembolsos.loc[(desembolsos['NR_CONVENIO']==fix['convenio']) & (desembolsos['DATA'] == fix['ref']), 
+                            'DATA'] = fix['valor']
+
+            return desembolsos
+
 
         feedback(self.logger, label='-> movimento', value='transforming...')
 
@@ -402,6 +413,7 @@ class Transformation(object):
         desembolsos['TIPO'] = 'D'
         desembolsos['VALOR'] = desembolsos['VALOR'].str.replace(',', '.', regex=False)
         desembolsos['VALOR'] = desembolsos['VALOR'].astype(float)
+        desembolsos = __fix_desembolsos__(desembolsos)
 
         contrapartidas['NR_CONVENIO'] = contrapartidas['NR_CONVENIO'].astype('int64')
         contrapartidas = pd.DataFrame(contrapartidas[contrapartidas['NR_CONVENIO'].isin(convenios_list) & 

@@ -30,6 +30,7 @@ class Config(object):
     GRAPHQL_DEFAULT_PAGE_LENGTH = int(os.getenv('GRAPHQL_DEFAULT_PAGE_LENGTH', default=50))
 
     CURRENT_DATE_URI = os.getenv('CURRENT_DATE_URI')
+    CURRENT_DATE_URI_COMPRESSION = os.getenv('CURRENT_DATE_URI_COMPRESSION', 'infer')
     DOWNLOAD_URI = os.getenv('DOWNLOAD_URI')
     CHUNK_SIZE=int(os.getenv('CHUNK_SIZE', default=10000))
 

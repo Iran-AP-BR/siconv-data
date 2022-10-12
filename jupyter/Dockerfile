@@ -18,4 +18,4 @@ COPY ./user-settings/* /root/.jupyter/lab/user-settings/@jupyterlab
 ENTRYPOINT ["tini", "--"]
 
 CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", \
-     "--NotebookApp.token=''","--NotebookApp.password=''", "--allow-root"]
+     "--ServerApp.token=''","--ServerApp.password=''", "--allow-root"]
