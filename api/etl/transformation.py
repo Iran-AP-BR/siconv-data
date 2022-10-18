@@ -292,23 +292,17 @@ class Transformation(object):
         def __fix_pagamentos__(pagamentos):
             fix_list = [
                 {'convenio': 756498, 'ref': '03/09/1985', 'valor': '03/09/2012'},
-                {'convenio': 704101, 'ref': '30/12/2000', 'valor': '30/12/2009'},
                 {'convenio': 703184, 'ref': '13/01/2001', 'valor': '13/01/2010'},
                 {'convenio': 731964, 'ref': '19/01/2001', 'valor': '19/01/2011'},
                 {'convenio': 702011, 'ref': '14/02/2001', 'valor': '14/02/2011'},
                 {'convenio': 726717, 'ref': '21/02/2001', 'valor': '21/02/2011'},
                 {'convenio': 720576, 'ref': '07/04/2001', 'valor': '07/04/2010'},
-                {'convenio': 721720, 'ref': '01/06/2001', 'valor': '01/06/2011'},
                 {'convenio': 752802, 'ref': '19/08/2001', 'valor': '19/08/2011'},
                 {'convenio': 702821, 'ref': '01/09/2001', 'valor': '01/09/2011'},
-                {'convenio': 751725, 'ref': '18/11/2001', 'valor': '18/11/2011'},
-                {'convenio': 733707, 'ref': '31/12/2004', 'valor': '31/12/2010'},
                 {'convenio': 716075, 'ref': '13/02/2002', 'valor': '13/02/2012'},
                 {'convenio': 703060, 'ref': '14/09/2002', 'valor': '14/09/2012'},
                 {'convenio': 723528, 'ref': '16/10/2002', 'valor': '16/10/2012'},
-                {'convenio': 719808, 'ref': '05/02/2003', 'valor': '05/02/2013'},
                 {'convenio': 702387, 'ref': '31/12/2004', 'valor': '31/12/2010'},
-                {'convenio': 772002, 'ref': '30/12/2005', 'valor': '30/12/2014'},
                 {'convenio': 717464, 'ref': '22/06/2006', 'valor': '22/06/2010'},
                 {'convenio': 704192, 'ref': '24/12/2006', 'valor': '22/06/2010'},
                 {'convenio': 732451, 'ref': '17/05/2007', 'valor': '17/05/2010'},
@@ -316,6 +310,9 @@ class Transformation(object):
                 {'convenio': 715596, 'ref': '16/06/2007', 'valor': '16/06/2010'},
                 {'convenio': 705156, 'ref': '06/11/2007', 'valor': '06/11/2009'},
                 {'convenio': 769286, 'ref': '03/06/2031', 'valor': '03/06/2013'},
+                {'convenio': 772002, 'ref': '30/12/2004', 'valor': '30/12/2014'},
+                {'convenio': 751725, 'ref': '21/09/2001', 'valor': '21/09/2011'},
+                {'convenio': 733707, 'ref': '18/11/2001', 'valor': '18/11/2011'},
                 ]
 
             for fix in fix_list:
@@ -382,6 +379,19 @@ class Transformation(object):
 
             return desembolsos
 
+        def __fix_contrapartidas__(contrapartidas):
+            fix_list = [
+                {'convenio': 704101, 'ref': '30/12/2000', 'valor': '30/12/2009'},
+                {'convenio': 721720, 'ref': '01/06/2001', 'valor': '01/06/2011'},
+                {'convenio': 719808, 'ref': '05/02/2003', 'valor': '05/02/2013'},
+                ]
+
+            for fix in fix_list:
+                contrapartidas.loc[(contrapartidas['NR_CONVENIO']==fix['convenio']) & (contrapartidas['DATA'] == fix['ref']), 
+                            'DATA'] = fix['valor']
+
+            return contrapartidas
+
 
         feedback(self.logger, label='-> movimento', value='transforming...')
 
@@ -403,10 +413,10 @@ class Transformation(object):
         fim_vigencia_convenios['TIPO'] = 'F'
         
         desembolsos['NR_CONVENIO'] = desembolsos['NR_CONVENIO'].astype('int64')
-        desembolsos = pd.DataFrame(desembolsos[desembolsos['NR_CONVENIO'].isin(convenios_list) & 
+        desembolsos = desembolsos[desembolsos['NR_CONVENIO'].isin(convenios_list) & 
                                 desembolsos['DATA_DESEMBOLSO'].notna() &
                                 desembolsos['VL_DESEMBOLSADO'].notna() &
-                                desembolsos['VL_DESEMBOLSADO']!=0], dtype=str)
+                                desembolsos['VL_DESEMBOLSADO']!=0].copy()
         
         desembolsos = desembolsos[['NR_CONVENIO', 'DATA_DESEMBOLSO', 'VL_DESEMBOLSADO']]
         desembolsos.columns = ['NR_CONVENIO', 'DATA', 'VALOR']
@@ -416,10 +426,10 @@ class Transformation(object):
         desembolsos = __fix_desembolsos__(desembolsos)
 
         contrapartidas['NR_CONVENIO'] = contrapartidas['NR_CONVENIO'].astype('int64')
-        contrapartidas = pd.DataFrame(contrapartidas[contrapartidas['NR_CONVENIO'].isin(convenios_list) & 
+        contrapartidas = contrapartidas[contrapartidas['NR_CONVENIO'].isin(convenios_list) & 
                                         contrapartidas['DT_INGRESSO_CONTRAPARTIDA'].notna() &
                                         contrapartidas['VL_INGRESSO_CONTRAPARTIDA'].notna() &
-                                        contrapartidas['VL_INGRESSO_CONTRAPARTIDA']!=0], dtype=str)
+                                        contrapartidas['VL_INGRESSO_CONTRAPARTIDA']!=0].copy()
 
         contrapartidas = contrapartidas[['NR_CONVENIO', 'DT_INGRESSO_CONTRAPARTIDA', 'VL_INGRESSO_CONTRAPARTIDA']]
         contrapartidas.columns = ['NR_CONVENIO', 'DATA', 'VALOR']

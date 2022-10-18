@@ -140,6 +140,7 @@ class Extraction(object):
             contrapartidas = pd.read_csv(f'{url}/siconv_ingresso_contrapartida.csv.zip', 
                                         compression='zip', sep=';', dtype=str,
                                         usecols=contrapartidas_extract_cols).drop_duplicates()
+            contrapartidas = contrapartidas[contrapartidas['VL_INGRESSO_CONTRAPARTIDA'] != 0]
             self.file_tools.write_to_stage(table=contrapartidas, table_name='contrapartidas')
         else:
             contrapartidas = self.file_tools.read_from_stage(tbl_name='contrapartidas')
