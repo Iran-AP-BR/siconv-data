@@ -303,6 +303,7 @@ class Transformation(object):
                 {'convenio': 703060, 'ref': '14/09/2002', 'valor': '14/09/2012'},
                 {'convenio': 723528, 'ref': '16/10/2002', 'valor': '16/10/2012'},
                 {'convenio': 702387, 'ref': '31/12/2004', 'valor': '31/12/2010'},
+                {'convenio': 702387, 'ref': '31/12/2003', 'valor': '31/12/2009'},
                 {'convenio': 717464, 'ref': '22/06/2006', 'valor': '22/06/2010'},
                 {'convenio': 704192, 'ref': '24/12/2006', 'valor': '22/06/2010'},
                 {'convenio': 732451, 'ref': '17/05/2007', 'valor': '17/05/2010'},
@@ -349,6 +350,7 @@ class Transformation(object):
                         {'convenio': 758189, 'ref': '30/10/1968', 'valor': '30/10/2012'},
                         {'convenio': 769286, 'ref': '10/04/2031', 'valor': '10/04/2013'},
                         {'convenio': 770959, 'ref': '03/11/2004', 'valor': '03/11/2014'},
+                        {'convenio': 749284, 'ref': '01/01/2001', 'valor': '01/01/2011'},
                         ]
 
             for flaw in fix_list1:
@@ -415,35 +417,39 @@ class Transformation(object):
         desembolsos['NR_CONVENIO'] = desembolsos['NR_CONVENIO'].astype('int64')
         desembolsos = desembolsos[desembolsos['NR_CONVENIO'].isin(convenios_list) & 
                                 desembolsos['DATA_DESEMBOLSO'].notna() &
-                                desembolsos['VL_DESEMBOLSADO'].notna() &
-                                desembolsos['VL_DESEMBOLSADO']!=0].copy()
+                                desembolsos['VL_DESEMBOLSADO'].notna()].copy()
         
         desembolsos = desembolsos[['NR_CONVENIO', 'DATA_DESEMBOLSO', 'VL_DESEMBOLSADO']]
         desembolsos.columns = ['NR_CONVENIO', 'DATA', 'VALOR']
         desembolsos['TIPO'] = 'D'
         desembolsos['VALOR'] = desembolsos['VALOR'].str.replace(',', '.', regex=False)
         desembolsos['VALOR'] = desembolsos['VALOR'].astype(float)
+        desembolsos = desembolsos[desembolsos['VALOR']!=0].copy()
         desembolsos = __fix_desembolsos__(desembolsos)
 
         contrapartidas['NR_CONVENIO'] = contrapartidas['NR_CONVENIO'].astype('int64')
         contrapartidas = contrapartidas[contrapartidas['NR_CONVENIO'].isin(convenios_list) & 
                                         contrapartidas['DT_INGRESSO_CONTRAPARTIDA'].notna() &
-                                        contrapartidas['VL_INGRESSO_CONTRAPARTIDA'].notna() &
-                                        contrapartidas['VL_INGRESSO_CONTRAPARTIDA']!=0].copy()
+                                        contrapartidas['VL_INGRESSO_CONTRAPARTIDA'].notna()].copy()
 
         contrapartidas = contrapartidas[['NR_CONVENIO', 'DT_INGRESSO_CONTRAPARTIDA', 'VL_INGRESSO_CONTRAPARTIDA']]
         contrapartidas.columns = ['NR_CONVENIO', 'DATA', 'VALOR']
         contrapartidas['TIPO'] = 'C'
         contrapartidas['VALOR'] = contrapartidas['VALOR'].str.replace(',', '.', regex=False)
         contrapartidas['VALOR'] = contrapartidas['VALOR'].astype(float)
+        contrapartidas = contrapartidas[contrapartidas['VALOR']!=0].copy()
+        contrapartidas = __fix_contrapartidas__(contrapartidas)
         
-        pagamentos = pd.merge(pagamentos, fornecedores, how='inner', on=['IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR'], 
-                            left_index=False, right_index=False)
+        pagamentos = pagamentos[pagamentos['DATA_PAG'].notna() & pagamentos['VL_PAGO'].notna()].copy()
+        pagamentos = pd.merge(pagamentos, fornecedores, how='inner', 
+                              on=['IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR'], 
+                              left_index=False, right_index=False)
         pagamentos = pagamentos[['NR_CONVENIO', 'FORNECEDOR_ID', 'DATA_PAG', 'VL_PAGO']]
         pagamentos.columns = ['NR_CONVENIO', 'FORNECEDOR_ID', 'DATA', 'VALOR']
         pagamentos['TIPO'] = 'P'
         pagamentos['VALOR'] = pagamentos['VALOR'].str.replace(',', '.', regex=False)
-        pagamentos['VALOR'] = pagamentos['VALOR'].astype(float)    
+        pagamentos['VALOR'] = pagamentos['VALOR'].astype(float)
+        pagamentos = pagamentos[pagamentos['VALOR']!=0].copy()
         pagamentos = __fix_pagamentos__(pagamentos)
         
 
