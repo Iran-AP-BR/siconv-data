@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import requests
-import gc
 import pandas as pd
 from datetime import datetime, timezone, timedelta
 import sqlalchemy as sa
 from sqlalchemy_utils import database_exists
 from .extraction import Extraction
 from .transformation import Transformation
-from .loader import FileLoader, DBLoader
+from .loader import DBLoader
 from .data_files_tools import FileTools
 from .data_files_exceptions import *
 from .db_exceptions import *
@@ -34,20 +32,11 @@ class ETL(object):
             current_date = self.check_update(target='files', force_update=force_files_update or force_download)
             
             self.extractor = Extraction(config=self.config, logger=self.logger)
-            extracted = self.extractor.extract(current_date=current_date, force_download=force_download)
+            self.extractor.extract(current_date=current_date, force_download=force_download)
             
-            self.transformer = Transformation(logger=self.logger)
-            transformed = self.transformer.transform(*extracted, current_date)
+            self.transformer = Transformation(config=self.config, logger=self.logger)
+            self.transformer.transform(current_date)
             
-            del extracted
-            gc.collect()
-
-            self.file_loader = FileLoader(config=self.config, logger=self.logger)
-            self.file_loader.load(*transformed)
-
-            del transformed
-            gc.collect()
-
             files_ok = True
         except FILESUpToDateException:
             self.logger.info('Data Files: Dados já estão atualizados.')
