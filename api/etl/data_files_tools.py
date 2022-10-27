@@ -30,18 +30,18 @@ class FileTools(object):
 
     def write_data(self, table, table_name):
         table.to_parquet(os.path.join(self.config.DATA_FOLDER, f'{table_name}{self.config.FILE_EXTENTION}'),
-                            compression=self.config.COMPRESSION_METHOD, index=False)    
+                            compression=self.config.COMPRESSION_METHOD, index=False)
 
     def read_data(self, tbl_name):
-        return pd.read_parquet(os.path.join(self.config.DATA_FOLDER, 
+        return pd.read_parquet(os.path.join(self.config.DATA_FOLDER,
                                             f'{tbl_name}{self.config.FILE_EXTENTION}'))
 
     def read_from_stage(self, tbl_name):
-        return pd.read_parquet(os.path.join(self.config.STAGE_FOLDER, 
+        return pd.read_parquet(os.path.join(self.config.STAGE_FOLDER,
                                             f'{tbl_name}{self.config.FILE_EXTENTION}'))
 
     def write_to_stage(self, table, table_name=''):
         table = self.__strip_white_spaces__(table)
         table.to_parquet(os.path.join(self.config.STAGE_FOLDER, f'{table_name}{self.config.FILE_EXTENTION}'),
-                            compression=self.config.COMPRESSION_METHOD, index=False)  
+                            compression=self.config.COMPRESSION_METHOD, index=False)
 

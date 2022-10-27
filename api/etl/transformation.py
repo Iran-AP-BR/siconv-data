@@ -5,11 +5,12 @@ from .data_types import *
 from .utils import *
 from .risk_analyzer import RiskAnalyzer
 from .data_files_tools import FileTools
-
+import gc
 
 class Transformation(object):
     def __init__(self, config, logger) -> None:
         self.logger = logger
+        self.config = config
         self.file_tools = FileTools(config=config)
 
     def transform(self, current_date):
@@ -24,7 +25,7 @@ class Transformation(object):
         self.__transform_licitacoes__()
         self.__transform_fornecedores__()
         self.__transform_movimento__()
-        
+
         self.__risk_analyzer__()
 
         self.__transform_calendario__(current_date)
@@ -33,14 +34,14 @@ class Transformation(object):
 
     def __transform_municipios__(self):
         feedback(self.logger, label='-> municipios', value='transforming...')
-        
+
         municipios = self.file_tools.read_from_stage(tbl_name='municipios')
         estados = self.file_tools.read_from_stage(tbl_name='estados')
         propostas = self.file_tools.read_from_stage(tbl_name='propostas')
 
         estados.rename(str.upper, axis='columns', inplace=True)
         municipios.rename(str.upper, axis='columns', inplace=True)
-        
+
         municipios = pd.merge(municipios, estados, how='inner', on='CODIGO_UF', left_index=False, right_index=False)
         municipios.rename(columns={'NOME_x': 'NOME_MUNICIPIO',
                                    'NOME_y': 'NOME_ESTADO'}, inplace=True)
@@ -49,8 +50,8 @@ class Transformation(object):
 
         municipios_list = municipios['CODIGO_IBGE'].unique()
         municipios_extra = propostas.loc[~propostas['COD_MUNIC_IBGE'].isin(municipios_list), :].copy()
-        municipios_extra.rename(columns={'COD_MUNIC_IBGE': 'CODIGO_IBGE', 
-                                         'MUNIC_PROPONENTE': 'NOME_MUNICIPIO', 
+        municipios_extra.rename(columns={'COD_MUNIC_IBGE': 'CODIGO_IBGE',
+                                         'MUNIC_PROPONENTE': 'NOME_MUNICIPIO',
                                          'UF_PROPONENTE': 'UF'}, inplace=True)
 
         municipios_extra.loc[municipios_extra['UF'].isin(['AP', 'PA', 'RR', 'AM', 'RO', 'TO', 'AC']), 'REGIAO'] = 'NORTE'
@@ -58,19 +59,19 @@ class Transformation(object):
         municipios_extra.loc[municipios_extra['UF'].isin(['GO', 'MT', 'MS', 'DF']), 'REGIAO'] = 'CENTRO_OESTE'
         municipios_extra.loc[municipios_extra['UF'].isin(['SP', 'RJ', 'ES', 'MG']), 'REGIAO'] = 'SUDESTE'
         municipios_extra.loc[municipios_extra['UF'].isin(['RS', 'PR', 'SC']), 'REGIAO'] = 'SUL'
-    
+
         municipios_extra['CAPITAL'] = 'NAO'
 
         uf_nome_estado = municipios[['UF', 'NOME_ESTADO']].drop_duplicates()
         municipios_extra = pd.merge(municipios_extra, uf_nome_estado, how='left', on='UF', left_index=False, right_index=False)
         municipios_extra = municipios_extra.filter(['CODIGO_IBGE', 'NOME_MUNICIPIO', 'UF', 'NOME_ESTADO', 'REGIAO', 'REGIAO_ABREVIADA', 'CAPITAL'])
-        
+
         municipios.loc[municipios['CAPITAL']=='1', 'CAPITAL'] = 'SIM'
         municipios.loc[municipios['CAPITAL']=='0', 'CAPITAL'] = 'NAO'
         municipios = pd.concat([municipios, municipios_extra], ignore_index=True, sort=False)
         municipios = municipios.drop_duplicates()
         municipios.loc[municipios['NOME_ESTADO'].isna(), 'NOME_ESTADO'] = '#(NÃO ESPECIFICADO)'
-        
+
         municipios['LATITUDE'] = municipios['LATITUDE'].str.replace(',', '.', regex=False)
         municipios['LONGITUDE'] = municipios['LONGITUDE'].str.replace(',', '.', regex=False)
 
@@ -83,19 +84,19 @@ class Transformation(object):
         municipios = set_types(municipios, csv_municipios_type)
 
         self.file_tools.write_data(table=municipios, table_name='municipios')
-        
+
         feedback(self.logger, label='-> municipios', value=f'{len(municipios)} linhas')
-        
+
 
     def __proponentes_convenios_(self):
-        
+
         proponentes = self.file_tools.read_from_stage(tbl_name='proponentes')
         convenios = self.file_tools.read_from_stage(tbl_name='convenios')
         propostas = self.file_tools.read_from_stage(tbl_name='propostas')
-        
-        propostas_proponentes = pd.merge(propostas, proponentes, how='inner', on='IDENTIF_PROPONENTE', 
+
+        propostas_proponentes = pd.merge(propostas, proponentes, how='inner', on='IDENTIF_PROPONENTE',
                                         left_index=False, right_index=False)
-        convenios = pd.merge(convenios, propostas_proponentes, how='inner', on='ID_PROPOSTA', 
+        convenios = pd.merge(convenios, propostas_proponentes, how='inner', on='ID_PROPOSTA',
                             left_index=False, right_index=False)
         proponentes = convenios.filter(["IDENTIF_PROPONENTE", "NM_PROPONENTE", "COD_MUNIC_IBGE"]).drop_duplicates()
         proponentes.rename(columns={'COD_MUNIC_IBGE': 'CODIGO_IBGE'}, inplace=True)
@@ -118,13 +119,13 @@ class Transformation(object):
         emendas = emendas[emendas['NR_EMENDA'].notna()].copy()
         propostas_ano = propostas.filter(['ID_PROPOSTA', 'ANO_PROP'])
         emendas = pd.merge(emendas, propostas_ano, how='inner', on='ID_PROPOSTA', left_index=False, right_index=False).drop_duplicates()
-        emendas['NR_EMENDA'] = emendas['ANO_PROP'].astype(str) + emendas['NR_EMENDA'].astype(str)    
+        emendas['NR_EMENDA'] = emendas['ANO_PROP'].astype(str) + emendas['NR_EMENDA'].astype(str)
         emendas_convenios = pd.merge(emendas, convenios, how='inner', on='ID_PROPOSTA', left_index=False, right_index=False)
         emendas_convenios['VALOR_REPASSE_EMENDA'] = emendas_convenios['VALOR_REPASSE_EMENDA'].fillna(0)
         emendas_convenios['VALOR_REPASSE_EMENDA'] = emendas_convenios['VALOR_REPASSE_EMENDA'].str.replace(',', '.', regex=False)
 
         emendas = emendas_convenios.filter(['NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR', 'VALOR_REPASSE_EMENDA']).drop_duplicates()
-        
+
         emendas_convenios = emendas_convenios.filter(['NR_EMENDA', 'NR_CONVENIO', 'VALOR_REPASSE_EMENDA']).drop_duplicates()
         emendas_convenios = set_types(emendas_convenios, csv_emendas_type_convenios)
 
@@ -137,7 +138,7 @@ class Transformation(object):
         self.file_tools.write_data(table=emendas_convenios, table_name='emendas_convenios')
 
         feedback(self.logger, label='-> emendas_convenios', value=f'{len(emendas_convenios)} linhas')
-    
+
 
     def __tansform_emendas__(self):
         feedback(self.logger, label='-> emendas', value='transforming...')
@@ -153,7 +154,7 @@ class Transformation(object):
 
         self.file_tools.write_data(table=emendas, table_name='emendas')
 
-        feedback(self.logger, label='-> emendas', value=f'{len(emendas)} linhas')        
+        feedback(self.logger, label='-> emendas', value=f'{len(emendas)} linhas')
 
 
     def __transform_convenios__(self):
@@ -173,7 +174,7 @@ class Transformation(object):
         convenios['VL_CONTRAPARTIDA_CONV'] = convenios['VL_CONTRAPARTIDA_CONV'].str.replace(',', '.', regex=False)
 
         conv_repasse_emenda = emendas_convenios.groupby('NR_CONVENIO', as_index=False).sum()
-        conv_repasse_emenda.rename(columns={'VALOR_REPASSE_EMENDA': 'VALOR_EMENDA_CONVENIO'}, inplace=True)    
+        conv_repasse_emenda.rename(columns={'VALOR_REPASSE_EMENDA': 'VALOR_EMENDA_CONVENIO'}, inplace=True)
         convenios['NR_CONVENIO'] = convenios['NR_CONVENIO'].astype('int64')
         convenios = pd.merge(convenios, conv_repasse_emenda, how='left', on='NR_CONVENIO', left_index=False, right_index=False)
         convenios['VALOR_EMENDA_CONVENIO'] = convenios['VALOR_EMENDA_CONVENIO'].fillna(0)
@@ -191,7 +192,7 @@ class Transformation(object):
         convenios = convenios.filter(convenios_columns).drop_duplicates()
 
         convenios['INSUCESSO'] = 0
-        
+
         convenios = set_types(convenios, csv_convenios_type)
 
         self.file_tools.write_data(table=convenios, table_name='convenios')
@@ -201,7 +202,7 @@ class Transformation(object):
 
     def __transform_licitacoes__(self):
         feedback(self.logger, label='-> licitações', value='transforming...')
-        
+
         licitacoes = self.file_tools.read_from_stage(tbl_name='licitacoes')
         convenios = self.file_tools.read_data(tbl_name='convenios')
 
@@ -213,15 +214,15 @@ class Transformation(object):
         licitacoes['MODALIDADE_COMPRA'] = licitacoes['MODALIDADE_COMPRA'].mask(licitacoes['MODALIDADE_COMPRA']=='12', 'PREGÃO')
 
         licitacoes['MODALIDADE_COMPRA'] = licitacoes['MODALIDADE_COMPRA'].mask(licitacoes['MODALIDADE_COMPRA'].isna() |
-                                                                                     licitacoes['MODALIDADE_COMPRA'].astype(str).str.isnumeric(), 
+                                                                                     licitacoes['MODALIDADE_COMPRA'].astype(str).str.isnumeric(),
                                                                                      licitacoes['TP_PROCESSO_COMPRA'])
-        
+
         licitacoes['MODALIDADE_COMPRA'] = licitacoes['MODALIDADE_COMPRA'].mask(licitacoes['MODALIDADE_COMPRA'].isna() |
                                                                                      licitacoes['MODALIDADE_COMPRA'].astype(str).str.isnumeric(),
                                                                                      '#(NÃO ESPECIFICADA)')
 
         licitacoes['TIPO_LICITACAO'] = licitacoes['TIPO_LICITACAO'].mask(licitacoes['TIPO_LICITACAO'].astype(str).str.isnumeric(), None)
-        
+
         licitacoes['VALOR_LICITACAO'] = licitacoes['VALOR_LICITACAO'].str.replace(',', '.', regex=False)
 
 
@@ -249,13 +250,13 @@ class Transformation(object):
                        licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.contains('tecnica e preço') |
                        licitacoes['TIPO_LICITACAO'].astype(str).str.lower().str.contains('tecnica e preco'), 'TIPO_LICITACAO'] = 'TÉCNICA E PREÇO'
 
-        licitacoes.loc[~licitacoes['TIPO_LICITACAO'].astype(str).str.lower().isin(['técnica e preço', 'menor preço', 'melhor técnica']), 
+        licitacoes.loc[~licitacoes['TIPO_LICITACAO'].astype(str).str.lower().isin(['técnica e preço', 'menor preço', 'melhor técnica']),
                                                                                  'TIPO_LICITACAO'] = '#(NÃO APLICÁVEL)'
 
         licitacoes.loc[licitacoes['STATUS_LICITACAO'].isna(), 'STATUS_LICITACAO'] = '#(INDEFINIDO)'
-        
+
         licitacoes = licitacoes.filter(['ID_LICITACAO', 'NR_CONVENIO', 'MODALIDADE_COMPRA',
-                                        'FORMA_LICITACAO', 'REGISTRO_PRECOS', 'LICITACAO_INTERNACIONAL', 'TIPO_LICITACAO', 
+                                        'FORMA_LICITACAO', 'REGISTRO_PRECOS', 'LICITACAO_INTERNACIONAL', 'TIPO_LICITACAO',
                                         'STATUS_LICITACAO', 'VALOR_LICITACAO']).drop_duplicates()
 
         licitacoes['MODALIDADE_COMPRA'] = licitacoes['MODALIDADE_COMPRA'].str.upper()
@@ -270,28 +271,28 @@ class Transformation(object):
 
 
     def __fornecedores_pagamentos__(self):
-        
+
         pagamentos = self.file_tools.read_from_stage(tbl_name='pagamentos')
         obtv = self.file_tools.read_from_stage(tbl_name='obtv')
         convenios = self.file_tools.read_data(tbl_name='convenios')
 
         convenios_list = convenios['NR_CONVENIO'].unique()
         pagamentos['NR_CONVENIO'] = pagamentos['NR_CONVENIO'].astype('int64')
-        pagamentos = pagamentos.loc[pagamentos['NR_CONVENIO'].isin(convenios_list) & 
+        pagamentos = pagamentos.loc[pagamentos['NR_CONVENIO'].isin(convenios_list) &
                                 pagamentos['DATA_PAG'].notna(), :]
 
         pagamentos = pd.merge(pagamentos, obtv, how='left', on='NR_MOV_FIN', left_index=False, right_index=False)
 
 
-        pagamentos['IDENTIF_FORNECEDOR'] = pagamentos['IDENTIF_FORNECEDOR'].mask(pagamentos['IDENTIF_FAVORECIDO_OBTV_CONV'].notna(), 
+        pagamentos['IDENTIF_FORNECEDOR'] = pagamentos['IDENTIF_FORNECEDOR'].mask(pagamentos['IDENTIF_FAVORECIDO_OBTV_CONV'].notna(),
                                                         pagamentos['IDENTIF_FAVORECIDO_OBTV_CONV'])
-        
-        pagamentos['NOME_FORNECEDOR'] = pagamentos['NOME_FORNECEDOR'].mask(pagamentos['IDENTIF_FAVORECIDO_OBTV_CONV'].notna(), 
+
+        pagamentos['NOME_FORNECEDOR'] = pagamentos['NOME_FORNECEDOR'].mask(pagamentos['IDENTIF_FAVORECIDO_OBTV_CONV'].notna(),
                                                                            pagamentos['NM_FAVORECIDO_OBTV_CONV'])
-        pagamentos['VL_PAGO'] = pagamentos['VL_PAGO'].mask(pagamentos['IDENTIF_FAVORECIDO_OBTV_CONV'].notna(), 
+        pagamentos['VL_PAGO'] = pagamentos['VL_PAGO'].mask(pagamentos['IDENTIF_FAVORECIDO_OBTV_CONV'].notna(),
                                                            pagamentos['VL_PAGO_OBTV_CONV'])
-        
-        pagamentos = pagamentos.loc[pagamentos['VL_PAGO'].notna() & 
+
+        pagamentos = pagamentos.loc[pagamentos['VL_PAGO'].notna() &
                                     pagamentos['VL_PAGO'].str.replace(',', '.', regex=False).astype(float)!=0, :]
 
         pagamentos.loc[pagamentos['IDENTIF_FORNECEDOR'].isna(), 'IDENTIF_FORNECEDOR'] = '#(NÃO ESPECIFICADA)'
@@ -304,15 +305,15 @@ class Transformation(object):
         fornecedores['FORNECEDOR_ID'] = fornecedores.index + 1
 
         nao_aplicavel_ = pd.DataFrame([{
-                            'FORNECEDOR_ID': -1, 
-                            'IDENTIF_FORNECEDOR': 'NAO APLICAVEL', 
+                            'FORNECEDOR_ID': -1,
+                            'IDENTIF_FORNECEDOR': 'NAO APLICAVEL',
                             'NOME_FORNECEDOR': 'NAO APLICAVEL'
                             }])
 
         fornecedores = pd.concat([fornecedores, nao_aplicavel_], axis=0, sort=False, ignore_index=True)
 
         fornecedores = set_types(fornecedores, csv_fornecedores_type)
-                
+
         return fornecedores, pagamentos
 
     def __transform_fornecedores__(self):
@@ -320,12 +321,12 @@ class Transformation(object):
 
         fornecedores, _ = self.__fornecedores_pagamentos__()
         self.file_tools.write_data(table=fornecedores, table_name='fornecedores')
-        
+
         feedback(self.logger, label='-> fornecedores', value=f'{len(fornecedores)} linhas')
 
 
     def __transform_movimento__(self):
-        
+
         def __fix_pagamentos__(pagamentos):
             fix_list = [
                 {'convenio': 756498, 'ref': '03/09/1985', 'valor': '03/09/2012'},
@@ -354,7 +355,7 @@ class Transformation(object):
                 ]
 
             for fix in fix_list:
-                pagamentos.loc[(pagamentos['NR_CONVENIO']==fix['convenio']) & (pagamentos['DATA'] == fix['ref']), 
+                pagamentos.loc[(pagamentos['NR_CONVENIO']==fix['convenio']) & (pagamentos['DATA'] == fix['ref']),
                             'DATA'] = fix['valor']
 
             return pagamentos
@@ -362,7 +363,7 @@ class Transformation(object):
         def __fix_tributos__(tributos, pagamentos, convenios):
             fix_list1 = {'/0001':'/2001', '/0009':'/2009', '/0010':'/2010', '/0011':'/2011',
                         '/0200':'/2010', '/0201':'/2010', '/0209':'/2009', '/0210':'/2010'}
-            
+
             fix_list2 = [
                         {'convenio': 700427, 'ref': '30/09/2007', 'valor': '30/09/2009'},
                         {'convenio': 700427, 'ref': '01/09/8009', 'valor': '01/09/2009'},
@@ -398,22 +399,22 @@ class Transformation(object):
 
             tributos['DATA_TRIBUTO'] = tributos['DATA_TRIBUTO'].mask(tributos['DATA_TRIBUTO'].isna(), tributos['DATA'])
             tributos['DATA_TRIBUTO'] = tributos['DATA_TRIBUTO'].mask(tributos['DATA_TRIBUTO'].isna(), tributos['DIA_INIC_VIGENC_CONV'])
-            
+
             tributos = tributos.drop(['DATA', 'DIA_INIC_VIGENC_CONV'], axis=1)
 
             for fix in fix_list2:
-                tributos.loc[(tributos['NR_CONVENIO']==fix['convenio']) & 
+                tributos.loc[(tributos['NR_CONVENIO']==fix['convenio']) &
                              (tributos['DATA_TRIBUTO'] == fix['ref']), 'DATA_TRIBUTO'] = fix['valor']
 
             return tributos
-        
+
         def __fix_desembolsos__(desembolsos):
             fix_list = [
                 {'convenio': 774717, 'ref': '24/06/1900', 'valor': '24/06/2014'},
                 ]
 
             for fix in fix_list:
-                desembolsos.loc[(desembolsos['NR_CONVENIO']==fix['convenio']) & (desembolsos['DATA'] == fix['ref']), 
+                desembolsos.loc[(desembolsos['NR_CONVENIO']==fix['convenio']) & (desembolsos['DATA'] == fix['ref']),
                             'DATA'] = fix['valor']
 
             return desembolsos
@@ -426,7 +427,7 @@ class Transformation(object):
                 ]
 
             for fix in fix_list:
-                contrapartidas.loc[(contrapartidas['NR_CONVENIO']==fix['convenio']) & (contrapartidas['DATA'] == fix['ref']), 
+                contrapartidas.loc[(contrapartidas['NR_CONVENIO']==fix['convenio']) & (contrapartidas['DATA'] == fix['ref']),
                             'DATA'] = fix['valor']
 
             return contrapartidas
@@ -442,27 +443,27 @@ class Transformation(object):
         fornecedores = self.file_tools.read_data(tbl_name='fornecedores')
 
         convenios_list = convenios['NR_CONVENIO'].unique()
-    
-        assinatura_convenios = pd.DataFrame(convenios[['NR_CONVENIO', 'DIA_ASSIN_CONV', 
+
+        assinatura_convenios = pd.DataFrame(convenios[['NR_CONVENIO', 'DIA_ASSIN_CONV',
                                                     'VL_GLOBAL_CONV']], dtype=str)
         assinatura_convenios.columns = ['NR_CONVENIO', 'DATA', 'VALOR']
         assinatura_convenios['TIPO'] = 'A'
-        
-        inicio_vigencia_convenios = pd.DataFrame(convenios[['NR_CONVENIO', 'DIA_INIC_VIGENC_CONV', 
+
+        inicio_vigencia_convenios = pd.DataFrame(convenios[['NR_CONVENIO', 'DIA_INIC_VIGENC_CONV',
                                                             'VL_GLOBAL_CONV']], dtype=str)
         inicio_vigencia_convenios.columns = ['NR_CONVENIO', 'DATA', 'VALOR']
         inicio_vigencia_convenios['TIPO'] = 'I'
-        
-        fim_vigencia_convenios = pd.DataFrame(convenios[['NR_CONVENIO', 'DIA_FIM_VIGENC_CONV', 
+
+        fim_vigencia_convenios = pd.DataFrame(convenios[['NR_CONVENIO', 'DIA_FIM_VIGENC_CONV',
                                                         'VL_GLOBAL_CONV']], dtype=str)
         fim_vigencia_convenios.columns = ['NR_CONVENIO', 'DATA', 'VALOR']
         fim_vigencia_convenios['TIPO'] = 'F'
-        
+
         desembolsos['NR_CONVENIO'] = desembolsos['NR_CONVENIO'].astype('int64')
-        desembolsos = desembolsos[desembolsos['NR_CONVENIO'].isin(convenios_list) & 
+        desembolsos = desembolsos[desembolsos['NR_CONVENIO'].isin(convenios_list) &
                                 desembolsos['DATA_DESEMBOLSO'].notna() &
                                 desembolsos['VL_DESEMBOLSADO'].notna()].copy()
-        
+
         desembolsos = desembolsos[['NR_CONVENIO', 'DATA_DESEMBOLSO', 'VL_DESEMBOLSADO']]
         desembolsos.columns = ['NR_CONVENIO', 'DATA', 'VALOR']
         desembolsos['TIPO'] = 'D'
@@ -472,7 +473,7 @@ class Transformation(object):
         desembolsos = __fix_desembolsos__(desembolsos)
 
         contrapartidas['NR_CONVENIO'] = contrapartidas['NR_CONVENIO'].astype('int64')
-        contrapartidas = contrapartidas[contrapartidas['NR_CONVENIO'].isin(convenios_list) & 
+        contrapartidas = contrapartidas[contrapartidas['NR_CONVENIO'].isin(convenios_list) &
                                         contrapartidas['DT_INGRESSO_CONTRAPARTIDA'].notna() &
                                         contrapartidas['VL_INGRESSO_CONTRAPARTIDA'].notna()].copy()
 
@@ -483,11 +484,11 @@ class Transformation(object):
         contrapartidas['VALOR'] = contrapartidas['VALOR'].astype(float)
         contrapartidas = contrapartidas[contrapartidas['VALOR']!=0].copy()
         contrapartidas = __fix_contrapartidas__(contrapartidas)
-        
+
         pagamentos = pagamentos[pagamentos['DATA_PAG'].notna() & pagamentos['VL_PAGO'].notna()].copy()
         pagamentos['NR_CONVENIO'] = pagamentos['NR_CONVENIO'].astype('int64')
-        pagamentos = pd.merge(pagamentos, fornecedores, how='inner', 
-                              on=['IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR'], 
+        pagamentos = pd.merge(pagamentos, fornecedores, how='inner',
+                              on=['IDENTIF_FORNECEDOR', 'NOME_FORNECEDOR'],
                               left_index=False, right_index=False)
         pagamentos = pagamentos[['NR_CONVENIO', 'FORNECEDOR_ID', 'DATA_PAG', 'VL_PAGO']]
         pagamentos.columns = ['NR_CONVENIO', 'FORNECEDOR_ID', 'DATA', 'VALOR']
@@ -496,7 +497,7 @@ class Transformation(object):
         pagamentos['VALOR'] = pagamentos['VALOR'].astype(float)
         pagamentos = pagamentos[pagamentos['VALOR']!=0].copy()
         pagamentos = __fix_pagamentos__(pagamentos)
-        
+
 
         tributos['NR_CONVENIO'] = tributos['NR_CONVENIO'].astype('int64')
         tributos = __fix_tributos__(tributos, pagamentos, convenios)
@@ -507,30 +508,30 @@ class Transformation(object):
         tributos['VALOR'] = tributos['VALOR'].astype(float)
 
 
-        movimento = pd.concat([assinatura_convenios, inicio_vigencia_convenios, 
-                            fim_vigencia_convenios, desembolsos, contrapartidas, 
+        movimento = pd.concat([assinatura_convenios, inicio_vigencia_convenios,
+                            fim_vigencia_convenios, desembolsos, contrapartidas,
                             pagamentos, tributos], ignore_index=True, sort=False)
-                            
-        
+
+
         movimento.loc[movimento['FORNECEDOR_ID'].isna(), 'FORNECEDOR_ID'] = -1
         movimento['MOV_ID'] = movimento.index + 1
         movimento.rename(columns={'DATA': 'DATA_MOV', 'TIPO': 'TIPO_MOV', 'VALOR': 'VALOR_MOV'}, inplace=True)
         movimento = set_types(movimento, csv_movimento_type)
-        
+
         self.file_tools.write_data(table=movimento, table_name='movimento')
 
         feedback(self.logger, label='-> movimento', value=f'{len(movimento)} linhas')
-        
+
 
     def __transform_calendario__(self, current_date):
         def months_names(dt):
             months = {
-            '1': 'janeiro', '2': 'fevereiro', '3': 'março', 
-            '4': 'abril', '5': 'maio', '6': 'junho', 
-            '7': 'julho', '8': 'agosto', '9': 'setembro', 
+            '1': 'janeiro', '2': 'fevereiro', '3': 'março',
+            '4': 'abril', '5': 'maio', '6': 'junho',
+            '7': 'julho', '8': 'agosto', '9': 'setembro',
             '10': 'outubro', '11': 'novembro', '12': 'dezembro'
             }
-            
+
             return months[str(dt.month)]
 
         feedback(self.logger, label='-> calendário', value='transforming...')
@@ -540,7 +541,7 @@ class Transformation(object):
 
         periods = (current_date - first_calendar_date).days + 1
         calendario = pd.DataFrame(columns=['DATA_MOV'], data=pd.date_range(first_calendar_date, periods=periods, freq="D"))
-        
+
         calendario.rename(columns={'DATA_MOV': 'DATA'}, inplace=True)
 
         calendario['ANO'] = calendario['DATA'].dt.year
@@ -571,7 +572,7 @@ class Transformation(object):
         self.file_tools.write_data(table=calendario, table_name='calendario')
 
         feedback(self.logger, label='-> calendário', value=f'{len(calendario)} linhas')
-        
+
 
     def __transform_data_atual__(self, current_date):
         feedback(self.logger, label='-> data atual', value='transforming...')
@@ -582,9 +583,10 @@ class Transformation(object):
 
 
     def __risk_analyzer__(self):
-        ra = RiskAnalyzer()
 
         feedback(self.logger, label='-> risk analyzer', value='analyzing...')
+
+        ra = RiskAnalyzer(config=self.config)
 
         convenios = self.file_tools.read_data(tbl_name='convenios')
         proponentes = self.file_tools.read_data(tbl_name='proponentes')
@@ -595,14 +597,40 @@ class Transformation(object):
 
         convenios['INSUCESSO'] = 0
         convenios.loc[convenios['SIT_CONVENIO'].isin(['Prestação de Contas Rejeitada', 'Inadimplente', 'Convênio Rescindido']), 'INSUCESSO'] = 1
-        
+
         convenios_em_execucao_ = convenios.loc[convenios['SIT_CONVENIO'].str.lower()=='em execução']
-        risks = ra.run(convenios_em_execucao_, proponentes, emendas, emendas_convenios, 
-                                    fornecedores, movimento, append=False)
-        convenios.loc[convenios['NR_CONVENIO'].isin(convenios_em_execucao_['NR_CONVENIO'].to_list()), 
-            ['INSUCESSO']] = risks.to_list()
+
+        del convenios
+        gc.collect()
+
+        convenios_ = ra.__transform_dataset__(convenios_em_execucao_, proponentes, emendas, emendas_convenios, fornecedores, movimento)
+        active_list = convenios_em_execucao_['NR_CONVENIO'].unique()
+        lines = len(convenios_em_execucao_)
+
+        del proponentes
+        del emendas
+        del emendas_convenios
+        del fornecedores
+        del convenios_em_execucao_
+        del movimento
+        gc.collect()
+
+        risks = []
+        while not convenios_.empty:
+            chunk = convenios_.head(self.config.CHUNK_SIZE)
+            risks += ra.predict(chunk, proba=True, scale=True, append=False).to_list()
+            convenios_ = convenios_.drop(chunk.index)
+
+        del convenios_
+        gc.collect()
+
+        convenios = self.file_tools.read_data(tbl_name='convenios')
+        convenios.loc[convenios['NR_CONVENIO'].isin(active_list),
+            ['INSUCESSO']] = risks
 
         self.file_tools.write_data(table=convenios, table_name='convenios')
 
-        feedback(self.logger, label='-> risk analyzer', value=f'{len(convenios_em_execucao_)} linhas')
-        
+        del convenios
+        gc.collect()
+
+        feedback(self.logger, label='-> risk analyzer', value=f'{lines} linhas')

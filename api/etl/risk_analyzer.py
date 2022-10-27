@@ -13,41 +13,43 @@ class Unpickler_(pickle.Unpickler):
 
 
 class MLModel(object):
-    
-    def __init__(self, classifier, transformers, principal_components_analysis, 
+
+    def __init__(self, classifier, transformers, principal_components_analysis,
                  validation_metrics, hyperparameters, sklearn_version=None):
-        
+
         self.transformers = transformers
         self.principal_components_analysis = principal_components_analysis
         self.classifier = classifier
         self.validation_metrics = validation_metrics
         self.hyperparameters = hyperparameters
         self.sklearn_version = sklearn_version
-        
-        
+
+
 class RiskAnalyzer(object):
-    
-    def __init__(self, ylabel_name = 'INSUCESSO'):
-        
+
+    def __init__(self, config, ylabel_name = 'INSUCESSO'):
+
         self.ylabel_name = ylabel_name
-        
-        self.__model_filename_path__ = './etl/trained_model/model.pickle'
-        
+
+        #self.__model_filename_path__ = '/home/siconvdata/siconv-data/api/etl/trained_model/model.pickle'
+        self.config = config
+        self.__model_filename_path__ = self.config.MODEL_PATH
+
         self.__model_object__ = self.__load_model__()
 
         self.__ibge__ = None
         self.__principais_parlamentares__ = None
         self.__principais_fornecedores__ = None
- 
-    def validation_metrics(self):        
+
+    def validation_metrics(self):
         return self.__model_object__.validation_metrics
 
-    def hyperparameters(self):        
+    def hyperparameters(self):
         return self.__model_object__.hyperparameters
 
-    def sklearn_version(self):        
+    def sklearn_version(self):
         return self.__model_object__.sklearn_version
-        
+
     def predict(self, X_conv, proba=False, scale=False, append=False):
         dataframe_type = True
         if not isinstance(X_conv, pd.DataFrame):
@@ -55,11 +57,11 @@ class RiskAnalyzer(object):
             dataframe_type = False
         else:
             X = X_conv.copy()
-        
+
         nr_convenio = None
         if 'NR_CONVENIO' in X.columns:
             nr_convenio = X.pop('NR_CONVENIO').to_frame()
-            
+
         X = self.__data_preparation__(X)
         X = self.__model_object__.principal_components_analysis.transform(X)
         if proba:
@@ -68,41 +70,41 @@ class RiskAnalyzer(object):
                 predictions = np.array(list(map(lambda value: self.__sigmoid__(value), predictions)))
         else:
             predictions = self.__model_object__.classifier.predict(X)
-            
+
         predictions = pd.Series(predictions, name=self.ylabel_name)
-        
+
         if append:
             predictions = pd.DataFrame(predictions)
             predictions = pd.concat([X, predictions], axis=1, sort=False, ignore_index=False)
 
             if isinstance(nr_convenio, pd.DataFrame):
                 predictions = pd.concat([nr_convenio, predictions], axis=1, sort=False, ignore_index=False)
-        
+
         if not dataframe_type:
             predictions = predictions.to_dict()
-            
-        return predictions 
-    
+
+        return predictions
+
     def run(self, convenios, proponentes, emendas, emendas_convenios, fornecedores, movimento, append=False):
-        
+
         convenios_ = self.__transform_dataset__(convenios, proponentes, emendas, emendas_convenios, fornecedores, movimento)
-        
+
         return self.predict(convenios_, proba=True, scale=True, append=append)
 
     def __sigmoid__(self, value):
-        
+
         middle_value = 0.5
         slope_factor = 2
         return 1/(1+np.e**(-slope_factor*(value-middle_value)))
-                
+
     def __load_model__(self):
         with open(self.__model_filename_path__, 'rb') as fd:
             model_object = Unpickler_(fd).load()
-    
+
         return model_object
 
     def __data_preparation__(self, X):
-        
+
         data = X.copy()
         transformers = self.__model_object__.transformers
         data['OBJETO_PROPOSTA'] = transformers['TEXT_CLUSTERER'].predict(data['OBJETO_PROPOSTA'])
@@ -142,17 +144,17 @@ class RiskAnalyzer(object):
     def __transform_dataset__(self, convenios, proponentes, emendas, emendas_convenios, fornecedores, movimento, ylabel=False):
 
         self.__ibge__ = proponentes[['IDENTIF_PROPONENTE', 'CODIGO_IBGE']].copy()
-        
+
         selected_columns = ['VL_REPASSE_CONV', 'VL_CONTRAPARTIDA_CONV', 'VALOR_EMENDA_CONVENIO',
                'OBJETO_PROPOSTA', 'COD_ORGAO', 'COD_ORGAO_SUP', 'NATUREZA_JURIDICA',
                'MODALIDADE', 'IDENTIF_PROPONENTE', 'COM_EMENDAS']
-        
+
         features_columns = ['NR_CONVENIO', *selected_columns]
         if ylabel:
             features_columns += [self.ylabel_name]
-            
+
         convenios_ = convenios[features_columns].copy()
-        
+
         self.__principais_parlamentares__ = self.__get_principais_parlamentares__(emendas=emendas, emendas_convenios=emendas_convenios, convenios_list=convenios_['NR_CONVENIO'].to_list())
         self.__principais_fornecedores__ = self.__get_principais_fornecedores__(movimento=movimento, fornecedores=fornecedores, convenios_list=convenios_['NR_CONVENIO'].to_list())
 
@@ -163,17 +165,17 @@ class RiskAnalyzer(object):
         dataset = pd.merge(dataset, self.__principais_fornecedores__, how='left', on=['NR_CONVENIO'], left_index=False, right_index=False)
 
         dataset = dataset.fillna('NAO APLICAVEL')
-        
-        Xdtypes = {'VL_REPASSE_CONV': 'float64', 'VL_CONTRAPARTIDA_CONV': 'float64', 
-                   'VALOR_EMENDA_CONVENIO': 'float64', 'OBJETO_PROPOSTA': 'object', 
-                   'COD_ORGAO': 'int64', 'COD_ORGAO_SUP': 'int64', 'NATUREZA_JURIDICA': 'object', 
+
+        Xdtypes = {'VL_REPASSE_CONV': 'float64', 'VL_CONTRAPARTIDA_CONV': 'float64',
+                   'VALOR_EMENDA_CONVENIO': 'float64', 'OBJETO_PROPOSTA': 'object',
+                   'COD_ORGAO': 'int64', 'COD_ORGAO_SUP': 'int64', 'NATUREZA_JURIDICA': 'object',
                    'MODALIDADE': 'object', 'IDENTIF_PROPONENTE': 'object', 'COM_EMENDAS': 'object',
                    'CODIGO_IBGE': 'int64', 'PRINCIPAL_PARLAMENTAR': 'object', 'PRINCIPAL_FORNECEDOR': 'object'}
-        
+
         return dataset.astype(Xdtypes)
-    
+
     def __get_principais_parlamentares__(self, emendas, emendas_convenios, convenios_list):
-        
+
         convenios_repasses_emendas = emendas_convenios.loc[emendas_convenios['NR_CONVENIO'].isin(convenios_list)].copy()
         convenios_repasses_emendas['rank'] = convenios_repasses_emendas.groupby(by=['NR_CONVENIO'])['VALOR_REPASSE_EMENDA'].rank(ascending=False, method='min')
         convenios_repasses_emendas = convenios_repasses_emendas.loc[convenios_repasses_emendas['rank']==1, ['NR_CONVENIO', 'NR_EMENDA']]
@@ -181,11 +183,11 @@ class RiskAnalyzer(object):
         convenios_parlamentares = convenios_parlamentares[['NR_CONVENIO', 'NOME_PARLAMENTAR']]
         convenios_parlamentares.columns = ['NR_CONVENIO', 'PRINCIPAL_PARLAMENTAR']
         convenios_parlamentares = convenios_parlamentares.groupby(by=['NR_CONVENIO']).max().reset_index()
-        
+
         return convenios_parlamentares
 
     def __get_principais_fornecedores__(self, movimento, fornecedores, convenios_list):
-        
+
         movimento_exec = movimento.loc[movimento['NR_CONVENIO'].isin(convenios_list)].copy()
         movimento_exec = movimento_exec[movimento_exec['TIPO_MOV']=='P']
         convenios_fornecedores = movimento_exec[['NR_CONVENIO', 'FORNECEDOR_ID', 'VALOR_MOV']].groupby(by=['NR_CONVENIO', 'FORNECEDOR_ID']).sum().reset_index().copy()
@@ -196,6 +198,6 @@ class RiskAnalyzer(object):
         convenios_fornecedores = convenios_fornecedores[['NR_CONVENIO', 'IDENTIF_FORNECEDOR']]
         convenios_fornecedores.columns = ['NR_CONVENIO', 'PRINCIPAL_FORNECEDOR']
         convenios_fornecedores = convenios_fornecedores.groupby(by=['NR_CONVENIO']).max().reset_index()
-        
+
         return convenios_fornecedores
-    
+
