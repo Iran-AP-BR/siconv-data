@@ -8,12 +8,13 @@ from .data_files_tools import FileTools
 import gc
 
 class Transformation(object):
-    def __init__(self, config, logger) -> None:
+    def __init__(self, config, logger, current_date) -> None:
         self.logger = logger
         self.config = config
+        self.current_date = current_date
         self.file_tools = FileTools(config=config)
 
-    def transform(self, current_date):
+    def transform(self):
 
         self.logger.info('[Transforming data]')
 
@@ -28,8 +29,8 @@ class Transformation(object):
 
         self.__risk_analyzer__()
 
-        self.__transform_calendario__(current_date)
-        self.__transform_data_atual__(current_date)
+        self.__transform_calendario__()
+        self.__transform_data_atual__()
 
 
     def __transform_municipios__(self):
@@ -83,7 +84,7 @@ class Transformation(object):
 
         municipios = set_types(municipios, csv_municipios_type)
 
-        self.file_tools.write_data(table=municipios, table_name='municipios')
+        self.file_tools.write_data(table=municipios, table_name='municipios', current_date=self.current_date)
 
         feedback(self.logger, label='-> municipios', value=f'{len(municipios)} linhas')
 
@@ -108,7 +109,7 @@ class Transformation(object):
     def __transform_proponentes__(self):
         feedback(self.logger, label='-> proponentes', value='transforming...')
         proponentes, _ = self.__proponentes_convenios_()
-        self.file_tools.write_data(table=proponentes, table_name='proponentes')
+        self.file_tools.write_data(table=proponentes, table_name='proponentes', current_date=self.current_date)
         feedback(self.logger, label='-> proponentes', value=f'{len(proponentes)} linhas')
 
     def __emendas_convenios__(self):
@@ -135,7 +136,7 @@ class Transformation(object):
         feedback(self.logger, label='-> emendas_convenios', value='transforming...')
 
         emendas_convenios, _ = self.__emendas_convenios__()
-        self.file_tools.write_data(table=emendas_convenios, table_name='emendas_convenios')
+        self.file_tools.write_data(table=emendas_convenios, table_name='emendas_convenios', current_date=self.current_date)
 
         feedback(self.logger, label='-> emendas_convenios', value=f'{len(emendas_convenios)} linhas')
 
@@ -152,7 +153,7 @@ class Transformation(object):
         emendas = emendas.groupby(['NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR'], as_index=False).sum()
         emendas = set_types(emendas, csv_emendas_type)
 
-        self.file_tools.write_data(table=emendas, table_name='emendas')
+        self.file_tools.write_data(table=emendas, table_name='emendas', current_date=self.current_date)
 
         feedback(self.logger, label='-> emendas', value=f'{len(emendas)} linhas')
 
@@ -195,7 +196,7 @@ class Transformation(object):
 
         convenios = set_types(convenios, csv_convenios_type)
 
-        self.file_tools.write_data(table=convenios, table_name='convenios')
+        self.file_tools.write_data(table=convenios, table_name='convenios', current_date=self.current_date)
 
         feedback(self.logger, label='-> convenios', value=f'{len(convenios)} linhas')
 
@@ -265,7 +266,7 @@ class Transformation(object):
 
         licitacoes = set_types(licitacoes, csv_licitacoes_type)
 
-        self.file_tools.write_data(table=licitacoes, table_name='licitacoes')
+        self.file_tools.write_data(table=licitacoes, table_name='licitacoes', current_date=self.current_date)
 
         feedback(self.logger, label='-> licitações', value=f'{len(licitacoes)} linhas')
 
@@ -320,7 +321,7 @@ class Transformation(object):
         feedback(self.logger, label='-> fornecedores', value='transforming...')
 
         fornecedores, _ = self.__fornecedores_pagamentos__()
-        self.file_tools.write_data(table=fornecedores, table_name='fornecedores')
+        self.file_tools.write_data(table=fornecedores, table_name='fornecedores', current_date=self.current_date)
 
         feedback(self.logger, label='-> fornecedores', value=f'{len(fornecedores)} linhas')
 
@@ -518,12 +519,12 @@ class Transformation(object):
         movimento.rename(columns={'DATA': 'DATA_MOV', 'TIPO': 'TIPO_MOV', 'VALOR': 'VALOR_MOV'}, inplace=True)
         movimento = set_types(movimento, csv_movimento_type)
 
-        self.file_tools.write_data(table=movimento, table_name='movimento')
+        self.file_tools.write_data(table=movimento, table_name='movimento', current_date=self.current_date)
 
         feedback(self.logger, label='-> movimento', value=f'{len(movimento)} linhas')
 
 
-    def __transform_calendario__(self, current_date):
+    def __transform_calendario__(self):
         def months_names(dt):
             months = {
             '1': 'janeiro', '2': 'fevereiro', '3': 'março',
@@ -539,8 +540,9 @@ class Transformation(object):
         movimento = self.file_tools.read_data(tbl_name='movimento')
         first_calendar_date = movimento['DATA_MOV'].min().date()
 
-        periods = (current_date - first_calendar_date).days + 1
-        calendario = pd.DataFrame(columns=['DATA_MOV'], data=pd.date_range(first_calendar_date, periods=periods, freq="D"))
+        periods = (self.current_date - first_calendar_date).days + 1
+        calendario = pd.DataFrame(columns=['DATA_MOV'], data=pd.date_range(first_calendar_date, 
+                                                             periods=periods, freq="D"))
 
         calendario.rename(columns={'DATA_MOV': 'DATA'}, inplace=True)
 
@@ -569,16 +571,16 @@ class Transformation(object):
                                                                     replace(4, 'sexta-feira').replace(5, 'sabado').replace(6, 'domingo')
         calendario = set_types(calendario, csv_calendario_type)
 
-        self.file_tools.write_data(table=calendario, table_name='calendario')
+        self.file_tools.write_data(table=calendario, table_name='calendario', current_date=self.current_date)
 
         feedback(self.logger, label='-> calendário', value=f'{len(calendario)} linhas')
 
 
-    def __transform_data_atual__(self, current_date):
+    def __transform_data_atual__(self):
         feedback(self.logger, label='-> data atual', value='transforming...')
-        data_atual = pd.DataFrame(data={'DATA_ATUAL': [current_date.strftime("%d/%m/%Y")]})
+        data_atual = pd.DataFrame(data={'DATA_ATUAL': [self.current_date.strftime("%d/%m/%Y")]})
         data_atual = set_types(data_atual, csv_data_atual_type)
-        self.file_tools.write_data(table=data_atual, table_name='data_atual')
+        self.file_tools.write_data(table=data_atual, table_name='data_atual', current_date=self.current_date)
         feedback(self.logger, label='-> data atual', value='done')
 
 
@@ -628,7 +630,7 @@ class Transformation(object):
         convenios.loc[convenios['NR_CONVENIO'].isin(active_list),
             ['INSUCESSO']] = risks
 
-        self.file_tools.write_data(table=convenios, table_name='convenios')
+        self.file_tools.write_data(table=convenios, table_name='convenios', current_date=self.current_date)
 
         del convenios
         gc.collect()

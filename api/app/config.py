@@ -35,6 +35,6 @@ class Config(object):
     CHUNK_SIZE=int(os.getenv('CHUNK_SIZE', default=10000))
 
     NLTK_DATA=os.getenv('NLTK_DATA')
-    MODEL_PATH=os.getenv('MODEL_PATH', './trained_model/model.pickle')
-
-    TIMEZONE=os.getenv('TIMEZONE', default="UTC")
+    MODEL_PATH=os.getenv('MODEL_PATH', './etl/trained_model/model.pickle')
+    
+    TIMEZONE_OFFSET=int(os.getenv('TIMEZONE_OFFSET', default=-3))

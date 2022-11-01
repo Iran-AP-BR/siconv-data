@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     if USE_SCHEDULER:
 
-        sched = BlockingScheduler(timezone=config.TIMEZONE)
+        sched = BlockingScheduler(timezone='UTC')
         sched.add_job(lambda: etl_pipeline(config), 'cron', day_of_week='*', hour='8/1', minute='30',
                     max_instances=1, id='etl', name='etl_pipeline', coalesce=True)
         sched.add_listener(etl_pipeline_error_listener, EVENT_JOB_ERROR)

@@ -31,11 +31,11 @@ class ETL(object):
         try:
             current_date = self.check_update(target='files', force_update=force_transformations or force_download)
 
-            self.extractor = Extraction(config=self.config, logger=self.logger)
-            self.extractor.extract(current_date=current_date, force_download=force_download)
+            self.extractor = Extraction(config=self.config, logger=self.logger, current_date=current_date)
+            self.extractor.extract(force_download=force_download)
 
-            self.transformer = Transformation(config=self.config, logger=self.logger)
-            self.transformer.transform(current_date)
+            self.transformer = Transformation(config=self.config, logger=self.logger, current_date=current_date)
+            self.transformer.transform()
 
             files_ok = True
         except FILESUpToDateException:
