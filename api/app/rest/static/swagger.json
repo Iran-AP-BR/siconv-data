@@ -45,7 +45,7 @@
         ],
         "summary": "Retorna um arquivo csv compactado com gzip contendo os dados da tabela selecionada.",
         "produces": [
-          "application/gzip"
+          "application/octet-stream"
         ],
         "parameters": [
           {
@@ -98,6 +98,52 @@
           },
           "404": {
             "description": "A tabela requisitada não está disponível."
+          },
+          "500": {
+            "description": "Ocorreu um erro interno não especificado."
+          }
+        }
+      }
+    },
+    "/types/{tableName}": {
+      "get": {
+        "tags": [
+          "Tipos"
+        ],
+        "summary": "Retorna os tipos de dados das tabelas.",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "tableName",
+            "in": "path",
+            "description": "Nome da tabela",
+            "required": true,
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                       "calendario",
+                       "convenios",
+                       "emendas",
+                       "emendas_convenios",
+                       "fornecedores",
+                       "licitacoes",
+                       "movimento",
+                       "municipios",
+                       "proponentes"
+                      ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Uma informação de autorização válida deve ser informada."
           },
           "500": {
             "description": "Ocorreu um erro interno não especificado."

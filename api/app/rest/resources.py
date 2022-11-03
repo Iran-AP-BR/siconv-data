@@ -1,7 +1,7 @@
 # coding: utf-8
 """Resources.
    """
-from flask import Response, send_file, send_from_directory, render_template, current_app as app
+from flask import Response, send_file, send_from_directory, render_template, jsonify, current_app as app
 import pandas as pd
 from app.security import api_key_required
 from . import check_target
@@ -20,7 +20,7 @@ def data_atual():
 
 @api_key_required
 @check_target
-def files_parquet(fileType, tableName):
+def files(fileType, tableName):
    if fileType == 'parquet':
       return _parquet_file(tableName)
    elif fileType == 'csv':
@@ -31,6 +31,12 @@ def files_parquet(fileType, tableName):
    resp.status = 404
    return resp
 
+@api_key_required
+@check_target
+def data_types(tableName):   
+   filename = os.path.join(app.config['DATA_FOLDER'], f'{tableName}{app.config["FILE_EXTENTION"]}')
+   df = pd.read_parquet(filename).head(1)
+   return jsonify(df.dtypes.astype(str).to_dict())
 
 def swagger():
    return render_template('swagger.html', title=app.config['APP_TITLE'])
