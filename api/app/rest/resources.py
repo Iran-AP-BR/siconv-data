@@ -36,7 +36,18 @@ def files(fileType, tableName):
 def data_types(tableName):   
    filename = os.path.join(app.config['DATA_FOLDER'], f'{tableName}{app.config["FILE_EXTENTION"]}')
    df = pd.read_parquet(filename).head(1)
-   return jsonify(df.dtypes.astype(str).to_dict())
+   dtypes = df.dtypes.astype(str).to_dict()
+   for key in dtypes:
+      if dtypes[key] == 'object':
+         dtypes[key] = 'string'
+      elif dtypes[key]  == 'datetime64[ns]':
+         dtypes[key] = 'datetime'
+      elif dtypes[key]  == 'int64':
+         dtypes[key] ='integer'
+      elif dtypes[key]  == 'float64':
+         dtypes[key] ='float'
+
+   return jsonify(dtypes)
 
 def swagger():
    return render_template('swagger.html', title=app.config['APP_TITLE'])
