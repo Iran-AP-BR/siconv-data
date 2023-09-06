@@ -78,7 +78,7 @@ def translator_ct(field, argument):
 def translator_ctx(field, argument):
     field, argument, _ = __prepare__(field, argument)
     argument2 = f"'% {argument} %'"
-    return f"({field} like {argument2} or {field} = {argument})"
+    return f"({field} like {argument2} or {field} = '{argument}')"
 
 def translator_sw(field, argument):
     field, argument, _ = __prepare__(field, argument)
@@ -88,7 +88,7 @@ def translator_sw(field, argument):
 def translator_swx(field, argument):
     field, argument, _ = __prepare__(field, argument)
     argument2 = f"'{argument} %'"
-    return f"({field} like {argument2} or {field} = {argument})"
+    return f"({field} like {argument2} or {field} = '{argument}')"
 
 def translator_ew(field, argument):
     field, argument, _ = __prepare__(field, argument)
@@ -98,7 +98,7 @@ def translator_ew(field, argument):
 def translator_ewx(field, argument):
     field, argument, _ = __prepare__(field, argument)
     argument2 = f"'% {argument}'"
-    return f"({field} like {argument2} or {field} = {argument})"
+    return f"({field} like {argument2} or {field} = '{argument}')"
 
 def translator_in(field, argument):
     field, argument, dtype = __prepare__(field, argument)
