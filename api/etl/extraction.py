@@ -7,6 +7,7 @@ import os
 from .data_files_tools import FileTools
 from .utils import *
 
+
 class Extraction(object):
     def __init__(self, config, logger, current_date) -> None:
         self.config = config
@@ -26,6 +27,23 @@ class Extraction(object):
                 result = True
 
         return result
+
+    def __get_data__(self, table_name, date_verification=True, force_download=False, 
+                           compression=None, sep=';', remote_path=None, usecols=None):
+        table = None
+        if not force_download and self.__already_extracted__(table_name=table_name, 
+                                                             date_verification=date_verification):
+            try:
+                table = self.file_tools.read_from_stage(tbl_name=table_name)
+            except:
+                table = None
+
+        if table is None:
+            table = pd.read_csv(remote_path, compression=compression, sep=sep, dtype=str, 
+                                usecols=usecols).drop_duplicates()
+
+        return table
+
 
     def extract(self, force_download=False):
 
@@ -59,133 +77,143 @@ class Extraction(object):
         url = self.config.DOWNLOAD_URI
         
         feedback(self.logger, label='-> estados', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='estados'):
-            estados = pd.read_csv(f'{self.config.MUNICIPIOS_BACKUP_FOLDER}/estados.csv.gz', 
-                                  compression='gzip', sep=',', dtype=str,
-                                  usecols=estados_extract_cols).drop_duplicates()
-            self.file_tools.write_to_stage(table=estados, table_name='estados', current_date=self.current_date)
-        else:
-            estados = self.file_tools.read_from_stage(tbl_name='estados')
+        estados = self.__get_data__(table_name='estados', 
+                                      force_download=force_download,
+                                      compression='gzip',
+                                      sep=',',
+                                      remote_path=f'{self.config.MUNICIPIOS_BACKUP_FOLDER}/estados.csv.gz',
+                                      usecols=estados_extract_cols)
+
+        self.file_tools.write_to_stage(table=estados, table_name='estados', current_date=self.current_date)
         feedback(self.logger, label='-> estados', value=f'{len(estados)}')
 
 
         feedback(self.logger, label='-> municipios', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='municipios'):
-            municipios = pd.read_csv(f'{self.config.MUNICIPIOS_BACKUP_FOLDER}/municipios.csv.gz', 
-                                     compression='gzip', sep=',', dtype=str,
-                                     usecols=municipios_extract_cols).drop_duplicates()
-            self.file_tools.write_to_stage(table=municipios, table_name='municipios', current_date=self.current_date)
-        else:
-            municipios = self.file_tools.read_from_stage(tbl_name='municipios')
+        municipios = self.__get_data__(table_name='municipios', 
+                                      force_download=force_download,
+                                      compression='gzip',
+                                      sep=',',
+                                      remote_path=f'{self.config.MUNICIPIOS_BACKUP_FOLDER}/municipios.csv.gz',
+                                      usecols=municipios_extract_cols)
+
+        self.file_tools.write_to_stage(table=municipios, table_name='municipios', current_date=self.current_date)
         feedback(self.logger, label='-> municipios', value=f'{len(municipios)}')
         
 
         feedback(self.logger, label='-> proponentes', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='proponentes'):
-            proponentes = pd.read_csv(f'{url}/siconv_proponentes.csv.zip', 
-                                    compression='zip', sep=';', dtype=str, 
-                                    usecols=proponentes_extract_cols).drop_duplicates()
-            self.file_tools.write_to_stage(table=proponentes, table_name='proponentes', current_date=self.current_date)
-        else:
-            proponentes = self.file_tools.read_from_stage(tbl_name='proponentes')
+        proponentes = self.__get_data__(table_name='proponentes', 
+                                      force_download=force_download,
+                                      compression='zip',
+                                      remote_path=f'{url}/siconv_proponentes.csv.zip',
+                                      usecols=proponentes_extract_cols)
+
+        self.file_tools.write_to_stage(table=proponentes, table_name='proponentes', current_date=self.current_date)
         feedback(self.logger, label='-> proponentes', value=f'{len(proponentes)}')
 
 
         feedback(self.logger, label='-> propostas', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='propostas'):
-            propostas = pd.read_csv(f'{url}/siconv_proposta.csv.zip', 
-                                    compression='zip', sep=';', dtype=str, 
-                                    usecols=propostas_extract_cols).drop_duplicates()
-            self.file_tools.write_to_stage(table=propostas, table_name='propostas', current_date=self.current_date)
-        else:
-            propostas = self.file_tools.read_from_stage(tbl_name='propostas')
+        propostas = self.__get_data__(table_name='propostas', 
+                                      force_download=force_download,
+                                      compression='zip',
+                                      remote_path=f'{url}/siconv_proposta.csv.zip',
+                                      usecols=propostas_extract_cols)
+
+        self.file_tools.write_to_stage(table=propostas, table_name='propostas', current_date=self.current_date)
         feedback(self.logger, label='-> propostas', value=f'{len(propostas)}')
 
 
         feedback(self.logger, label='-> convenios', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='convenios'):
-            convenios = pd.read_csv(f'{url}/siconv_convenio.csv.zip', compression='zip', sep=';', dtype=str, usecols=convenios_extract_cols)
-            convenios = convenios[(convenios['DIA_ASSIN_CONV'].notna()) & (convenios['DIA_PUBL_CONV'].notna())]
-            convenios.loc[convenios['INSTRUMENTO_ATIVO'].str.upper()=='NÃO', ['INSTRUMENTO_ATIVO']] = 'NAO'
-            convenios = convenios.drop_duplicates()
-            self.file_tools.write_to_stage(table=convenios, table_name='convenios', current_date=self.current_date)
-        else:
-            convenios = self.file_tools.read_from_stage(tbl_name='convenios')
+        convenios = self.__get_data__(table_name='convenios', 
+                                      force_download=force_download,
+                                      compression='zip',
+                                      remote_path=f'{url}/siconv_convenio.csv.zip',
+                                      usecols=convenios_extract_cols)
+
+        convenios = convenios[(convenios['DIA_ASSIN_CONV'].notna()) & (convenios['DIA_PUBL_CONV'].notna())]
+        convenios.loc[convenios['INSTRUMENTO_ATIVO'].str.upper()=='NÃO', ['INSTRUMENTO_ATIVO']] = 'NAO'
+        convenios = convenios.drop_duplicates()
+
+        self.file_tools.write_to_stage(table=convenios, table_name='convenios', current_date=self.current_date)
         feedback(self.logger, label='-> convenios', value=f'{len(convenios)}')
 
 
         feedback(self.logger, label='-> emendas', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='emendas'):
-            emendas = pd.read_csv(f'{url}/siconv_emenda.csv.zip', 
-                                compression='zip', sep=';', dtype=str, 
-                                usecols=emendas_extract_cols).drop_duplicates()
-            self.file_tools.write_to_stage(table=emendas, table_name='emendas', current_date=self.current_date)
-        else:
-            emendas = self.file_tools.read_from_stage(tbl_name='emendas')
+        emendas = self.__get_data__(table_name='emendas', 
+                                      force_download=force_download,
+                                      compression='zip',
+                                      remote_path=f'{url}/siconv_emenda.csv.zip',
+                                      usecols=emendas_extract_cols)
+
+        self.file_tools.write_to_stage(table=emendas, table_name='emendas', current_date=self.current_date)
         feedback(self.logger, label='-> emendas', value=f'{len(emendas)}')
 
 
         feedback(self.logger, label='-> desembolsos', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='desembolsos'):
-            desembolsos = pd.read_csv(f'{url}/siconv_desembolso.csv.zip', 
-                                    compression='zip', sep=';', dtype=str, 
-                                    usecols=desembolsos_extract_cols).drop_duplicates()
-            self.file_tools.write_to_stage(table=desembolsos, table_name='desembolsos', current_date=self.current_date)
-        else:
-            desembolsos = self.file_tools.read_from_stage(tbl_name='desembolsos')
+        desembolsos = self.__get_data__(table_name='desembolsos', 
+                                      force_download=force_download,
+                                      compression='zip',
+                                      remote_path=f'{url}/siconv_desembolso.csv.zip',
+                                      usecols=desembolsos_extract_cols)
+
+        self.file_tools.write_to_stage(table=desembolsos, table_name='desembolsos', current_date=self.current_date)
         feedback(self.logger, label='-> desembolsos', value=f'{len(desembolsos)}')
 
 
         feedback(self.logger, label='-> contrapartidas', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='contrapartidas'):
-            contrapartidas = pd.read_csv(f'{url}/siconv_ingresso_contrapartida.csv.zip', 
-                                        compression='zip', sep=';', dtype=str,
-                                        usecols=contrapartidas_extract_cols).drop_duplicates()
-            self.file_tools.write_to_stage(table=contrapartidas, table_name='contrapartidas', current_date=self.current_date)
-        else:
-            contrapartidas = self.file_tools.read_from_stage(tbl_name='contrapartidas')
+        contrapartidas = self.__get_data__(table_name='contrapartidas', 
+                                      force_download=force_download,
+                                      compression='zip',
+                                      remote_path=f'{url}/siconv_ingresso_contrapartida.csv.zip',
+                                      usecols=contrapartidas_extract_cols)
+
+        self.file_tools.write_to_stage(table=contrapartidas, table_name='contrapartidas', current_date=self.current_date)
         feedback(self.logger, label='-> contrapartidas', value=f'{len(contrapartidas)}')
 
 
         feedback(self.logger, label='-> tributos', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='tributos'):
-            tributos = pd.read_csv(f'{url}/siconv_pagamento_tributo.csv.zip', 
-                                        compression='zip', sep=';', dtype=str,
-                                        usecols=tributos_extract_cols).drop_duplicates()
-            self.file_tools.write_to_stage(table=tributos, table_name='tributos', current_date=self.current_date)
-        else:
-            tributos = self.file_tools.read_from_stage(tbl_name='tributos')
+        tributos = self.__get_data__(table_name='tributos', 
+                                      force_download=force_download,
+                                      compression='zip',
+                                      remote_path=f'{url}/siconv_pagamento_tributo.csv.zip',
+                                      usecols=tributos_extract_cols)
+
+        self.file_tools.write_to_stage(table=tributos, table_name='tributos', current_date=self.current_date)
         feedback(self.logger, label='-> tributos', value=f'{len(tributos)}')
 
 
         feedback(self.logger, label='-> pagamentos', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='pagamentos'):
-            pagamentos = pd.read_csv(f'{url}/siconv_pagamento.csv.zip', 
-                                    compression='zip', sep=';', dtype=str, 
-                                    usecols=pagamentos_extract_cols).drop_duplicates()
-            self.file_tools.write_to_stage(table=pagamentos, table_name='pagamentos', current_date=self.current_date)
-        else:
-            pagamentos = self.file_tools.read_from_stage(tbl_name='pagamentos')
+        pagamentos = self.__get_data__(table_name='pagamentos', 
+                                      force_download=force_download,
+                                      compression='zip',
+                                      remote_path=f'{url}/siconv_pagamento.csv.zip',
+                                      usecols=pagamentos_extract_cols)
+
+        self.file_tools.write_to_stage(table=pagamentos, table_name='pagamentos', current_date=self.current_date)
         feedback(self.logger, label='-> pagamentos', value=f'{len(pagamentos)}')
 
 
         feedback(self.logger, label='-> OBTV', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='obtv'):
-            obtv = pd.read_csv(f'{url}/siconv_obtv_convenente.csv.zip', compression='zip', sep=';', dtype=str, usecols=obtv_extract_cols)
-            obtv = obtv[obtv['IDENTIF_FAVORECIDO_OBTV_CONV'].notna()]
-            obtv = obtv.drop_duplicates()
-            self.file_tools.write_to_stage(table=obtv, table_name='obtv', current_date=self.current_date)
-        else:
-            obtv = self.file_tools.read_from_stage(tbl_name='obtv')
-        feedback(self.logger, label='-> OBTV', value=f'{len(pagamentos)}')
+        obtv = self.__get_data__(table_name='obtv', 
+                                      force_download=force_download,
+                                      compression='zip',
+                                      remote_path=f'{url}/siconv_obtv_convenente.csv.zip',
+                                      usecols=obtv_extract_cols)
+        
+        obtv = obtv[obtv['IDENTIF_FAVORECIDO_OBTV_CONV'].notna()]
+        obtv = obtv.drop_duplicates()
+        
+        self.file_tools.write_to_stage(table=obtv, table_name='obtv', current_date=self.current_date)
+        feedback(self.logger, label='-> OBTV', value=f'{len(obtv)}')
 
 
         feedback(self.logger, label='-> licitações', value='connecting...')
-        if force_download or not self.__already_extracted__(table_name='licitacoes'):
-            licitacoes = pd.read_csv(f'{url}/siconv_licitacao.csv.zip', compression='zip', sep=';', dtype=str, usecols=licitacoes_extract_cols)
-            self.file_tools.write_to_stage(table=licitacoes, table_name='licitacoes', current_date=self.current_date)
-        else:
-            licitacoes = self.file_tools.read_from_stage(tbl_name='licitacoes')
+        licitacoes = self.__get_data__(table_name='licitacoes', 
+                                      force_download=force_download,
+                                      compression='zip',
+                                      remote_path=f'{url}/siconv_licitacao.csv.zip',
+                                      usecols=licitacoes_extract_cols)
+
+        self.file_tools.write_to_stage(table=licitacoes, table_name='licitacoes', current_date=self.current_date)
         feedback(self.logger, label='-> licitações', value=f'{len(licitacoes)}')
 
 

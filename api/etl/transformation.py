@@ -148,6 +148,7 @@ class Transformation(object):
 
         emendas.rename(columns={'VALOR_REPASSE_EMENDA': 'VALOR_EMENDA'}, inplace=True)
         emendas.loc[emendas['NOME_PARLAMENTAR'].isna(), 'NOME_PARLAMENTAR'] = '#(NÃO ESPECIFICADO)'
+        emendas['NOME_PARLAMENTAR'] = emendas['NOME_PARLAMENTAR'].str[:60]
         emendas.loc[emendas['TIPO_PARLAMENTAR'].isna(), 'TIPO_PARLAMENTAR'] = '#(NÃO ESPECIFICADO)'
         emendas['VALOR_EMENDA'] = emendas['VALOR_EMENDA'].astype(float)
         emendas = emendas.groupby(['NR_EMENDA', 'NOME_PARLAMENTAR', 'TIPO_PARLAMENTAR'], as_index=False).sum()
