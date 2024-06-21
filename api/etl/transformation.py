@@ -283,8 +283,14 @@ class Transformation(object):
         pagamentos = pagamentos.loc[pagamentos['NR_CONVENIO'].isin(convenios_list) &
                                 pagamentos['DATA_PAG'].notna(), :]
 
+        del convenios
+        del convenios_list
+        gc.collect()
+
         pagamentos = pd.merge(pagamentos, obtv, how='left', on='NR_MOV_FIN', left_index=False, right_index=False)
 
+        del obtv
+        gc.collect()
 
         pagamentos['IDENTIF_FORNECEDOR'] = pagamentos['IDENTIF_FORNECEDOR'].mask(pagamentos['IDENTIF_FAVORECIDO_OBTV_CONV'].notna(),
                                                         pagamentos['IDENTIF_FAVORECIDO_OBTV_CONV'])
@@ -500,6 +506,8 @@ class Transformation(object):
         pagamentos = pagamentos[pagamentos['VALOR']!=0].copy()
         pagamentos = __fix_pagamentos__(pagamentos)
 
+        del fornecedores
+        gc.collect()
 
         tributos['NR_CONVENIO'] = tributos['NR_CONVENIO'].astype('int64')
         tributos = __fix_tributos__(tributos, pagamentos, convenios)
@@ -509,6 +517,9 @@ class Transformation(object):
         tributos['VALOR'] = tributos['VALOR'].str.replace(',', '.', regex=False)
         tributos['VALOR'] = tributos['VALOR'].astype(float)
 
+        del convenios
+        del convenios_list
+        gc.collect()
 
         movimento = pd.concat([assinatura_convenios, inicio_vigencia_convenios,
                             fim_vigencia_convenios, desembolsos, contrapartidas,
@@ -542,7 +553,7 @@ class Transformation(object):
         first_calendar_date = movimento['DATA_MOV'].min().date()
 
         periods = (self.current_date - first_calendar_date).days + 1
-        calendario = pd.DataFrame(columns=['DATA_MOV'], data=pd.date_range(first_calendar_date, 
+        calendario = pd.DataFrame(columns=['DATA_MOV'], data=pd.date_range(first_calendar_date,
                                                              periods=periods, freq="D"))
 
         calendario.rename(columns={'DATA_MOV': 'DATA'}, inplace=True)
